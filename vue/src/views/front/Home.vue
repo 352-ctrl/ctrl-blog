@@ -25,7 +25,7 @@
         </el-carousel-item>
       </el-carousel>
     </div>
-    <el-tabs v-model="data.activeTab" @tab-change="handleTabChange" style="padding-top: 20px">
+    <el-tabs v-model="data.activeTab" @tab-change="handleTabChange" style="padding-top: 30px">
       <el-tab-pane label="全部" name="all"></el-tab-pane>
       <el-tab-pane
           v-for="item in data.categoryList"
@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, reactive} from "vue";
+import {onMounted, reactive} from "vue";
 import { useRouter } from "vue-router";
 import {getArticleCarousel, getArticlePage} from "@/api/front/article.js";
 import {getCategoryList} from '@/api/front/category.js'

@@ -17,9 +17,59 @@
 }
 
 .el-tag {
-  /**
-  color: var(--el-color-primary) !important;
-   */
+  // 1. 尺寸与形状
+  height: 24px;               // 稍微压扁，适应底部 meta 栏的高度
+  padding: 0 10px;            // 左右内边距
+  line-height: 24px;
+  border-radius: 4px;         // 微圆角，比默认的方形看起来更现代，但比胶囊形更稳重
+  border: none;               // 去掉默认边框，减少视觉噪点
+
+  // 2. 字体设置
+  font-size: 12px;
+  font-weight: 500;           // 中等字重，清晰但不粗糙
+  letter-spacing: 0.5px;      // 稍微增加字间距
+
+  // 3. 颜色策略 (默认浅灰色背景，深色文字 -> 类似 GitHub 标签)
+  background-color: #f2f3f5;  // 极浅的灰色背景
+  color: #5d636f;             // 深灰文字，对比度适中
+
+  // 4. 交互效果
+  transition: all 0.2s ease;
+  cursor: pointer;            // 鼠标放上去显示手型，暗示可点击筛选
+
+  &:hover {
+    background-color: #e4e6eb; // 悬停时背景稍微变深
+    color: #333;               // 文字变黑
+    transform: translateY(-1px); // 极其微小的上浮，增加精致感
+  }
+
+  // 蓝色系 (技术/前端)
+  &.el-tag--primary {
+    background-color: rgba(64, 158, 255, 0.1);
+    color: #409eff;
+    &:hover { background-color: rgba(64, 158, 255, 0.2); }
+  }
+
+  // 绿色系 (实战/教程)
+  &.el-tag--success {
+    background-color: rgba(103, 194, 58, 0.1);
+    color: #67c23a;
+    &:hover { background-color: rgba(103, 194, 58, 0.2); }
+  }
+
+  // 橙色系 (笔记/随笔)
+  &.el-tag--warning {
+    background-color: rgba(230, 162, 60, 0.1);
+    color: #e6a23c;
+    &:hover { background-color: rgba(230, 162, 60, 0.2); }
+  }
+
+  // 红色系 (Bug/报错)
+  &.el-tag--danger {
+    background-color: rgba(245, 108, 108, 0.1);
+    color: #f56c6c;
+    &:hover { background-color: rgba(245, 108, 108, 0.2); }
+  }
 }
 
 .el-card {

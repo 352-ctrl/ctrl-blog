@@ -47,8 +47,9 @@ import { getArticlePage } from "@/api/front/article.js";
 import { getCategoryList } from '@/api/front/category.js';
 import { getHomepageNotices } from "@/api/front/notice.js";
 import { ElMessage } from "element-plus";
-import { useRouter } from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 
+const route = useRoute();
 const router = useRouter();
 
 const data = reactive({
@@ -69,10 +70,20 @@ const navToArticle = (id) => {
 };
 
 // 初始化加载
-onMounted(() => {
-  loadCategory();
-  loadPage();
-  loadNotice();
+onMounted(async () => {
+  await loadCategory();
+  // 检查 URL 是否带有 id 参数
+  const queryId = route.query.id;
+  if (queryId) {
+    // 如果有 ID，设置当前激活的 Tab 和查询参数
+    data.activeTab = queryId.toString();
+    data.categoryId = queryId;
+  } else {
+    // 如果没有，默认全部
+    data.activeTab = 'all';
+    data.categoryId = '';
+  }
+  await loadPage();
 });
 
 // 加载文章数据
@@ -110,15 +121,6 @@ const handleTabChange = (tabName) => {
   data.pageNum = 1;
   data.categoryId = tabName === 'all' ? null : tabName;
   loadPage();
-};
-
-// 加载公告
-const loadNotice = () => {
-  getHomepageNotices().then(res => {
-    if (res.code === 200) {
-      data.noticeList = res.data;
-    }
-  });
 };
 </script>
 

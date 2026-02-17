@@ -98,7 +98,6 @@
 import {onMounted, reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
 import {useRoute, useRouter} from "vue-router";
-import {View, MagicStick, Collection} from "@element-plus/icons-vue"; // 引入新图标
 import 'emoji-picker-element';
 import {sanitizeHtml} from "@/utils/filter.js";
 import {getArticleById} from "@/api/front/article.js";
@@ -123,9 +122,10 @@ onMounted(() => {
 });
 
 const handleTagClick = (id) => {
-  // 建议使用 router.push 而不是 location.href 以避免整页刷新
-  router.push(`/search?tagId=${id}`); // 假设您有搜索页，或者 `/post/${id}`
-  // location.href = `/post/${id}`;
+  router.push({
+    name: 'FrontTags',
+    query: { id: id }
+  });
 }
 
 // 加载数据

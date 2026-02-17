@@ -1,7 +1,7 @@
 <template>
   <el-row v-for="item in articles" :key="item.id">
     <el-col @click="handleCardClick(item.id)">
-      <el-card class="article-card">
+      <el-card class="article-card" shadow="hover">
         <div class="content-wrapper">
           <div class="image-container">
             <el-image
@@ -28,7 +28,7 @@
           <div style="flex: 1"></div>
 
           <div>
-            <el-tag round>
+            <el-tag @click.stop="handleCategoryClick(item.categoryId)">
               <span>{{ item.categoryName }}</span>
             </el-tag>
           </div>
@@ -40,6 +40,9 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 /**
  * @typedef {Object} ArticleItem
@@ -51,7 +54,8 @@
  * @property {string} userNickname - 作者昵称
  * @property {string} createTime - 发布时间
  * @property {number} viewCount - 浏览量
- * @property {string} categoryName - 所属分类
+ * @property {number} categoryId - 所属分类ID
+ * @property {string} categoryName - 所属分类名称
  */
 
 /**
@@ -83,9 +87,20 @@ const emit = defineEmits([
   'click'
 ])
 
-// 内部处理点击逻辑
+// 内部处理卡片点击逻辑
 const handleCardClick = (articleId) => {
   emit('click', articleId)
+}
+
+// 处理标签点击逻辑
+const handleCategoryClick = (categoryId) => {
+  // 如果 ID 不存在，防止报错
+  if (!categoryId) return;
+
+  router.push({
+    name: 'FrontCategories',
+    query: { id: categoryId }
+  });
 }
 </script>
 
@@ -124,7 +139,7 @@ const handleCardClick = (articleId) => {
 
 .article-summary {
   color: #666;
-  font-size: 17px;
+  font-size: 15px;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -138,5 +153,4 @@ const handleCardClick = (articleId) => {
   align-items: center;
   padding-top: 5px;
 }
-
 </style>

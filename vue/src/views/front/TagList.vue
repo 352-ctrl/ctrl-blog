@@ -83,7 +83,6 @@ onMounted(async () => {
     data.tagId = '';
   }
   await loadPage();
-  loadNotice();
 });
 
 // 加载数据
@@ -143,16 +142,6 @@ const handleTagClick = (tagKey) => {
   // 重新加载文章
   loadPage();
 };
-
-const loadNotice = () => {
-  getHomepageNotices().then(res => {
-    if (res.code === 200) {
-      data.noticeList = res.data;
-    } else {
-      ElMessage.error(res.msg);
-    }
-  });
-}
 </script>
 
 <style scoped>
