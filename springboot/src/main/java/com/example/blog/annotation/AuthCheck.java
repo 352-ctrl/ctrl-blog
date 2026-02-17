@@ -1,0 +1,14 @@
+package com.example.blog.annotation;
+
+import java.lang.annotation.*;
+
+/**
+ * 权限校验注解
+ */
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface AuthCheck {
+    // 默认不限制特定角色
+    String role() default "";
+}

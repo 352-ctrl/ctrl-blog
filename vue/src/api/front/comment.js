@@ -1,0 +1,30 @@
+import request from "@/utils/request.js";
+
+// 基础路径
+const BASE_URL = '/api/front/comments'
+
+// 1. 分页查询
+export function getCommentPage(params) {
+    return request({
+        url: BASE_URL,
+        method: 'get',
+        params: params
+    })
+}
+
+// 2. 新增评论
+export function addComment(data) {
+    return request({
+        url: BASE_URL,
+        method: 'post',
+        data: data
+    })
+}
+
+// 3. 删除单个
+export function deleteComment(id) {
+    return request({
+        url: `${BASE_URL}/${id}`,
+        method: 'delete'
+    })
+}

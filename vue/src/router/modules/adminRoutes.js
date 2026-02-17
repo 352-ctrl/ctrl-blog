@@ -1,0 +1,87 @@
+import { h } from 'vue'
+import { RouterView } from 'vue-router'
+
+// 空布局：用于渲染子路由的占位符
+const BlankLayout = { render: () => h(RouterView) }
+
+/**
+ * 后台路由配置
+ */
+export const adminRoutes = {
+    path: '/admin',
+    component: () => import('@/layouts/AdminLayout/AdminLayout.vue'),
+    redirect: '/admin/dashboard',
+    meta: { requiresAuth: true, role: 'ADMIN' },
+    children: [
+        {
+            path: 'dashboard',
+            name: 'AdminDashboard',
+            component: () => import('@/views/admin/dashboard/Dashboard.vue'),
+            meta: { title: '仪表盘', icon: 'Odometer' }
+        },
+        {
+            path: 'content',
+            component: BlankLayout,
+            meta: { title: '内容管理', icon: 'Folder' },
+            redirect: '/admin/content/articles',
+            children: [
+                {
+                    path: 'articles',
+                    name: 'AdminArticleList',
+                    component: () => import('@/views/admin/content/article/ArticleList.vue'),
+                    meta: { title: '文章管理', icon: 'Document' }
+                },
+                {
+                    path: 'categories',
+                    name: 'AdminCategoryList',
+                    component: () => import('@/views/admin/content/category/CategoryList.vue'),
+                    meta: { title: '分类管理', icon: 'Files' }
+                },
+                {
+                    path: 'tags',
+                    name: 'AdminTagList',
+                    component: () => import('@/views/admin/content/tag/TagList.vue'),
+                    meta: { title: '标签管理', icon: 'CollectionTag' }
+                },
+                {
+                    path: 'comments',
+                    name: 'AdminCommentList',
+                    component: () => import('@/views/admin/content/comment/CommentList.vue'),
+                    meta: { title: '评论管理', icon: 'ChatLineRound' }
+                }
+            ]
+        },
+        {
+            path: 'system',
+            component: BlankLayout,
+            meta: { title: '系统管理', icon: 'Setting' },
+            redirect: '/admin/system/users',
+            children: [
+                {
+                    path: 'users',
+                    name: 'AdminUserList',
+                    component: () => import('@/views/admin/system/user/UserList.vue'),
+                    meta: { title: '用户管理', icon: 'User' }
+                },
+                {
+                    path: 'notices',
+                    name: 'AdminNoticeList',
+                    component: () => import('@/views/admin/system/notice/NoticeList.vue'),
+                    meta: { title: '公告管理', icon: 'Bell' }
+                },
+                {
+                    path: 'jobs',
+                    name: 'AdminJobList',
+                    component: () => import('@/views/admin/system/job/JobList.vue'),
+                    meta: { title: '任务管理', icon: 'Timer' }
+                },
+            ]
+        },
+        {
+            path: 'profile',
+            name: 'AdminProfile',
+            component: () => import('@/views/profile/Profile.vue'),
+            meta: { title: '个人中心', hideSidebar: true, icon: 'UserFilled' }
+        },
+    ]
+}

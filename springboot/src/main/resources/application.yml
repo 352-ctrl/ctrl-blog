@@ -1,0 +1,102 @@
+server:
+  port: 9999
+
+spring:
+  ai:
+    openai:
+      api-key: ${DEEPSEEK_API_KEY}  # DeepSeek API Key
+      base-url: https://api.deepseek.com  # DeepSeek 的 API 地址
+      chat:
+        options:
+          model: deepseek-chat # 指定使用 DeepSeek 模型
+          temperature: 0.3 # 摘要不需要太发散，设置低一点
+  jackson:
+    default-property-inclusion: non_null  # 全局忽略 null
+  servlet:
+    multipart:
+      max-file-size: 10MB      # 单个文件最大
+      max-request-size: 10MB   # 整个请求最大
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/blog_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+  # Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+      # Redis数据库索引，默认0，取值范围0-15
+      database: 0
+      # Lettuce连接池配置
+      lettuce:
+        pool:
+          # 连接池最大活跃连接数
+          max-active: 8
+          # 连接池最大空闲连接数
+          max-idle: 8
+          # 连接池最小空闲连接数
+          min-idle: 0
+          # 连接池最大阻塞等待时间（负数表示没有限制）
+          max-wait: -1ms
+      # 连接超时时间（毫秒）
+      timeout: 3000ms
+  cache:
+    type: redis  # 指定使用Redis作为缓存
+    redis:
+      time-to-live: 1800000  # 缓存过期时间，单位毫秒（30分钟）
+      cache-null-values: false  # 不缓存null值
+      key-prefix: "blog:"  # 缓存key前缀
+      use-key-prefix: true  # 使用key前缀
+  mail:
+    ## 配置邮件服务器的地址
+    host: smtp.qq.com
+    ## 配置邮件服务器的端口（465或587）
+    port: 465
+    ## 配置邮箱账号
+    username: ${MAIL_USERNAME}
+    ## 配置邮箱授权码
+    password: ${MAIL_PASSWORD}
+    # 配置默认编码
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          socketFactory:
+            ## SSL 连接配置
+            class: javax.net.ssl.SSLSocketFactory
+        ## 是否开启 debug，这样方便开发者查看邮件发送日志
+        debug: false
+# 配置mybatis实体和xml映射
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml  # XML 文件的位置
+  type-aliases-package: com.example.springboot.entity     # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: true      # 开启驼峰命名转换
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 控制台打印 SQL (调试用)
+  global-config:
+    db-config:
+      logic-delete-field: isDeleted         # 全局逻辑删除字段名
+      logic-delete-value: 1                 # 删除后为 1
+      logic-not-delete-value: 0             # 未删除为 0
+
+blog:
+  jwt:
+    # 签名密钥：生产环境请务必使用复杂的随机字符串（建议32位以上）
+    secret: ${JWT_SECRET}
+    # 过期时间（为了统一管理，也可以把过期时间提出来）
+    expire-day: 1
+  task:
+    # 回收站保留时间 (文章、评论)
+    recycle-bin-days: 30
+    # 系统日志保留时间
+    log-retention-days: 7
+
+file:
+  # 这里的 ${user.dir} 会自动被 Spring 替换为当前项目运行的根目录
+  # 也可以写绝对路径，例如: /var/www/blog/files/
+  upload-path: ${FILE_UPLOAD_PATH:${user.dir}/files/}
+  # 访问前缀 (开发环境写 localhost，生产环境改域名)
+  access-path: ${FILE_ACCESS_HOST}

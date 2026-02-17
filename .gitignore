@@ -1,0 +1,16 @@
+# Java 忽略
+target/
+*.class
+*.jar
+
+# IDEA 忽略
+.idea/
+files/
+*.iml
+
+# Vue 忽略
+node_modules/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
