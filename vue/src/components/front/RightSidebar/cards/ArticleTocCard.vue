@@ -6,7 +6,6 @@
           <el-icon class="icon-reading"><Reading /></el-icon>
           文章目录
         </span>
-
         <div class="header-progress">
           <span class="progress-num">{{ readProgress }}%</span>
           <el-progress
@@ -21,31 +20,39 @@
     </template>
 
     <div class="toc-body">
-      <el-anchor
-          class="custom-anchor"
-          type="underline"
-          :offset-top="80"
-          :container="scrollContainer"
-          v-model:active-key="activeAnchor"
+      <div
+          class="anchor-wrapper"
+          v-if="tocList.length > 0 && scrollContainer"
+          @click.capture.stop.prevent="handleAnchorClick"
       >
-        <el-anchor-link
-            v-for="item in tocList"
-            :key="item.id"
-            :href="`#${item.id}`"
-            :title="item.text"
-            :class="['toc-link', 'toc-item-level-' + item.level]"
-        />
-      </el-anchor>
+        <el-anchor
+            class="custom-anchor"
+            :container="scrollContainer"
+            :offset-top="20"
+            type="underline"
+        >
+          <el-anchor-link
+              v-for="item in tocList"
+              :key="item.id"
+              :href="`#${item.id}`"
+              :title="item.text"
+              :class="['toc-link', 'toc-item-level-' + item.level]"
+          />
+        </el-anchor>
+      </div>
+
+      <div v-else class="empty-toc">
+        <span v-if="loading">正在解析目录...</span>
+        <span v-else>暂无目录</span>
+      </div>
     </div>
   </el-card>
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { useRoute } from 'vue-router';
-import { Reading } from '@element-plus/icons-vue'; // 引入图标
+import { onMounted, onUnmounted, ref, shallowRef, nextTick } from "vue";
+import { Reading } from '@element-plus/icons-vue';
 
-// 接收选择器字符串
 const props = defineProps({
   containerSelector: {
     type: String,
@@ -53,117 +60,143 @@ const props = defineProps({
   }
 });
 
-const route = useRoute();
 const tocList = ref([]);
-const activeAnchor = ref('');
 const readProgress = ref(0);
-// 注意：scrollContainer 在 Vue 3 中最好不要定义为 ref 如果它是原生 DOM 元素且不需要响应式
-// 这里保持普通变量即可，或者用 shallowRef
-let scrollContainer = null;
-let contentDom = null;
+const loading = ref(true);
 
-// 初始化逻辑
-const initToc = () => {
-  // 1. 找到滚动容器
-  scrollContainer = document.querySelector('.page-scroll-view') || window;
-
-  // 2. 找到文章内容 DOM
-  contentDom = document.querySelector(props.containerSelector);
-
-  if (contentDom) {
-    generateToc();
-    // 绑定滚动监听
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-      // 立即计算一次
-      handleScroll();
-    }
-  }
-};
-
-// 生成目录
-const generateToc = () => {
-  if (!contentDom) return;
-  tocList.value = [];
-  // 查找所有 H1-H3 标签
-  const headings = contentDom.querySelectorAll('h1, h2, h3');
-
-  headings.forEach((heading, index) => {
-    // 确保 ID 唯一且有效
-    const id = `heading-${index}-${heading.tagName.toLowerCase()}`;
-    heading.id = id;
-    tocList.value.push({
-      id,
-      text: heading.textContent.trim(),
-      // 解析层级：H1->1, H2->2...
-      level: parseInt(heading.tagName.replace('H', ''))
-    });
-  });
-};
-
-// 滚动处理
-const handleScroll = () => {
-  if (!contentDom || !scrollContainer) return;
-
-  const clientHeight = scrollContainer === window ? window.innerHeight : scrollContainer.clientHeight;
-  const scrollTop = scrollContainer === window ? window.scrollY : scrollContainer.scrollTop;
-
-  // 计算阅读进度
-  const rect = contentDom.getBoundingClientRect();
-  // 当文章底部出现在视口内时，视为读完
-  const isArticleFinished = rect.bottom <= clientHeight;
-
-  if (isArticleFinished) {
-    readProgress.value = 100;
-  } else {
-    // 剩余未读高度 = 底部距离 - 视口高度
-    const remaining = rect.bottom - clientHeight;
-    // 总可滚动高度 = 文章总高 - 视口高度
-    const totalScrollable = rect.height - clientHeight;
-
-    // 避免除以0
-    if (totalScrollable <= 0) {
-      readProgress.value = 100;
-    } else {
-      let progress = 1 - (remaining / totalScrollable);
-      readProgress.value = Math.max(0, Math.min(100, Math.round(progress * 100)));
-    }
-  }
-
-  // 锚点高亮逻辑 (简单版：高亮距离顶部最近的标题)
-  // 注意：Element Plus Anchor 组件自带监听，但在某些复杂滚动容器下可能需要手动辅助
-  // 这里仅更新 activeAnchor，Element Plus 会处理样式
-  // 如果 Element Anchor 的自动监听好用，这一步其实可以省略，或者用来同步 activeAnchor 状态
-};
+const scrollContainer = shallowRef(null);
+let contentObserver = null;
 
 onMounted(() => {
-  setTimeout(() => {
-    initToc();
-  }, 500);
+  const container = document.querySelector('.page-scroll-view');
+  if (container) {
+    scrollContainer.value = container;
+    container.addEventListener('scroll', handleScroll);
+  }
+  initObserver();
 });
 
 onUnmounted(() => {
-  if (scrollContainer) {
-    scrollContainer.removeEventListener('scroll', handleScroll);
+  if (scrollContainer.value) {
+    scrollContainer.value.removeEventListener('scroll', handleScroll);
+  }
+  if (contentObserver) {
+    contentObserver.disconnect();
   }
 });
 
-watch(() => route.path, () => {
-  setTimeout(initToc, 500);
-});
+const initObserver = () => {
+  const articleDom = document.querySelector(props.containerSelector);
+  if (!articleDom) {
+    setTimeout(initObserver, 200);
+    return;
+  }
+  contentObserver = new MutationObserver((mutations) => {
+    let shouldUpdate = false;
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        shouldUpdate = true;
+        break;
+      }
+    }
+    if (shouldUpdate) {
+      generateToc();
+    }
+  });
+  contentObserver.observe(articleDom, { childList: true, subtree: true });
+  generateToc();
+};
+
+const generateToc = () => {
+  const articleDom = document.querySelector(props.containerSelector);
+  if (!articleDom) return;
+
+  const headings = articleDom.querySelectorAll('h1, h2, h3');
+  if (headings.length === 0) return;
+
+  const list = [];
+  headings.forEach((heading, index) => {
+    const text = heading.textContent.trim();
+    if (text) {
+      const id = `toc-heading-${index}`;
+      heading.id = id;
+      list.push({
+        id,
+        text,
+        level: parseInt(heading.tagName.replace('H', ''))
+      });
+    }
+  });
+
+  tocList.value = list;
+  loading.value = false;
+  handleScroll();
+};
+
+const handleAnchorClick = (e) => {
+  // 1. 阻止默认行为和冒泡，彻底切断 Element Plus 原生锚点逻辑的干扰
+  if (e.preventDefault) e.preventDefault();
+  e.stopPropagation();
+
+  // 2. 获取点击的链接
+  const linkNode = e.target.closest('a');
+  if (!linkNode) return;
+
+  const href = linkNode.getAttribute('href');
+  if (!href) return;
+
+  // 3. 解析目标元素
+  const id = href.replace('#', '');
+  const target = document.getElementById(id);
+  const container = scrollContainer.value;
+
+  if (target && container) {
+    // 4. 【核心修改】使用 getBoundingClientRect 计算相对位置
+    // 这种方式不受父级 position: relative 等样式影响，计算结果是物理像素级的精准
+    const targetRect = target.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    // 逻辑：目标距离视口顶部的距离 - 容器距离视口顶部的距离 = 目标在容器内的相对偏移量
+    const offsetInsideContainer = targetRect.top - containerRect.top;
+
+    // 5. 计算最终滚动位置
+    // 当前滚动位置 + 相对偏移量
+    const targetScrollTop = container.scrollTop + offsetInsideContainer;
+
+    // 6. 执行滚动
+    container.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
+  }
+};
+
+const handleScroll = () => {
+  const el = scrollContainer.value;
+  if (!el) return;
+
+  const scrollTop = el.scrollTop;
+  const scrollHeight = el.scrollHeight;
+  const clientHeight = el.clientHeight;
+
+  const maxScroll = scrollHeight - clientHeight;
+
+  if (maxScroll <= 0) {
+    readProgress.value = 100;
+  } else {
+    const progress = (scrollTop / maxScroll) * 100;
+    readProgress.value = Math.min(100, Math.max(0, Math.round(progress)));
+  }
+};
 </script>
 
 <style scoped lang="scss">
-/* 1. 复用卡片整体样式 */
 .toc-card {
   border: 1px solid #e4e7ed;
   border-radius: 8px;
   background: #fff;
   margin-bottom: 20px;
-  position: sticky; /* 目录通常需要吸顶，根据你的布局需求调整 */
-  top: 20px;
 
-  /* 2. 头部样式复用 */
   :deep(.el-card__header) {
     padding: 15px 20px;
     border-bottom: 1px solid #f0f0f0;
@@ -183,10 +216,8 @@ watch(() => route.path, () => {
 
       .icon-reading {
         margin-right: 10px;
-        color: #67C23A; /* 绿色代表阅读/健康 */
+        color: #67C23A;
         font-size: 18px;
-        animation: swing 2s infinite linear;
-        transform-origin: top center;
       }
     }
 
@@ -205,11 +236,10 @@ watch(() => route.path, () => {
   }
 
   .toc-body {
-    max-height: 400px; /* 限制目录最大高度 */
-    overflow-y: auto;  /* 超出滚动 */
+    max-height: 400px;
+    overflow-y: auto;
     padding-right: 5px;
 
-    /* 滚动条美化 */
     &::-webkit-scrollbar {
       width: 4px;
     }
@@ -218,57 +248,51 @@ watch(() => route.path, () => {
       border-radius: 4px;
     }
   }
+
+  .empty-toc {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 13px;
+  }
 }
 
-/* 3. 复用动画 */
-@keyframes swing {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(15deg); }
-  20% { transform: rotate(-10deg); }
-  30% { transform: rotate(5deg); }
-  40% { transform: rotate(-5deg); }
-  50% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
-}
-
-/* 4. Element Anchor 样式穿透与定制 */
-:deep(.el-anchor) {
-  background: transparent;
-}
-
-:deep(.el-anchor__marker) {
-  background-color: #67C23A; /* 绿色游标 */
-}
-
+/* 样式优化：修复 Element Plus Anchor 的默认样式 */
 :deep(.el-anchor__link) {
   font-size: 14px;
-  line-height: 1.8; /* 稍微增加行高 */
+  line-height: 1.8;
   padding: 6px 0 6px 16px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #606266;
+  text-decoration: none;
 
   &:hover {
     color: #67C23A;
+    background-color: transparent;
   }
 
   &.is-active {
     color: #67C23A;
     font-weight: bold;
-    background-color: #f0f9eb; /* 选中时的淡绿色背景 */
+    background-color: #f0f9eb;
     border-radius: 0 4px 4px 0;
-    padding-left: 12px; /* 视觉微调 */
+    border-left: 2px solid #67C23A;
+    padding-left: 14px;
   }
 }
 
-/* 目录层级缩进 */
+:deep(.el-anchor__marker) {
+  display: none;
+}
+
 :deep(.toc-item-level-2 .el-anchor__link) {
-  padding-left: 32px !important;
+  padding-left: 30px !important;
   font-size: 13px;
 }
 :deep(.toc-item-level-3 .el-anchor__link) {
-  padding-left: 48px !important;
+  padding-left: 45px !important;
   font-size: 12px;
   color: #909399;
 }
