@@ -171,7 +171,7 @@
 import { reactive, ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import Pagination from "@/components/common/Pagination.vue";
-import Crontab from '@/views/admin/system/job/components/Crontab/Crontab.vue'
+import Crontab from '@/views/admin/monitor/job/components/Crontab/Crontab.vue'
 // 引入 API 模块
 import {
   addJob, changeStatus,

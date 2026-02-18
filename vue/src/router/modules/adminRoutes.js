@@ -68,13 +68,27 @@ export const adminRoutes = {
                     name: 'AdminNoticeList',
                     component: () => import('@/views/admin/system/notice/NoticeList.vue'),
                     meta: { title: '公告管理', icon: 'Bell' }
-                },
+                }
+            ]
+        },
+        {
+            path: 'monitor',
+            component: BlankLayout,
+            meta: { title: '系统监控', icon: 'Monitor' },
+            redirect: '/admin/monitor/jobs',
+            children: [
                 {
                     path: 'jobs',
                     name: 'AdminJobList',
-                    component: () => import('@/views/admin/system/job/JobList.vue'),
-                    meta: { title: '任务管理', icon: 'Timer' }
+                    component: () => import('@/views/admin/monitor/job/JobList.vue'),
+                    meta: { title: '定时任务', icon: 'Timer' }
                 },
+                {
+                    path: 'server',
+                    name: 'AdminServerMonitor',
+                    component: () => import('@/views/admin/monitor/server/Server.vue'),
+                    meta: { title: '服务监控', icon: 'DataLine' }
+                }
             ]
         },
         {

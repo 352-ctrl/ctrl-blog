@@ -100,3 +100,16 @@ file:
   upload-path: ${FILE_UPLOAD_PATH:${user.dir}/files/}
   # 访问前缀 (开发环境写 localhost，生产环境改域名)
   access-path: ${FILE_ACCESS_HOST}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 暴露所有监控端点，包括 metrics, health, info, env 等
+        # 注意：在生产环境中，应该只暴露需要的端点，或者配合 Spring Security 进行权限控制
+        include: "*"
+  endpoint:
+    health:
+      show-details: always # 显示详细的健康信息（包括磁盘空间、数据库连接状态等）
+    metrics:
+      enabled: true # 开启指标收集
