@@ -16,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(description = "定时任务查询条件")
 public class SysJobQueryDTO extends PageQueryDTO {
 
-    @Schema(description = "任务名称 (支持模糊查询)", example = "文章")
+    @Schema(description = "任务名称 (模糊查询)", example = "文章")
     private String jobName;
 
     @Schema(description = "任务组名", example = "DEFAULT")

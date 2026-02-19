@@ -103,10 +103,10 @@ const handleBatchDelete = async () => {
     }
 
     // 2. 二次确认
-    await ElMessageBox.confirm(
+    ElMessageBox.confirm(
         props.batchDeleteTip,
         props.batchDeleteTitle,
-        { type: 'warning' }
+        {type: 'warning'}
     )
 
     // 3. 调用接口

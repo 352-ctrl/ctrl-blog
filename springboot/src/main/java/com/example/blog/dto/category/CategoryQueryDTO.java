@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(description = "分类分页查询条件")
 public class CategoryQueryDTO extends PageQueryDTO {
 
-    @Schema(description = "分类名称 (支持模糊查询)", example = "后端")
+    @Schema(description = "分类名称 (模糊查询)", example = "后端")
     private String name;
 
 }

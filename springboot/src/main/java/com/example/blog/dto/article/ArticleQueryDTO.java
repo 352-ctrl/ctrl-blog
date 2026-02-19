@@ -24,7 +24,7 @@ import java.util.List;
 @Schema(description = "文章分页查询条件")
 public class ArticleQueryDTO extends PageQueryDTO {
 
-    @Schema(description = "文章标题 (支持模糊查询)", example = "Spring")
+    @Schema(description = "文章标题 (模糊查询)", example = "Spring")
     private String title;
 
     @Schema(description = "分类ID (用于筛选)", example = "1623456789012345678")

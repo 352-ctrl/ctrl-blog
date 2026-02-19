@@ -21,7 +21,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(description = "公告分页查询条件")
 public class NoticeQueryDTO extends PageQueryDTO {
 
-    @Schema(description = "公告内容 (支持模糊查询)", example = "维护")
+    @Schema(description = "公告内容 (模糊查询)", example = "维护")
     private String content;
 
     @Schema(description = "公告状态 (0:隐藏, 1:显示)", example = "1")

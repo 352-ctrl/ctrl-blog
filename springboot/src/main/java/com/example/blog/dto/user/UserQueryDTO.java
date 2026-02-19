@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 @Schema(description = "用户分页查询条件")
 public class UserQueryDTO extends PageQueryDTO {
 
-    @Schema(description = "用户昵称 (支持模糊查询)", example = "技术")
+    @Schema(description = "用户昵称 (模糊查询)", example = "技术")
     private String nickname;
 
 }

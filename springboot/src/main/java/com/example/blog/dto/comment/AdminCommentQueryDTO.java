@@ -19,10 +19,10 @@ import lombok.experimental.SuperBuilder;
 @Schema(description = "后台评论分页查询条件")
 public class AdminCommentQueryDTO extends PageQueryDTO {
 
-    @Schema(description = "评论人昵称 (支持模糊查询)", example = "张三")
+    @Schema(description = "评论人昵称 (模糊查询)", example = "张三")
     private String userNickname;
 
-    @Schema(description = "文章标题 (支持模糊查询)", example = "Spring Boot")
+    @Schema(description = "文章标题 (模糊查询)", example = "Spring Boot")
     private String articleTitle;
 
 }

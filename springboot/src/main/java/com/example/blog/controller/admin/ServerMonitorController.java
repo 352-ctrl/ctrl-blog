@@ -3,7 +3,7 @@ package com.example.blog.controller.admin;
 import com.example.blog.annotation.AuthCheck;
 import com.example.blog.common.Result;
 import com.example.blog.common.enums.BizStatus;
-import com.example.blog.vo.ServerMonitorVO;
+import com.example.blog.vo.monitor.ServerMonitorVO;
 import com.sun.management.OperatingSystemMXBean;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin/monitor")
+@RequestMapping("/api/admin/monitor/server")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台服务监控")
 public class ServerMonitorController {
@@ -28,7 +28,7 @@ public class ServerMonitorController {
     @Resource
     private MeterRegistry meterRegistry;
 
-    @GetMapping("/server-info")
+    @GetMapping("/info")
     @Operation(summary = "获取服务器信息", description = "获取包括CPU核心、内存比例、JVM及磁盘状态在内的完整数据")
     public Result<ServerMonitorVO> getServerInfo() {
         OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();

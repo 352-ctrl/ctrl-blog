@@ -1,4 +1,4 @@
-package com.example.blog.vo;
+package com.example.blog.vo.monitor;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

@@ -88,6 +88,12 @@ export const adminRoutes = {
                     name: 'AdminServerMonitor',
                     component: () => import('@/views/admin/monitor/server/Server.vue'),
                     meta: { title: '服务监控', icon: 'DataLine' }
+                },
+                {
+                    path: 'redis',
+                    name: 'AdminRedisMonitor',
+                    component: () => import('@/views/admin/monitor/redis/Redis.vue'),
+                    meta: { title: '缓存监控', icon: 'Coin' }
                 }
             ]
         },
