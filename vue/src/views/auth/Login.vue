@@ -10,7 +10,7 @@
           <el-input size="large" show-password v-model="data.form.password" prefix-icon="Lock" placeholder="请输入密码" autocomplete="off" />
         </el-form-item>
         <div style="margin-top: 20px">
-          <el-button style="width: 100%" size="large" type="primary" @click="handleLogin">登 录</el-button>
+          <el-button style="width: 100%" size="large" :loading="loading" type="primary" @click="handleLogin">登 录</el-button>
         </div>
         <div style="text-align: right; margin-top: 20px; margin-bottom: 15px">
           还没有账号？
@@ -38,6 +38,9 @@ const userStore = useUserStore()
 
 // 创建表单引用
 const formRef = ref()
+
+// 定义 loading 变量
+const loading = ref(false)
 
 const data = reactive({
   form: {},
@@ -70,26 +73,39 @@ onUnmounted(() => {
 });
 
 const handleLogin = () => {
+  if (loading.value) return;
+
   formRef.value.validate(async (valid) => {
     if (valid) {
-      const result = await userStore.login(data.form);
+      loading.value = true;
 
-      if (result.success) {
-        const isRestored = result.data.isRestored;
+      try {
+        const result = await userStore.login(data.form);
 
-        if (isRestored) {
-          // 撤销注销：使用 Notification 通知，更显眼，停留时间更长
-          ElNotification({
-            title: '欢迎回来',
-            message: '您的账号注销申请已撤销，账号已恢复正常使用。',
-            type: 'success',
-            duration: 5000 // 5秒后自动关闭
-          });
+        if (result.success) {
+          const isRestored = result.data.isRestored;
+
+          if (isRestored) {
+            // 撤销注销：使用 Notification 通知，更显眼，停留时间更长
+            ElNotification({
+              title: '欢迎回来',
+              message: '您的账号注销申请已撤销，账号已恢复正常使用。',
+              type: 'success',
+              duration: 5000 // 5秒后自动关闭
+            });
+          } else {
+            // 普通登录提示
+            ElMessage.success('登录成功');
+          }
+          await router.push('/')
         } else {
-          // 普通登录提示
-          ElMessage.success('登录成功');
+          ElMessage.error(result.msg || '登录失败，请重试');
         }
-        await router.push('/')
+      } catch (error) {
+        ElMessage.error(error.msg || error.message || '系统异常，请联系管理员');
+      } finally {
+        // 无论成功还是失败，最后都关闭 loading
+        loading.value = false;
       }
     }
   })

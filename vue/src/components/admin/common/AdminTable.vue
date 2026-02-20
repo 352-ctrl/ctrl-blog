@@ -13,6 +13,14 @@
         align="center"
     />
 
+    <el-table-column v-if="expandable" type="expand">
+      <template #default="scope">
+        <div style="padding: 20px; background-color: #fafafa;">
+          <slot name="expand" :row="scope.row"></slot>
+        </div>
+      </template>
+    </el-table-column>
+
     <template v-for="column in columns" :key="column.prop || column.label">
 
       <el-table-column
@@ -176,9 +184,9 @@
     </template>
 
     <el-table-column
-        v-if="showAction"
+        v-if="realShowAction"
         label="操作"
-        width="150"
+        :width="actionColumnWidth"
         fixed="right"
         align="center"
     >
@@ -189,7 +197,7 @@
             icon="Edit"
             circle
             @click="handleEditClick(scope.row)"
-            style="margin-right: 8px;"
+            :style="deletable ? 'margin-right: 8px;' : ''"
         />
         <el-button
             v-if="deletable"
@@ -204,9 +212,9 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
+import { defineProps, defineEmits, computed } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import {sanitizeHtml} from "@/utils/filter.js";
+import { sanitizeHtml } from "@/utils/filter.js";
 
 /**
  * =========================================================================
@@ -240,7 +248,7 @@ const props = defineProps({
   /** 是否显示最左侧多选列 */
   showSelection: { type: Boolean, default: true },
 
-  /** 是否显示最右侧操作列 */
+  /** 是否显示最右侧操作列基础开关 */
   showAction: { type: Boolean, default: true },
 
   /** v-model:selectedIds 绑定的选中行 ID 集合 */
@@ -262,7 +270,10 @@ const props = defineProps({
   deleteTip: { type: String, default: '确定删除该数据吗？' },
 
   /** 删除确认弹窗标题 */
-  deleteTitle: { type: String, default: '提示' }
+  deleteTitle: { type: String, default: '提示' },
+
+  /** 是否开启展开行功能 */
+  expandable: { type: Boolean, default: false }
 })
 
 /**
@@ -277,6 +288,25 @@ const emit = defineEmits([
   'delete-success',     // 删除成功回调
   'status-change'       // 状态修改事件 (Switch 开关切换时触发，回传当前行数据 row)
 ])
+
+/**
+ * =========================================================================
+ * 计算属性 (Computed Properties) - 新增
+ * =========================================================================
+ */
+
+// 1. 实际是否显示操作列（基础开关打开 且 至少有一个按钮时才显示）
+const realShowAction = computed(() => {
+  return props.showAction && (props.editable || props.deletable)
+})
+
+// 2. 动态计算操作列宽度（两个按钮 150px，只有一个按钮时缩小为 90px）
+const actionColumnWidth = computed(() => {
+  if (props.editable && props.deletable) {
+    return 150
+  }
+  return 90
+})
 
 /**
  * =========================================================================

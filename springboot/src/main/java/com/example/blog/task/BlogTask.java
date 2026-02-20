@@ -2,10 +2,7 @@ package com.example.blog.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.blog.entity.ArticleTag;
-import com.example.blog.mapper.ArticleMapper;
-import com.example.blog.mapper.ArticleTagMapper;
-import com.example.blog.mapper.CommentMapper;
-import com.example.blog.mapper.SysLogMapper;
+import com.example.blog.mapper.*;
 import com.example.blog.service.ArticleService;
 import com.example.blog.service.VisitService;
 import jakarta.annotation.Resource;
@@ -40,7 +37,10 @@ public class BlogTask {
     private CommentMapper commentMapper;
 
     @Resource
-    private SysLogMapper sysLogMapper;
+    private SysOperLogMapper sysOperLogMapper;
+
+    @Resource
+    private SysLoginLogMapper sysLoginLogMapper;
 
     @Value("${blog.task.recycle-bin-days:30}")
     private Integer recycleBinDays;
@@ -120,10 +120,18 @@ public class BlogTask {
 
         // --- 子任务 C: 清理系统操作日志 ---
         try {
-            int count = sysLogMapper.deleteExpiredLogs(logLimitDate);
-            if (count > 0) log.info("[维护] 物理删除旧日志: {} 条", count);
+            int count = sysOperLogMapper.deleteExpiredLogs(logLimitDate);
+            if (count > 0) log.info("[维护] 物理删除旧系统日志: {} 条", count);
         } catch (Exception e) {
-            log.error("[维护] 清理日志失败", e);
+            log.error("[维护] 清理系统日志失败", e);
+        }
+
+        // --- 子任务 D: 清理系统登录日志 ---
+        try {
+            int count = sysLoginLogMapper.deleteExpiredLogs(logLimitDate);
+            if (count > 0) log.info("[维护] 物理删除旧登录日志: {} 条", count);
+        } catch (Exception e) {
+            log.error("[维护] 清理登录日志失败", e);
         }
 
         log.info("=== 每日系统维护任务结束 ===");

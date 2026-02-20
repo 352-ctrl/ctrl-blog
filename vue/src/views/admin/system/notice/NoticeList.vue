@@ -16,11 +16,11 @@
             clearable
             @clear="loadPage"
         />
-        <el-select v-model="data.status" placeholder="请选择是否发布" style="width: 100%">
+        <el-select v-model="data.status" placeholder="请选择是否发布">
           <el-option label="是" value="1" />
           <el-option label="否" value="0" />
         </el-select>
-        <el-select v-model="data.isTop" placeholder="请选择是否置顶" style="width: 100%">
+        <el-select v-model="data.isTop" placeholder="请选择是否置顶">
           <el-option label="是" value="1" />
           <el-option label="否" value="0" />
         </el-select>

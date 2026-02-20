@@ -1,6 +1,8 @@
 package com.example.blog.vo;
 
+import com.example.blog.common.jackson.EmailDesensitizeSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +20,7 @@ public class UserVO {
     @Schema(description = "用户ID", example = "1623456789012345678")
     private Long id;
 
+    @JsonSerialize(using = EmailDesensitizeSerializer.class)
     @Schema(description = "用户邮箱", example = "zhangsan@example.com")
     private String email;
 

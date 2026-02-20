@@ -2,6 +2,7 @@ package com.example.blog.controller.front;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.blog.common.Result;
+import com.example.blog.common.constants.Constants;
 import com.example.blog.dto.article.ArticleQueryDTO;
 import com.example.blog.dto.article.ArticleVisitorDTO;
 import com.example.blog.service.ArticleService;
@@ -94,7 +95,7 @@ public class ArticleController {
         String ip = IpUtils.getIpAddr(request);
 
         // 2. 提取 UA
-        String userAgent = request.getHeader("User-Agent");
+        String userAgent = request.getHeader(Constants.HEADER_USER_AGENT);
         // 防御性编程：防止数据库报错
         if (userAgent != null && userAgent.length() > 500) {
             userAgent = userAgent.substring(0, 500);

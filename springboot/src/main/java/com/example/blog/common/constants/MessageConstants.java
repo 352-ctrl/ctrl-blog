@@ -57,6 +57,16 @@ public final class MessageConstants {
      */
     public static final String MSG_BATCH_DELETE_FAILED = "批量删除失败";
 
+    /**
+     * IP解析：未知位置
+     */
+    public static final String MSG_UNKNOWN_LOCATION = "未知位置";
+
+    /**
+     * IP解析：内网IP
+     */
+    public static final String MSG_LOCAL_IP = "内网IP";
+
 
     /* ============================== 2. 认证与授权消息 ============================== */
 
@@ -227,4 +237,14 @@ public final class MessageConstants {
      * 取消收藏失败提示 (未找到记录)
      */
     public static final String MSG_FAVORITE_NOT_FOUND = "未找到收藏记录，无法取消";
+
+    /* ============================== 7. 日志专属提示消息 ============================== */
+    /** 日志：登录成功 */
+    public static final String LOG_LOGIN_SUCCESS = "登录成功";
+    /** 日志：密码错误 */
+    public static final String LOG_LOGIN_PWD_ERROR = "密码错误";
+    /** 日志：账号被锁定 */
+    public static final String LOG_LOGIN_LOCKED = "账号被锁定，限制登录";
+    /** 日志：账号已封禁 */
+    public static final String LOG_LOGIN_BANNED = "账号已被封禁";
 }

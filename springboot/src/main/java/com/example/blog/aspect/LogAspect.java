@@ -11,8 +11,8 @@ import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.dto.user.UserPayloadDTO;
-import com.example.blog.entity.SysLog;
-import com.example.blog.service.SysLogService;
+import com.example.blog.entity.SysOperLog;
+import com.example.blog.service.SysOperLogService;
 import com.example.blog.utils.IpUtils;
 import com.example.blog.utils.UserContext;
 import jakarta.annotation.Resource;
@@ -45,7 +45,7 @@ import java.util.concurrent.CompletableFuture;
 public class LogAspect {
 
     @Resource
-    private SysLogService sysLogService;
+    private SysOperLogService sysOperLogService;
 
     /**
      * 环绕通知
@@ -69,11 +69,12 @@ public class LogAspect {
             HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
 
             // 提取关键信息 (String 是线程安全的)
-            String ip = request != null ? IpUtils.getIpAddr(request) : "Unknown";
-            String userAgent = request != null ? request.getHeader("User-Agent") : "";
+            String ip = request != null ? IpUtils.getIpAddr(request) : Constants.UNKNOWN;
+            String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : "";
+            String requestMethod = request != null ? request.getMethod() : "";
 
             // 提取需要异步处理的数据
-            saveLogAsync(joinPoint, controllerLog, result, exception, costTime, ip, userAgent);
+            saveLogAsync(joinPoint, controllerLog, result, exception, costTime, ip, userAgent, requestMethod);
         }
 
         return result;
@@ -82,7 +83,7 @@ public class LogAspect {
     /**
      * 保存日志 (建议做成异步，不影响主业务性能)
      */
-    private void saveLogAsync(ProceedingJoinPoint joinPoint, Log controllerLog, Object result, Exception e, Integer costTime, String ip, String userAgent) {
+    private void saveLogAsync(ProceedingJoinPoint joinPoint, Log controllerLog, Object result, Exception e, Integer costTime, String ip, String userAgent, String requestMethod) {
         // 获取当前用户（主线程获取）
         UserPayloadDTO currentUser = UserContext.get();
 
@@ -103,39 +104,40 @@ public class LogAspect {
         // 2. 异步执行数据库写入
         CompletableFuture.runAsync(() -> {
             try {
-                SysLog sysLog = new SysLog();
-                sysLog.setModule(controllerLog.module());
-                sysLog.setType(controllerLog.type());
-                sysLog.setDescription(controllerLog.desc());
-                sysLog.setIp(ip);
+                SysOperLog sysOperLog = new SysOperLog();
+                sysOperLog.setModule(controllerLog.module());
+                sysOperLog.setRequestMethod(requestMethod);
+                sysOperLog.setType(controllerLog.type());
+                sysOperLog.setDescription(controllerLog.desc());
+                sysOperLog.setIp(ip);
                 // 设置 UserAgent，记得截断防止数据库报错
                 if (userAgent != null && userAgent.length() > 500) {
-                    sysLog.setUserAgent(userAgent.substring(0, 500));
+                    sysOperLog.setUserAgent(userAgent.substring(0, 500));
                 } else {
-                    sysLog.setUserAgent(userAgent);
+                    sysOperLog.setUserAgent(userAgent);
                 }
-                sysLog.setMethod(methodName);
-                sysLog.setParams(StrUtil.sub(params, 0, Constants.SYS_LOG_MAX_LENGTH));
+                sysOperLog.setMethod(methodName);
+                sysOperLog.setParams(StrUtil.sub(params, 0, Constants.SYS_LOG_MAX_LENGTH));
 
                 if (finalUser != null) {
-                    sysLog.setUserId(finalUser.getId());
-                    sysLog.setNickname(finalUser.getNickname());
+                    sysOperLog.setUserId(finalUser.getId());
+                    sysOperLog.setNickname(finalUser.getNickname());
                 } else {
-                    sysLog.setNickname(MessageConstants.MSG_LOG_GUEST);
+                    sysOperLog.setNickname(MessageConstants.MSG_LOG_GUEST);
                 }
 
                 if (e != null) {
-                    sysLog.setStatus(BizStatus.Log.FAIL.getValue());
-                    sysLog.setResult(StrUtil.sub(e.getMessage(), 0, Constants.SYS_LOG_MAX_LENGTH));
+                    sysOperLog.setStatus(BizStatus.Log.FAIL.getValue());
+                    sysOperLog.setResult(StrUtil.sub(e.toString(), 0, Constants.SYS_LOG_MAX_LENGTH));
                 } else {
-                    sysLog.setStatus(BizStatus.Log.SUCCESS.getValue());
-                    sysLog.setResult(MessageConstants.MSG_SUCCESS);
+                    sysOperLog.setStatus(BizStatus.Log.SUCCESS.getValue());
+                    sysOperLog.setResult(MessageConstants.MSG_SUCCESS);
                 }
 
-                sysLog.setCostTime(costTime);
-                sysLog.setCreateTime(LocalDateTime.now());
+                sysOperLog.setCostTime(costTime);
+                sysOperLog.setCreateTime(LocalDateTime.now());
 
-                sysLogService.addLog(sysLog);
+                sysOperLogService.addLog(sysOperLog);
             } catch (Exception ex) {
                 log.error(MessageConstants.MSG_LOG_ERROR, ex);
             }
@@ -240,32 +242,5 @@ public class LogAspect {
             // 解析失败忽略，保持 currentUser 为 null
         }
         return null;
-    }
-
-    /**
-     * 获取真实客户端 IP (处理 Nginx 代理情况)
-     */
-    private String getIpAddress(HttpServletRequest request) {
-        if (request == null) {
-            return Constants.IP_UNKNOWN;
-        }
-        String ip = null;
-        // 遍历常量数组获取 IP
-        for (String header : Constants.IP_HEADER_CANDIDATES) {
-            ip = request.getHeader(header);
-            if (ip != null && ip.length() != 0 && !Constants.IP_UNKNOWN.equalsIgnoreCase(ip)) {
-                break;
-            }
-        }
-        if (ip == null || ip.length() == 0 || Constants.IP_UNKNOWN.equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.length() > 15 && ip.indexOf(",") > 0) {
-            ip = ip.substring(0, ip.indexOf(","));
-        }
-        if (Constants.IP_LOCAL_V6.equals(ip)) {
-            ip = Constants.IP_LOCAL_V4;
-        }
-        return ip;
     }
 }

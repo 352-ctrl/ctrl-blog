@@ -1,6 +1,5 @@
 package com.example.blog.convert;
 
-import cn.hutool.core.util.DesensitizedUtil;
 import com.example.blog.dto.user.UserAddDTO;
 import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.dto.user.UserUpdateDTO;
@@ -49,9 +48,6 @@ public interface UserConvert extends BaseConvert<User, UserAddDTO, UserUpdateDTO
      * @param registerDTO 用户新增DTO
      * @return 用户实体
      */
-    @Mappings({
-            @Mapping(source = "email", target = "email"),
-    })
     User registerDtoToEntity(UserRegisterDTO registerDTO);
 
     /**
@@ -60,18 +56,6 @@ public interface UserConvert extends BaseConvert<User, UserAddDTO, UserUpdateDTO
      * @return 用户VO
      */
     @Override
-    @Mappings({
-            // 邮箱脱敏：调用自定义的desensitizeEmail方法处理
-            @Mapping(target = "email", qualifiedByName = "desensitizeEmail"),
-    })
     UserVO entityToVo(User user);
 
-    /**
-     * 邮箱脱敏转换器
-     * 邮箱脱敏：123456@qq.com → 123****@qq.com
-     */
-    @Named("desensitizeEmail")
-    default String desensitizeEmail(String email) {
-        return DesensitizedUtil.email(email);
-    }
 }

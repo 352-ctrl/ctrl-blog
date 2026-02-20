@@ -34,6 +34,11 @@ public final class Constants {
      */
     public static final String CLAIM_NICKNAME = "nickname";
 
+    /**
+     * HTTP请求头：User-Agent
+     */
+    public static final String HEADER_USER_AGENT = "User-Agent";
+
     // ============================== 业务逻辑与状态控制 ==============================
 
     /* ---------- 用户默认配置 ---------- */
@@ -101,9 +106,14 @@ public final class Constants {
     public static final int SYS_LOG_MAX_LENGTH = 2000;
 
     /**
-     * 未知 IP 标识
+     * 未知 IP 标识 (小写，通常用于逻辑判断)
      */
     public static final String IP_UNKNOWN = "unknown";
+
+    /**
+     * 通用未知占位符 (首字母大写，通常用于数据库日志存值展示)
+     */
+    public static final String UNKNOWN = "Unknown";
 
     /**
      * 本地 IPv6 地址
@@ -126,5 +136,20 @@ public final class Constants {
             "HTTP_X_FORWARDED_FOR",
             "X-Real-IP"
     };
+
+    /**
+     * 离线 IP 定位库文件路径
+     */
+    public static final String IP2REGION_FILE_PATH = "ip2region.xdb";
+
+    /**
+     * 局域网 IPv4 前缀 1
+     */
+    public static final String IP_LOCAL_PREFIX_192 = "192.168.";
+
+    /**
+     * 局域网 IPv4 前缀 2
+     */
+    public static final String IP_LOCAL_PREFIX_10 = "10.";
 
 }

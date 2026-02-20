@@ -18,15 +18,19 @@ import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.entity.User;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.service.AuthService;
+import com.example.blog.service.SysLoginLogService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.*;
 import com.example.blog.vo.UserLoginVO;
 import com.example.blog.vo.UserVO;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -49,6 +53,9 @@ public class AuthServiceImpl implements AuthService {
     private MailService mailService;
 
     @Resource
+    private SysLoginLogService sysLoginLogService;
+
+    @Resource
     private RedisUtil redisUtil;
 
     @Resource
@@ -67,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         String redisKey = RedisConstants.REDIS_EMAIL_CODE_KEY + email;
         Long expire = stringRedisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
         // 如果有效期还剩超过 4分30秒 (说明刚发过不到30秒)，拦截
-        if (expire != null && expire > 270) {
+        if (expire > 270) {
             throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
         }
 
@@ -89,6 +96,12 @@ public class AuthServiceImpl implements AuthService {
     public UserLoginVO login(UserLoginDTO loginDTO) {
         String email = loginDTO.getEmail();
 
+        // 在主线程提前获取网络信息 (ip, userAgent)
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
+        String ip = IpUtils.getIpAddr(request);
+        String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : "";
+
         // 检查是否被锁定
         String failKey = RedisConstants.REDIS_LOGIN_FAIL_KEY + email;
         if (redisUtil.hasKey(failKey)) {
@@ -100,6 +113,8 @@ public class AuthServiceImpl implements AuthService {
                 long displayTime = (expire != null && expire > 0) ? (expire + 1) : 1;
                 // 格式化字符串
                 String msg = String.format(MessageConstants.MSG_LOGIN_LOCKED, displayTime);
+                // 记录因为锁定导致的登录失败
+                sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_LOCKED, ip, userAgent);
                 // 抛出带有动态时间的异常
                 throw new CustomerException(ResultCode.FORBIDDEN, msg);
             }
@@ -107,6 +122,7 @@ public class AuthServiceImpl implements AuthService {
         // 查询用户
         User dbUser = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getEmail, loginDTO.getEmail()));
         if (dbUser == null) {
+            sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.MSG_USER_NOT_EXIST, ip, userAgent);
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
         }
 
@@ -114,10 +130,12 @@ public class AuthServiceImpl implements AuthService {
         if (!PasswordEncoderUtil.matches(loginDTO.getPassword(), dbUser.getPassword())) {
             // 记录失败次数
             recordLoginFailed(failKey);
+            sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_PWD_ERROR, ip, userAgent);
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
         }
 
         if (dbUser.getStatus() == BizStatus.User.DISABLE) {
+            sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_BANNED, ip, userAgent);
             // 如果是封禁状态，即使密码对也不让进
             throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_ACCOUNT_BANNED);
         }
@@ -137,6 +155,8 @@ public class AuthServiceImpl implements AuthService {
 
         // 将 Token 存入 Redis，用于踢人或退出登录 (有效期 1 天)
         redisUtil.set(RedisConstants.REDIS_USER_TOKEN_KEY + dbUser.getId(), token, RedisConstants.EXPIRE_USER_TOKEN, TimeUnit.DAYS);
+
+        sysLoginLogService.recordLoginLog(email, BizStatus.Log.SUCCESS.getValue(), MessageConstants.LOG_LOGIN_SUCCESS, ip, userAgent);
 
         UserVO userVO = userConvert.entityToVo(dbUser);
         userVO.setCreateTime(null);

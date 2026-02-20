@@ -1,7 +1,6 @@
 package com.example.blog.controller;
 
 import cn.hutool.core.util.StrUtil;
-import com.example.blog.annotation.Log;
 import com.example.blog.annotation.RateLimit;
 import com.example.blog.common.Result;
 import com.example.blog.common.constants.Constants;
@@ -37,7 +36,6 @@ public class AuthController {
      */
     @PostMapping("/login")
     @RateLimit(key = "ip", time = 60, count = 10)
-    @Log(module = "认证中心", type = "登录", desc = "用户执行了登录操作")
     @Operation(summary = "用户登录", description = "校验用户名密码。成功后返回 **Token**。<br>后续请求需在 Header 中携带 `Authorization: Bearer {token}`。")
     public Result<UserLoginVO> login(@Valid @RequestBody UserLoginDTO loginDTO) {
         UserLoginVO loginVO = authService.login(loginDTO);
@@ -49,7 +47,6 @@ public class AuthController {
      */
     @PostMapping("/register")
     @RateLimit(key = "ip", time = 60, count = 5)
-    @Log(module = "认证中心", type = "注册", desc = "新用户注册账号")
     @Operation(summary = "用户注册", description = "新用户注册。系统会自动校验用户名重复性，并加密存储密码。")
     public Result<Void> register(@Valid @RequestBody UserRegisterDTO registerDTO) {
         authService.register(registerDTO);
@@ -62,7 +59,6 @@ public class AuthController {
      */
     @PostMapping("/email/code")
     @RateLimit(key = "ip", time = 60, count = 1)
-    @Log(module = "认证中心", type = "邮件", desc = "请求发送邮箱验证码")
     @Operation(summary = "发送邮箱验证码", description = "用于注册或找回密码。验证码有效期通常为 5-10 分钟。")
     public Result<Void> sendEmailCode(@Valid @RequestBody EmailRequestDTO emailDTO) {
         authService.sendEmailCode(emailDTO);

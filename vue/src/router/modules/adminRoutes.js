@@ -68,6 +68,27 @@ export const adminRoutes = {
                     name: 'AdminNoticeList',
                     component: () => import('@/views/admin/system/notice/NoticeList.vue'),
                     meta: { title: '公告管理', icon: 'Bell' }
+                },
+                {
+                    path: 'log',
+                    name: 'SystemLog',
+                    component: BlankLayout,
+                    meta: { title: '日志管理', icon: 'Document' },
+                    redirect: '/admin/system/log/login',
+                    children: [
+                        {
+                            path: 'login',
+                            name: 'LoginLogList',
+                            component: () => import('@/views/admin/system/log/loginLog/LoginLogList.vue'),
+                            meta: { title: '登录日志', icon: 'Key' }
+                        },
+                        {
+                            path: 'operate',
+                            name: 'OperLogList',
+                            component: () => import('@/views/admin/system/log/operLog/OperLogList.vue'),
+                            meta: { title: '操作日志', icon: 'Operation' }
+                        }
+                    ]
                 }
             ]
         },

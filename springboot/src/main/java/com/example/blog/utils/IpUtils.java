@@ -2,9 +2,14 @@ package com.example.blog.utils;
 
 import cn.hutool.core.util.StrUtil;
 import com.example.blog.common.constants.Constants;
+import com.example.blog.common.constants.MessageConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.lionsoul.ip2region.xdb.Searcher;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.FileCopyUtils;
 
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -13,6 +18,56 @@ import java.net.UnknownHostException;
  */
 @Slf4j
 public class IpUtils {
+
+    // 预先加载的 xdb 全内存缓存
+    private static byte[] cBuff;
+
+    static {
+        try {
+            // 1、使用常量替换魔法值
+            ClassPathResource resource = new ClassPathResource(Constants.IP2REGION_FILE_PATH);
+            InputStream is = resource.getInputStream();
+            cBuff = FileCopyUtils.copyToByteArray(is);
+            log.info("{} 离线IP库加载成功!", Constants.IP2REGION_FILE_PATH);
+        } catch (Exception e) {
+            log.error("加载 {} 文件失败, 请检查 resources 目录下是否存在该文件", Constants.IP2REGION_FILE_PATH, e);
+        }
+    }
+
+    /**
+     * 根据 IP 获取实际物理位置
+     * @param ip IP地址
+     * @return 物理位置（例：中国 广东省 深圳市 电信）
+     */
+    public static String getCityInfo(String ip) {
+        if (isEmptyIp(ip)) {
+            return MessageConstants.MSG_UNKNOWN_LOCATION;
+        }
+
+        // 过滤内网 IP (使用常量替换魔法值)
+        if (Constants.IP_LOCAL_V4.equals(ip)
+                || Constants.IP_LOCAL_V6.equals(ip)
+                || ip.startsWith(Constants.IP_LOCAL_PREFIX_192)
+                || ip.startsWith(Constants.IP_LOCAL_PREFIX_10)) {
+            return MessageConstants.MSG_LOCAL_IP;
+        }
+
+        try {
+            // 使用内存的 cBuff 缓存创建一个完全基于内存的查询对象
+            Searcher searcher = Searcher.newWithBuffer(cBuff);
+
+            // 查询，IPv4 和 IPv6 都支持
+            String region = searcher.search(ip);
+
+            // 原始的 region 格式通常为：国家|区域|省份|城市|ISP
+            if (region != null) {
+                return region.replace("|0|", StrUtil.SPACE).replace("|", StrUtil.SPACE).trim();
+            }
+        } catch (Exception e) {
+            log.error("根据 IP [{}] 获取地理位置失败: {}", ip, e.getMessage());
+        }
+        return MessageConstants.MSG_UNKNOWN_LOCATION;
+    }
 
     /**
      * 获取客户端真实IP地址
@@ -46,8 +101,6 @@ public class IpUtils {
         }
 
         // 3. 处理多级代理的情况
-        // 如果经过了多个代理，X-Forwarded-For 的值可能是 "真实IP, 代理1, 代理2..."
-        // 我们只取第一个，那个才是真实客户端 IP
         if (ip != null && ip.indexOf(StrUtil.COMMA) > 0) {
             ip = ip.substring(0, ip.indexOf(StrUtil.COMMA));
         }
@@ -59,6 +112,6 @@ public class IpUtils {
      * 判断 IP 是否为空或 unknown
      */
     private static boolean isEmptyIp(String ip) {
-        return ip == null || ip.length() == 0 || Constants.IP_UNKNOWN.equalsIgnoreCase(ip);
+        return ip == null || ip.isEmpty() || Constants.IP_UNKNOWN.equalsIgnoreCase(ip);
     }
 }
