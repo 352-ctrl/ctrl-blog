@@ -27,37 +27,67 @@ const route = useRoute();
 </script>
 
 <style scoped>
-/* * 侧边栏容器样式
- * 原 SidebarContainer 的逻辑移到这里
- */
+/* 侧边栏整体容器 */
 .right-sidebar-wrapper {
   width: 300px;
   margin-left: 20px;
   flex-shrink: 0; /* 防止被挤压 */
 }
 
+/* 核心：粘性定位容器 */
 .sidebar-sticky-content {
-  position: sticky; /* 推荐用 sticky 代替 fixed，布局更简单 */
-  top: 0;        /* 距离顶部 header 的距离 */
+  position: sticky;
+  top: 20px;
   width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: calc(100vh - 80px);
 
-  display: flex;           /* 开启 Flex 布局 */
-  flex-direction: column;  /* 垂直排列 */
-  gap: 5px;
-
-  /* 如果内容超长，允许内部滚动 */
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
+
+  /* Firefox 浏览器滚动条处理：默认透明 */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
 }
 
-/* 隐藏滚动条但保留功能 (可选) */
+/* Firefox：鼠标悬浮时显示减淡的颜色 */
+.sidebar-sticky-content:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+/* 防止内部卡片被压缩 */
+.sidebar-sticky-content > * {
+  flex-shrink: 0;
+}
+
+/* ==========================================
+ * Webkit (Chrome/Edge/Safari) 滚动条定制
+ * ========================================== */
+
+/* 定义滚动条整体宽度和背景 */
 .sidebar-sticky-content::-webkit-scrollbar {
   width: 4px;
+  background-color: transparent; /* 轨道背景透明 */
 }
+
+/* 默认状态：滑块背景完全透明（隐藏） */
 .sidebar-sticky-content::-webkit-scrollbar-thumb {
-  background: #e0e0e0;
+  background-color: transparent;
   border-radius: 4px;
+}
+
+/* 鼠标悬浮到整个侧边栏区域时：显示减淡的滑块 */
+.sidebar-sticky-content:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15); /* 15%透明度的黑，非常柔和 */
+}
+
+/* 鼠标放在滚动条上时稍微加深 */
+.sidebar-sticky-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.25);
 }
 
 /* 响应式：中屏以下隐藏 */

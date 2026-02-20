@@ -214,7 +214,7 @@ const isShowSidebar = computed(() => !route.meta.hideSidebar);
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 10px; /* 给上下一些间距 */
+  padding: 20px 10px 0 10px;
   width: 100%;
   display: flex;
   box-sizing: border-box;
@@ -225,6 +225,7 @@ const isShowSidebar = computed(() => !route.meta.hideSidebar);
 .main-content-wrapper {
   flex: 1;
   min-width: 0; /* 防止内容撑破 flex 容器 */
+  padding-bottom: 20px;
 }
 
 /* ====================================

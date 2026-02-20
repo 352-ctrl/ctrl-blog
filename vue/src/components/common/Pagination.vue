@@ -64,7 +64,6 @@ const handleChange = () => {
   width: 100%;
   box-sizing: border-box;
   overflow-x: auto;
-  background-color: #fff; /* 可选：为分页区域添加纯白背景 */
   border-radius: 8px;     /* 可选：容器圆角 */
 }
 
@@ -117,7 +116,6 @@ const handleChange = () => {
 @media screen and (max-width: 992px) {
   .pagination-container {
     justify-content: center;
-    background-color: transparent; /* 移动端往往不需要白底背景 */
     padding: 12px 0;
   }
 }
