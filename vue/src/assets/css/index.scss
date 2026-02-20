@@ -33,15 +33,6 @@
   background-color: #f2f3f5;  // 极浅的灰色背景
   color: #5d636f;             // 深灰文字，对比度适中
 
-  // 4. 交互效果
-  transition: all 0.2s ease;
-  cursor: pointer;            // 鼠标放上去显示手型，暗示可点击筛选
-
-  &:hover {
-    background-color: #e4e6eb; // 悬停时背景稍微变深
-    color: #333;               // 文字变黑
-    transform: translateY(-1px); // 极其微小的上浮，增加精致感
-  }
 
   // 蓝色系 (技术/前端)
   &.el-tag--primary {

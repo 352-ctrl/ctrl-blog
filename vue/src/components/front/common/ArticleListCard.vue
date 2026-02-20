@@ -1,7 +1,8 @@
 <template>
-  <el-row v-for="item in articles" :key="item.id">
+  <el-row v-for="item in articles" :key="item.id" style="margin-bottom: 20px;">
     <el-col @click="handleCardClick(item.id)">
-      <el-card class="article-card" shadow="hover">
+
+      <el-card class="article-card" shadow="hover" :body-style="{ padding: '16px 20px' }">
         <div class="content-wrapper">
           <div class="image-container">
             <el-image
@@ -12,24 +13,55 @@
           </div>
 
           <div class="text-content">
-            <div class="article-title">{{ item.title }}</div>
-            <div class="article-summary">{{ item.summary }}</div>
+            <div class="article-title">
+              <el-tag
+                  v-if="item.isTop === 1"
+                  class="top-tag"
+                  type="danger"
+                  effect="light"
+                  size="small"
+              >
+                <div class="top-tag-content">
+                  <el-icon><Promotion /></el-icon>
+                  <span>置顶</span>
+                </div>
+              </el-tag>
+              <span class="title-text" :title="item.title">{{ item.title }}</span>
+            </div>
+            <div class="article-summary" :title="item.summary">{{ item.summary }}</div>
           </div>
         </div>
 
-        <hr class="divider"/>
+        <el-divider class="custom-divider" />
 
         <div class="meta-info">
-          <el-avatar :size="25" :src="item.userAvatar"/>
-          {{ item.userNickname }}
-          {{ item.createTime }}
-          <el-icon><View /></el-icon>{{ item.viewCount }}
+          <div class="meta-left">
+            <el-avatar :size="24" :src="item.userAvatar" class="avatar"/>
+            <span class="nickname">{{ item.userNickname }}</span>
 
-          <div style="flex: 1"></div>
+            <el-divider direction="vertical" border-style="dashed" />
 
-          <div>
-            <el-tag @click.stop="handleCategoryClick(item.categoryId)">
-              <span>{{ item.categoryName }}</span>
+            <span class="meta-item">
+              <el-icon class="meta-icon"><Clock /></el-icon>
+              <span class="meta-text">{{ formatTimeAgo(item.createTime) }}</span>
+            </span>
+
+            <el-divider direction="vertical" border-style="dashed" />
+
+            <span class="meta-item">
+              <el-icon class="meta-icon"><View /></el-icon>
+              <span class="meta-text">{{ item.viewCount }}</span>
+            </span>
+          </div>
+
+          <div class="meta-right" @click.stop>
+            <el-tag
+                class="category-tag"
+                effect="plain"
+                round
+                @click="handleCategoryClick(item.categoryId)"
+            >
+              {{ item.categoryName }}
             </el-tag>
           </div>
         </div>
@@ -44,113 +76,191 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-/**
- * @typedef {Object} ArticleItem
- * @property {number} id - 文章唯一 ID
- * @property {string} cover - 封面图 URL
- * @property {string} title - 标题
- * @property {string} summary - 摘要内容
- * @property {string} userAvatar - 作者头像 URL
- * @property {string} userNickname - 作者昵称
- * @property {string} createTime - 发布时间
- * @property {number} viewCount - 浏览量
- * @property {number} categoryId - 所属分类ID
- * @property {string} categoryName - 所属分类名称
- */
-
-/**
- * =========================================================================
- * Props 定义
- * =========================================================================
- */
 const props = defineProps({
-  /**
-   * 文章数据列表
-   * @type {ArticleItem[]}
-   */
   articles: {
     type: Array,
     default: () => []
   }
 })
 
-/**
- * =========================================================================
- * Events 定义
- * =========================================================================
- */
-const emit = defineEmits([
-  /**
-   * 点击卡片时触发，用于跳转详情页
-   * @arg {number} id - 文章 ID
-   */
-  'click'
-])
+const emit = defineEmits(['click'])
 
-// 内部处理卡片点击逻辑
 const handleCardClick = (articleId) => {
   emit('click', articleId)
 }
 
-// 处理标签点击逻辑
 const handleCategoryClick = (categoryId) => {
-  // 如果 ID 不存在，防止报错
   if (!categoryId) return;
-
   router.push({
     name: 'FrontCategories',
     query: { id: categoryId }
   });
 }
+
+const formatTimeAgo = (timeStr) => {
+  if (!timeStr) return '未知时间';
+
+  const date = new Date(timeStr).getTime();
+  const now = Date.now();
+  const diff = (now - date) / 1000;
+
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+  if (diff < 2592000) return Math.floor(diff / 86400) + ' 天前';
+  if (diff < 31536000) return Math.floor(diff / 2592000) + ' 个月前';
+  return Math.floor(diff / 31536000) + ' 年前';
+}
 </script>
 
 <style scoped>
+/* ==================== 1. 卡片整体与交互效果 ==================== */
+.article-card {
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.article-card:hover {
+  transform: translateY(-2px);
+}
+
+.article-card:active {
+  transform: scale(0.99);
+  transition: transform 0.1s ease;
+}
+
+/* ==================== 2. 顶部内容区（图片与文本） ==================== */
 .content-wrapper {
   display: flex;
-  align-items: flex-start; /* 顶部对齐，防止摘要过少时布局塌陷 */
-  padding-bottom: 5px;
+  align-items: flex-start;
   min-height: 100px;
 }
 
 .image-container {
-  flex: 0 0 auto; /* 禁止缩放，固定左侧封面区域 */
-  padding-right: 10px;
+  flex: 0 0 auto;
+  padding-right: 16px;
 }
 
 .article-image {
-  border-radius: 5px;
-  width: 100px;
+  border-radius: 6px;
+  width: 140px;
   height: 100px;
-  object-fit: cover; /* 保持比例裁剪 */
+  object-fit: cover;
 }
 
 .text-content {
   flex: 1;
-  align-self: stretch; /* 垂直方向充满父容器 */
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
+/* 优化标题布局，让置顶标签和文字在一行完美对齐 */
 .article-title {
-  font-weight: bold;
-  font-size: 25px;
+  display: flex;
+  align-items: center; /* 垂直居中 */
+  flex-wrap: wrap; /* 如果标题太长允许换行 */
+  gap: 8px; /* 标签和文字的间距 */
   margin-bottom: 8px;
 }
 
+.title-text {
+  color: #303133;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.4;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* 保持标题单行显示超出省略 */
+}
+
+/* 置顶标签：取消鼠标交互反馈 */
+.top-tag {
+  cursor: default; /* 保持普通指针 */
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
+/* 确保置顶标签没有 hover 动画 */
+.top-tag:hover {
+  transform: none;
+}
+
+.top-tag-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.top-tag-content .el-icon {
+  font-size: 12px;
+}
+
 .article-summary {
-  color: #666;
-  font-size: 15px;
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.6;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* 多行文本截断：最多显示3行 */
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
+.custom-divider {
+  margin: 16px 0;
+  border-top-color: #ebeef5;
+}
+
+/* ==================== 3. 底部元信息区（头像、图标、标签） ==================== */
 .meta-info {
   display: flex;
   align-items: center;
-  padding-top: 5px;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #909399;
+}
+
+.meta-left {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  margin-right: 8px;
+}
+
+.nickname {
+  color: #606266;
+  font-weight: 500;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-icon {
+  font-size: 15px;
+}
+
+.meta-text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.category-tag {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.category-tag:hover {
+  background-color: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  border-color: var(--el-color-primary-light-5);
+  transform: translateY(-1px);
 }
 </style>
