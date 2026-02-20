@@ -9,15 +9,22 @@
     </div>
   </div>
 
-  <div class="card operate-box" v-if="$slots['operate-buttons']">
+  <div class="card operate-box">
     <slot name="operate-buttons"></slot>
-    <el-button type="danger" icon="Delete" @click="handleBatchDelete">批量删除</el-button>
+    <el-button
+        type="danger"
+        icon="Delete"
+        :disabled="selectedIds.length === 0"
+        @click="handleBatchDelete"
+    >
+      批量删除
+    </el-button>
   </div>
 </template>
 
 <script setup>
 import { defineProps, defineEmits } from "vue";
-import {ElMessage, ElMessageBox} from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 /**
  * =========================================================================
@@ -61,7 +68,7 @@ const props = defineProps({
  * Events 定义
  * =========================================================================
  */
-const emit = defineEmits([])
+const emit = defineEmits(['batch-delete-success', 'batch-delete-fail'])
 
 /**
  * =========================================================================
@@ -91,22 +98,22 @@ const handleReset = () => {
  * 2. 弹出二次确认框
  * 3. 调用 API 执行删除
  * 4. 处理响应结果并通知父组件刷新
- * * @emits batch-delete-success 删除成功后触发
+ * @emits batch-delete-success 删除成功后触发
  * @emits batch-delete-fail 删除失败后触发
  */
 const handleBatchDelete = async () => {
   try {
-    // 1. 校验选中状态
+    // 1. 校验选中状态 (虽然按钮禁用了，但保留逻辑校验更严谨)
     if (props.selectedIds.length === 0) {
       ElMessage.warning('请选择要删除的数据');
       return;
     }
 
     // 2. 二次确认
-    ElMessageBox.confirm(
+    await ElMessageBox.confirm(
         props.batchDeleteTip,
         props.batchDeleteTitle,
-        {type: 'warning'}
+        { type: 'warning' }
     )
 
     // 3. 调用接口
@@ -167,26 +174,23 @@ const handleBatchDelete = async () => {
  * ==========================================
  */
 
-/* 大屏幕 (PC): 单行横向布局 */
+/* 大屏幕 (PC): 搜索项四列布局 */
 @media (min-width: 1200px) {
-  .search-box {
-    flex-wrap: nowrap;
-    justify-content: space-between;
-  }
-
   .search-container {
-    flex: 1;
-    flex-wrap: nowrap;
+    display: contents; /* 消除容器层级，使子元素直接参与外层 search-box 的 Flex 布局 */
   }
 
-  .search-container > * {
-    max-width: 240px;
+  /* 强制每个搜索项占据 20% 宽度 (根据你之前的代码保留的比例) */
+  .search-container :deep(> *) {
+    flex: 0 0 calc(20% - 6px);
+    max-width: calc(20% - 6px); /* 防止内部超长内容撑破列宽 */
   }
 
   .button-container {
-    flex-wrap: nowrap;
-    white-space: nowrap;
-    margin-left: 12px;
+    flex: 1;
+    display: flex;
+    justify-content: flex-end; /* 确保按钮始终靠右侧对齐 */
+    min-width: 160px; /* 兜底宽度，防止按钮被过度挤压变形 */
   }
 }
 
