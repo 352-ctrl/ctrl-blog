@@ -13,20 +13,6 @@ const router = createRouter({
     // 2. 前台路由 (匹配 / 下的路径)
     frontRoutes,
 
-    // 3. 基础页面 (登录注册)
-    {
-      path: '/login',
-      name: 'Login',
-      component: () => import('@/views/auth/Login.vue'),
-      meta: { title: '登录' }
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      component: () => import('@/views/auth/Register.vue'),
-      meta: { title: '注册' }
-    },
-
     // 4. 错误页处理
     {
       path: '/notFound',

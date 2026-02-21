@@ -22,10 +22,10 @@ export function register(data) {
 }
 
 // 3. 发送验证码
-export function sendEmailCode(email) {
+export function sendEmailCode(data) {
     return request({
         url: `${BASE_URL}/email/code`,
         method: 'post',
-        data: { email: email }
+        data: data
     })
 }

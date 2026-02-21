@@ -11,6 +11,10 @@ export const useUserStore = defineStore('user', () => {
     const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || '{}'))
     const isLoading = ref(false)
 
+    // 全局 AuthDialog 弹窗状态
+    const showAuthDialog = ref(false)
+    const authDialogMode = ref('login')
+
     // 2. Getters - 提供常用属性的快捷访问
     const isLoggedIn = computed(() => !!token.value)
     const isAdmin = computed(() => userInfo.value?.role === 'ADMIN')
@@ -22,6 +26,13 @@ export const useUserStore = defineStore('user', () => {
     const createTime = computed(() => userInfo.value?.createTime)
 
     // 3. Actions: 定义操作
+
+    // 新增：快捷唤起弹窗的方法
+    const openAuthDialog = (mode = 'login') => {
+        authDialogMode.value = mode
+        showAuthDialog.value = true
+    }
+
     // 登录动作
     const login = async (loginForm) => {
         isLoading.value = true
@@ -36,8 +47,6 @@ export const useUserStore = defineStore('user', () => {
                     userInfo.value = res.data.userInfo
                     localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo))
                 }
-
-                await fetchUserInfo()
 
                 return {
                     success: true,
@@ -102,6 +111,8 @@ export const useUserStore = defineStore('user', () => {
         token,
         userInfo,
         isLoading,
+        showAuthDialog,
+        authDialogMode,
 
         // Getters
         isLoggedIn,
@@ -114,6 +125,7 @@ export const useUserStore = defineStore('user', () => {
         createTime,
 
         // Actions
+        openAuthDialog,
         login,
         fetchUserInfo,
         logout,
