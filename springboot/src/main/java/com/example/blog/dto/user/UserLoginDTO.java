@@ -29,4 +29,7 @@ public class UserLoginDTO {
     @Size(min = 8, max = 20, message = "密码长度应在8-20位之间")
     private String password;
 
+    @NotBlank(message = "请先完成安全验证")
+    private String captchaVerification;
+
 }

@@ -48,9 +48,9 @@ public class AuthController {
     @PostMapping("/register")
     @RateLimit(key = "ip", time = 60, count = 5)
     @Operation(summary = "用户注册", description = "新用户注册。系统会自动校验用户名重复性，并加密存储密码。")
-    public Result<Void> register(@Valid @RequestBody UserRegisterDTO registerDTO) {
-        authService.register(registerDTO);
-        return Result.success();
+    public Result<UserLoginVO> register(@Valid @RequestBody UserRegisterDTO registerDTO) {
+        UserLoginVO loginVO = authService.register(registerDTO);
+        return Result.success(loginVO);
     }
 
     /**

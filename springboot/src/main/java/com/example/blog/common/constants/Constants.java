@@ -140,7 +140,7 @@ public final class Constants {
     /**
      * 离线 IP 定位库文件路径
      */
-    public static final String IP2REGION_FILE_PATH = "ip2region.xdb";
+    public static final String IP2REGION_FILE_PATH = "ip2region_v4.xdb";
 
     /**
      * 局域网 IPv4 前缀 1

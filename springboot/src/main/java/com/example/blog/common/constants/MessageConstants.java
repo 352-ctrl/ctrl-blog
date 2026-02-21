@@ -79,6 +79,14 @@ public final class MessageConstants {
      */
     public static final String MSG_LOGIN_ERROR = "账号或密码错误";
     /**
+     * 未进行安全验证（参数为空）
+     */
+    public static final String MSG_CAPTCHA_REQUIRE = "请先完成滑动安全验证";
+    /**
+     * 安全验证（滑动拼图等）失败
+     */
+    public static final String MSG_CAPTCHA_VERIFY_FAILED = "安全验证失败，请重新滑动拼图";
+    /**
      * 认证失败：Token 无效或由过滤器拦截
      */
     public static final String MSG_AUTH_FAILED = "认证失败，请重新登录";
@@ -247,4 +255,6 @@ public final class MessageConstants {
     public static final String LOG_LOGIN_LOCKED = "账号被锁定，限制登录";
     /** 日志：账号已封禁 */
     public static final String LOG_LOGIN_BANNED = "账号已被封禁";
+    /** 日志：注册并自动登录成功 */
+    public static final String LOG_REGISTER_AND_LOGIN_SUCCESS = "注册并自动登录成功";
 }

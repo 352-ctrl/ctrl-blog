@@ -29,7 +29,7 @@ public interface AuthService {
      * 用户注册
      * @param userRegisterDTO 用户注册DTO
      */
-    void register(UserRegisterDTO userRegisterDTO);
+    UserLoginVO register(UserRegisterDTO userRegisterDTO);
 
     /**
      * 用户注销登录

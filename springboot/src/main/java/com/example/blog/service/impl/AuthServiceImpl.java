@@ -3,6 +3,9 @@ package com.example.blog.service.impl;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.anji.captcha.model.common.ResponseModel;
+import com.anji.captcha.model.vo.CaptchaVO;
+import com.anji.captcha.service.CaptchaService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -61,8 +64,86 @@ public class AuthServiceImpl implements AuthService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private CaptchaService captchaService;
+
+    /**
+     * 校验滑动验证码二次凭证
+     * @param captchaVerification 前端传入的加密凭证
+     */
+    private void verifyCaptcha(String captchaVerification) {
+        if (StrUtil.isBlank(captchaVerification)) {
+            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CAPTCHA_REQUIRE);
+        }
+
+        CaptchaVO captchaVO = new CaptchaVO();
+        captchaVO.setCaptchaVerification(captchaVerification);
+        ResponseModel response = captchaService.verification(captchaVO);
+
+        if (!response.isSuccess()) {
+            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CAPTCHA_VERIFY_FAILED);
+        }
+    }
+
+    /**
+     * 统一获取网络信息并记录认证日志
+     */
+    private void recordAuthLog(String email, Integer status, String msg) {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
+        String ip = IpUtils.getIpAddr(request);
+        String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : "";
+
+        sysLoginLogService.recordLoginLog(email, status, msg, ip, userAgent);
+    }
+
+    /**
+     * 统一构建登录/注册成功后的返回对象
+     * 包含生成 Token、存入 Redis、记录成功日志、封装 VO
+     */
+    private UserLoginVO buildLoginResult(User user, boolean isRestored, String logMsg) {
+        // 1. 创建 token
+        String token = TokenUtils.getToken(user);
+
+        // 2. 将 Token 存入 Redis，用于踢人或退出登录 (有效期 1 天)
+        redisUtil.set(RedisConstants.REDIS_USER_TOKEN_KEY + user.getId(), token, RedisConstants.EXPIRE_USER_TOKEN, TimeUnit.DAYS);
+
+        // 3. 记录成功日志
+        recordAuthLog(user.getEmail(), BizStatus.Log.SUCCESS.getValue(), logMsg);
+
+        // 4. 封装返回视图对象
+        UserVO userVO = userConvert.entityToVo(user);
+        userVO.setCreateTime(null);
+
+        return UserLoginVO.builder()
+                .token(token)
+                .userInfo(userVO)
+                .isRestored(isRestored)
+                .build();
+    }
+
+    /**
+     * 记录登录失败次数
+     */
+    private void recordLoginFailed(String key) {
+        // 如果 key 不存在，redisUtil.increment 会自动创建并设为1
+        long count = redisUtil.increment(key, 1);
+        if (count == 1) {
+            // 第一次失败，设置过期时间 30 分钟
+            redisUtil.expire(key, RedisConstants.EXPIRE_LOGIN_FAIL_WINDOW, TimeUnit.MINUTES);
+        }
+        // 如果达到了锁定阈值，强制设置一个锁定时间
+        if (count >= 5) {
+            // 覆盖过期时间，强制锁定 30 分钟
+            redisUtil.expire(key, RedisConstants.LOGIN_LOCKED_TIME, TimeUnit.MINUTES);
+        }
+    }
+
     @Override
     public void sendEmailCode(EmailRequestDTO emailRequestDTO) {
+        // 滑动验证码二次校验
+        verifyCaptcha(emailRequestDTO.getCaptchaVerification());
+
         String email = emailRequestDTO.getEmail();
         // 1. 校验邮箱是否已注册
         long count = userService.count(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
@@ -73,8 +154,8 @@ public class AuthServiceImpl implements AuthService {
         // 2. 防刷校验：检查Redis里是否还有未过期的验证码，防止频繁发送
         String redisKey = RedisConstants.REDIS_EMAIL_CODE_KEY + email;
         Long expire = stringRedisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
-        // 如果有效期还剩超过 4分30秒 (说明刚发过不到30秒)，拦截
-        if (expire > 270) {
+        // 如果有效期还剩超过4分钟 (说明刚发过不到1分钟)，拦截
+        if (expire > 240) {
             throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
         }
 
@@ -94,16 +175,13 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserLoginVO login(UserLoginDTO loginDTO) {
+        // 滑动验证码二次校验
+        verifyCaptcha(loginDTO.getCaptchaVerification());
+
         String email = loginDTO.getEmail();
-
-        // 在主线程提前获取网络信息 (ip, userAgent)
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
-        String ip = IpUtils.getIpAddr(request);
-        String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : "";
-
         // 检查是否被锁定
         String failKey = RedisConstants.REDIS_LOGIN_FAIL_KEY + email;
+
         if (redisUtil.hasKey(failKey)) {
             int failCount = Convert.toInt(redisUtil.get(failKey), 0);
             if (failCount >= 5) {
@@ -114,7 +192,7 @@ public class AuthServiceImpl implements AuthService {
                 // 格式化字符串
                 String msg = String.format(MessageConstants.MSG_LOGIN_LOCKED, displayTime);
                 // 记录因为锁定导致的登录失败
-                sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_LOCKED, ip, userAgent);
+                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_LOCKED);
                 // 抛出带有动态时间的异常
                 throw new CustomerException(ResultCode.FORBIDDEN, msg);
             }
@@ -122,7 +200,7 @@ public class AuthServiceImpl implements AuthService {
         // 查询用户
         User dbUser = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getEmail, loginDTO.getEmail()));
         if (dbUser == null) {
-            sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.MSG_USER_NOT_EXIST, ip, userAgent);
+            recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.MSG_USER_NOT_EXIST);
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
         }
 
@@ -130,12 +208,12 @@ public class AuthServiceImpl implements AuthService {
         if (!PasswordEncoderUtil.matches(loginDTO.getPassword(), dbUser.getPassword())) {
             // 记录失败次数
             recordLoginFailed(failKey);
-            sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_PWD_ERROR, ip, userAgent);
+            recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_PWD_ERROR);
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
         }
 
         if (dbUser.getStatus() == BizStatus.User.DISABLE) {
-            sysLoginLogService.recordLoginLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_BANNED, ip, userAgent);
+            recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_BANNED);
             // 如果是封禁状态，即使密码对也不让进
             throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_ACCOUNT_BANNED);
         }
@@ -150,27 +228,13 @@ public class AuthServiceImpl implements AuthService {
         // 登录成功，清除失败记录
         redisUtil.delete(failKey);
 
-        // 创建token
-        String token = TokenUtils.getToken(dbUser);
-
-        // 将 Token 存入 Redis，用于踢人或退出登录 (有效期 1 天)
-        redisUtil.set(RedisConstants.REDIS_USER_TOKEN_KEY + dbUser.getId(), token, RedisConstants.EXPIRE_USER_TOKEN, TimeUnit.DAYS);
-
-        sysLoginLogService.recordLoginLog(email, BizStatus.Log.SUCCESS.getValue(), MessageConstants.LOG_LOGIN_SUCCESS, ip, userAgent);
-
-        UserVO userVO = userConvert.entityToVo(dbUser);
-        userVO.setCreateTime(null);
-
-        return UserLoginVO.builder()
-                .token(token)
-                .userInfo(userVO)
-                .isRestored(isRestored)
-                .build();
+        // 调用私有方法统一构建返回值
+        return buildLoginResult(dbUser, isRestored, MessageConstants.LOG_LOGIN_SUCCESS);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void register(UserRegisterDTO registerDTO) {
+    public UserLoginVO register(UserRegisterDTO registerDTO) {
         // 验证密码与确认密码是否一致
         String password = registerDTO.getPassword();
         String confirmPassword = registerDTO.getConfirmPassword();
@@ -203,18 +267,15 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userConvert.registerDtoToEntity(registerDTO);
 
-        // 如果没有昵称，设置默认昵称 "用户xxxxxx"
-        if (StrUtil.isBlank(user.getNickname())) {
-            user.setNickname(Constants.DEFAULT_NICKNAME_PREFIX + RandomUtil.randomString(6));
-        }
-        // 如果没有头像，设置默认头像
-        if (StrUtil.isBlank(user.getAvatar())) {
-            user.setAvatar(Constants.DEFAULT_AVATAR);
-        }
+        // 设置默认头像
+        String avatarUrl = GravatarUtils.getRetroAvatar(registerDTO.getEmail());
+        user.setAvatar(avatarUrl);
         // 设置默认角色
         user.setRole(BizStatus.Role.USER);
         // 设置默认状态
         user.setStatus(BizStatus.User.NORMAL);
+        // 设置默认昵称
+        user.setNickname(Constants.DEFAULT_NICKNAME_PREFIX + RandomUtil.randomString(8));
 
         // 密码加密（核心：明文→BCrypt哈希）
         String encryptedPassword = PasswordEncoderUtil.encode(password);
@@ -230,23 +291,9 @@ public class AuthServiceImpl implements AuthService {
 
         // 注册成功后，删除 Redis 中的验证码
         stringRedisTemplate.delete(redisKey);
-    }
 
-    /**
-     * 记录登录失败次数
-     */
-    private void recordLoginFailed(String key) {
-        // 如果 key 不存在，redisUtil.increment 会自动创建并设为1
-        long count = redisUtil.increment(key, 1);
-        if (count == 1) {
-            // 第一次失败，设置过期时间 30 分钟
-            redisUtil.expire(key, RedisConstants.EXPIRE_LOGIN_FAIL_WINDOW, TimeUnit.MINUTES);
-        }
-        // 如果达到了锁定阈值，强制设置一个锁定时间
-        if (count >= 5) {
-            // 覆盖过期时间，强制锁定 30 分钟
-            redisUtil.expire(key, RedisConstants.LOGIN_LOCKED_TIME, TimeUnit.MINUTES);
-        }
+        // 调用私有方法统一构建返回值
+        return buildLoginResult(user, false, MessageConstants.LOG_REGISTER_AND_LOGIN_SUCCESS);
     }
 
     @Override
