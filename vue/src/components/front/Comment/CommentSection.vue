@@ -39,17 +39,12 @@
       </div>
     </div>
 
-    <div class="pagination-wrapper" style="margin-top: 20px; display: flex; justify-content: flex-end">
-      <el-pagination
-          v-if="total > 0"
-          background
-          layout="prev, pager, next"
-          :total="total"
-          v-model:current-page="pageNum"
-          :page-size="pageSize"
-          @current-change="loadComment"
-      />
-    </div>
+    <FrontPagination
+        v-model:current-page="pageNum"
+        v-model:page-size="pageSize"
+        :total="total"
+        @change="loadComment"
+    />
   </el-card>
 </template>
 

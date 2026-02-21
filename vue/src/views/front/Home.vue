@@ -40,7 +40,7 @@
         @click="navToArticle"
     />
 
-    <Pagination
+    <FrontPagination
         v-model:current-page="data.pageNum"
         v-model:page-size="data.pageSize"
         :total="data.total"

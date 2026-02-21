@@ -42,7 +42,7 @@
           @delete-success="loadPage"
       />
 
-      <Pagination
+      <AdminPagination
           v-model:current-page="data.pageNum"
           v-model:page-size="data.pageSize"
           :total="data.total"
@@ -103,7 +103,7 @@ import {
   deleteNotices,
   getNoticeById
 } from "@/api/admin/notice.js";
-import Pagination from "@/components/common/Pagination.vue";
+import AdminPagination from "@/components/admin/AdminPagination/AdminPagination.vue";
 
 const formRef = ref(null);
 

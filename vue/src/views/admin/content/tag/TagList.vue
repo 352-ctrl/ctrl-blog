@@ -34,7 +34,7 @@
           @delete-success="loadPage"
       />
 
-      <Pagination
+      <AdminPagination
           v-model:current-page="data.pageNum"
           v-model:page-size="data.pageSize"
           :total="data.total"
@@ -61,7 +61,7 @@ import { reactive, ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 // 引入 API 模块
 import {getTagPage, addTag, updateTag, deleteTag, deleteTags, getTagById} from "@/api/admin/tag.js";
-import Pagination from "@/components/common/Pagination.vue";
+import AdminPagination from "@/components/admin/AdminPagination/AdminPagination.vue";
 
 const formRef = ref(null);
 

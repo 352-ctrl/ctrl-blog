@@ -59,7 +59,7 @@
           @status-change="handleStatusChange"
       />
 
-      <Pagination
+      <AdminPagination
           v-model:current-page="data.pageNum"
           v-model:page-size="data.pageSize"
           :total="data.total"
@@ -170,7 +170,7 @@
 <script setup>
 import { reactive, ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import Pagination from "@/components/common/Pagination.vue";
+import AdminPagination from "@/components/admin/AdminPagination/AdminPagination.vue";
 import Crontab from '@/views/admin/monitor/job/components/Crontab/Crontab.vue'
 // 引入 API 模块
 import {

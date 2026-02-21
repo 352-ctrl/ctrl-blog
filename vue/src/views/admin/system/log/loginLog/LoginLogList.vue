@@ -43,7 +43,7 @@
           @delete-success="loadPage"
       />
 
-      <Pagination
+      <AdminPagination
           v-model:current-page="data.pageNum"
           v-model:page-size="data.pageSize"
           :total="data.total"
@@ -59,7 +59,7 @@ import { ElMessage } from "element-plus";
 import { getLoginLogPage, deleteLoginLog, deleteLoginLogs } from "@/api/admin/sysLoginLog.js";
 import AdminSearchBar from "@/components/admin/common/AdminSearchBar.vue";
 import AdminTable from "@/components/admin/common/AdminTable.vue";
-import Pagination from "@/components/common/Pagination.vue";
+import AdminPagination from "@/components/admin/AdminPagination/AdminPagination.vue";
 
 const data = reactive({
   status: null,

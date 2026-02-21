@@ -39,7 +39,7 @@
           @delete-success="loadPage"
       />
 
-      <Pagination
+      <AdminPagination
           v-model:current-page="data.pageNum"
           v-model:page-size="data.pageSize"
           :total="data.total"
@@ -55,7 +55,7 @@ import {reactive, ref, onMounted, computed} from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 // 引入 API 模块
 import {getCommentPage,deleteComment,deleteComments} from "@/api/admin/comment.js";
-import Pagination from "@/components/common/Pagination.vue";
+import AdminPagination from "@/components/admin/AdminPagination/AdminPagination.vue";
 
 const data = reactive({
   userNickname: '',

@@ -32,7 +32,7 @@
       @click="navToArticle"
   />
 
-  <Pagination
+  <AdminPagination
       v-model:current-page="data.pageNum"
       v-model:page-size="data.pageSize"
       :total="data.total"

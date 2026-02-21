@@ -80,7 +80,7 @@
         </el-table-column>
       </el-table>
 
-      <Pagination
+      <AdminPagination
           v-model:current-page="queryParams.pageNum"
           v-model:page-size="queryParams.pageSize"
           :total="total"
@@ -94,7 +94,7 @@
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getRedisInfo, getRedisKeys } from '@/api/admin/redis.js'
-import Pagination from '@/components/common/Pagination.vue'
+import AdminPagination from '@/components/admin/AdminPagination/AdminPagination.vue'
 
 // --- 状态定义 ---
 const infoLoading = ref(false)
