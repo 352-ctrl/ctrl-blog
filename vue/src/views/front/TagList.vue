@@ -1,38 +1,39 @@
 <template>
-  <el-card>
-    <div class="tag-filter-box">
-      <div class="tag-list">
-        <el-tag
-            class="tag-item"
-            :effect="data.activeTab === 'all' ? 'dark' : 'plain'"
-            :type="data.activeTab === 'all' ? 'primary' : 'info'"
-            size="large"
-            @click="handleTagClick('all')"
-        >
-          全部
-        </el-tag>
+  <el-card class="tag-main-card" shadow="never">
+    <div class="tag-header">
+      <el-icon class="header-icon"><CollectionTag /></el-icon>
+      <span class="header-title">标签云</span>
+    </div>
 
-        <el-tag
-            v-for="item in data.tagList"
-            :key="item.id"
-            class="tag-item"
-            :effect="data.activeTab === item.id.toString() ? 'dark' : 'plain'"
-            :type="data.activeTab === item.id.toString() ? 'primary' : 'info'"
-            size="large"
-            @click="handleTagClick(item.id.toString())"
-        >
-          {{ item.name }}
-        </el-tag>
+    <div class="tag-cloud-box">
+      <div
+          v-for="item in data.tagList"
+          :key="item.id"
+          class="custom-tag-item"
+          :class="{ 'is-active': data.activeTab === item.id.toString() }"
+          @click="handleTagClick(item.id.toString())"
+          :style="{ '--random-color': item.color }"
+      >
+        <el-icon class="tag-icon"><PriceTag /></el-icon>
+        <span class="tag-name">{{ item.name }}</span>
       </div>
     </div>
   </el-card>
 
-  <ArticleListCard
-      :articles="data.articleList"
-      @click="navToArticle"
-  />
+  <div class="article-list-container">
+    <ArticleListCard
+        :articles="data.articleList"
+        @click="navToArticle"
+    />
 
-  <AdminPagination
+    <el-empty
+        v-if="data.articleList.length === 0"
+        description="该标签下暂无文章"
+        :image-size="100"
+    />
+  </div>
+
+  <FrontPagination
       v-model:current-page="data.pageNum"
       v-model:page-size="data.pageSize"
       :total="data.total"
@@ -41,25 +42,31 @@
 </template>
 
 <script setup>
-import {onMounted, reactive} from "vue";
-import {getArticlePage} from "@/api/front/article.js";
-import {ElMessage} from "element-plus";
-import {getTagList} from "@/api/front/tag.js";
-import {getHomepageNotices} from "@/api/front/notice.js";
-import {useRoute, useRouter} from "vue-router";
+import { onMounted, reactive } from "vue";
+import { getArticlePage } from "@/api/front/article.js";
+import { ElMessage } from "element-plus";
+import { getTagList } from "@/api/front/tag.js";
+import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
+
+// 精选的一套好看的 UI 色板，避免纯随机产生亮瞎眼的颜色
+const colorPalette = [
+  '#409EFF', '#67C23A', '#E6A23C', '#F56C6C',
+  '#9c27b0', '#ff9800', '#00bcd4', '#8bc34a',
+  '#e91e63', '#3f51b5', '#009688', '#795548',
+  '#FA541C', '#13C2C2', '#2F54EB', '#722ED1'
+];
 
 const data = reactive({
   pageNum: 1,
   pageSize: 10,
   total: 0,
-  activeTab: 'all',
+  activeTab: '',
   tagId: '',
   articleList: [],
   tagList:[],
-  noticeList:[]
 })
 
 const navToArticle = (id) => {
@@ -71,15 +78,12 @@ const navToArticle = (id) => {
 // 初始化加载
 onMounted(async () => {
   await loadTag();
-  // 检查 URL 是否带有 id 参数
   const queryId = route.query.id;
   if (queryId) {
-    // 如果有 ID，设置当前激活的 Tab 和查询参数
     data.activeTab = queryId.toString();
     data.tagId = queryId;
   } else {
-    // 如果没有，默认全部
-    data.activeTab = 'all';
+    data.activeTab = '';
     data.tagId = '';
   }
   await loadPage();
@@ -91,13 +95,11 @@ const loadPage = async () => {
     pageNum: data.pageNum,
     pageSize: data.pageSize,
   };
-  // 如果有分类ID，添加到查询参数
   const tagIdNum = Number(data.tagId);
   if (tagIdNum && tagIdNum > 0) {
-    params.tagIds = [tagIdNum]; // 单标签ID封装成数组，适配后端List<Integer>
+    params.tagIds = [tagIdNum];
   }
   try {
-    // 使用 await 等待接口返回
     const res = await getArticlePage(params);
     if (res.code === 200) {
       data.articleList = res.data.records || [];
@@ -114,7 +116,14 @@ const loadTag = async () => {
   try {
     const res = await getTagList();
     if (res.code === 200) {
-      data.tagList = res.data || [];
+      // 在这里为每一个标签随机分配一个颜色
+      data.tagList = (res.data || []).map(tag => {
+        const randomHex = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+        return {
+          ...tag,
+          color: randomHex
+        };
+      });
     } else {
       ElMessage.error(res.msg);
     }
@@ -125,40 +134,141 @@ const loadTag = async () => {
 
 // 标签切换处理
 const handleTagClick = (tagKey) => {
-  // 更新选中状态
-  data.activeTab = tagKey;
-
-  // 重置页码到第一页
-  data.pageNum = 1;
-
-  if (tagKey === 'all') {
-    // 切换到全部文章
-    data.tagId = null;
+  if (data.activeTab === tagKey) {
+    data.activeTab = '';
+    data.tagId = '';
   } else {
-    // 切换到指定分类
+    data.activeTab = tagKey;
     data.tagId = tagKey;
   }
-
-  // 重新加载文章
+  data.pageNum = 1;
   loadPage();
 };
 </script>
 
-<style scoped>
-.tag-list {
-  display: flex;       /* 弹性布局 */
-  flex-wrap: wrap;     /* 允许换行 */
-  gap: 12px;           /* 标签之间的间距 */
+<style scoped lang="scss">
+/* ==========================================
+ * 卡片容器与标题样式
+ * ========================================== */
+.tag-main-card {
+  border: none;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  margin-bottom: 20px;
+
+  :deep(.el-card__body) {
+    padding: 25px 30px;
+  }
+}
+
+.tag-header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 标题居中 */
+  margin-bottom: 25px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+
+  .header-icon {
+    margin-right: 8px;
+    font-size: 22px;
+    color: var(--el-color-primary);
+  }
+}
+
+.article-list-container {
+  min-height: 200px;
+}
+
+/* ==========================================
+ * 优化的标签样式
+ * ========================================== */
+.tag-cloud-box {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* 标签也整体居中，如果不喜欢可以删掉这行靠左对齐 */
+  gap: 12px 16px;
   align-items: center;
 }
 
-.tag-item {
-  cursor: pointer;     /* 鼠标移上去变成手型 */
-  border: none;        /* 可选：去掉边框，让样式更简洁 */
-  transition: all 0.3s;
+.custom-tag-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  font-size: 14px;
+  color: #606266;
+  background-color: #ffffff;
+
+  /* 边框颜色使用注入的 CSS 变量 */
+  border: 1px solid var(--random-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  user-select: none;
+
+  .tag-icon {
+    margin-right: 6px;
+    font-size: 14px;
+    /* 图标颜色使用注入的 CSS 变量 */
+    color: var(--random-color);
+    transition: color 0.3s;
+  }
+
+  .tag-name {
+    font-weight: 500;
+  }
+
+  /* 悬浮状态 */
+  &:hover {
+    color: var(--random-color); /* 悬浮时字体也变成对应颜色 */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  /* 激活(选中)状态 */
+  &.is-active {
+    background-color: var(--random-color);
+    border-color: var(--random-color);
+    color: #ffffff;
+    transform: translateY(-2px);
+    /* 通用柔和阴影，如果浏览器支持，可以使用带有颜色的发光阴影 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    .tag-icon {
+      color: #ffffff; /* 激活时图标变成白色 */
+    }
+  }
 }
 
-.tag-item:hover {
-  transform: translateY(-2px); /* 可选：悬停时轻微上浮效果 */
+/* ==========================================
+ * 移动端适配
+ * ========================================== */
+@media screen and (max-width: 768px) {
+  .tag-main-card {
+    border-radius: 8px;
+    margin-bottom: 15px;
+
+    :deep(.el-card__body) {
+      padding: 20px 15px;
+    }
+  }
+
+  .tag-header {
+    font-size: 18px;
+    margin-bottom: 18px;
+  }
+
+  .tag-cloud-box {
+    gap: 10px;
+  }
+
+  .custom-tag-item {
+    padding: 6px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
 }
 </style>

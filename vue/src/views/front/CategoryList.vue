@@ -30,11 +30,10 @@
     </div>
 
     <div class="pagination-container">
-      <Pagination
+      <FrontPagination
           v-model:current-page="data.pageNum"
           v-model:page-size="data.pageSize"
           :total="data.total"
-          layout="total, prev, pager, next"
           @change="loadPage"
       />
     </div>
@@ -125,44 +124,99 @@ const handleTabChange = (tabName) => {
 </script>
 
 <style scoped lang="scss">
+/* ==========================================
+ * 主容器卡片优化
+ * ========================================== */
 .home-main-card {
   border: none;
-  transition: all 0.3s;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease;
 
-  // 移除 card 默认内边距的影响，方便 tabs 贴边或自定义
+  &:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  }
+
   :deep(.el-card__body) {
-    padding: 20px;
+    /* 这里的 padding-bottom 控制最后一个卡片距离分隔线的距离 */
+    padding: 20px 24px 0px 24px;
   }
 }
 
+/* ==========================================
+ * Tabs 分类导航美化
+ * ========================================== */
 .tabs-container {
-  margin-bottom: 15px;
-  border-bottom: 1px solid #f2f2f2;
-  padding-bottom: 8px;
+  margin-bottom: 8px;
 
-  // 微调由于胶囊样式带来的高度偏移
   :deep(.custom-category-tabs) {
-    .el-tabs__header {
-      margin: 0; // 覆盖全局 margin
+    .el-tabs__nav-wrap::after {
+      display: none;
     }
-    .el-tabs__nav-scroll {
-      padding: 4px 0;
+
+    .el-tabs__header {
+      margin-bottom: 4px;
+    }
+
+    .el-tabs__item {
+      font-size: 16px;
+      color: #606266;
+      padding: 0 20px;
+      height: 40px;
+      line-height: 40px;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+      &.is-active {
+        font-size: 17px;
+        font-weight: 600;
+        color: #222226;
+      }
+    }
+
+    .el-tabs__active-bar {
+      height: 4px;
+      border-radius: 2px;
+      background-color: var(--el-color-primary);
+      box-shadow: 0 2px 6px rgba(64, 158, 255, 0.4);
+      bottom: 0px;
     }
   }
 }
 
+/* ==========================================
+ * 分页容器
+ * ========================================== */
 .pagination-container {
-  margin-top: 30px;
+  border-top: 1px solid #dcdfe6;
   display: flex;
-  justify-content: center; // 分页居中
+  justify-content: center;
+  align-items: center;
+
+  padding: 20px 0;
+  margin-top: 0;
+
+  :deep(> div),
+  :deep(.custom-pagination),
+  :deep(.el-pagination) {
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
 }
 
-// 响应式调整
+/* ==========================================
+ * 移动端适配
+ * ========================================== */
 @media screen and (max-width: 768px) {
   .home-main-card {
     :deep(.el-card__body) {
-      padding: 15px 10px;
+      padding: 12px 12px 0 12px;
     }
+  }
+
+  .pagination-container {
+    padding: 15px 0;
   }
 }
 </style>
