@@ -16,7 +16,7 @@
 
       <div v-else class="notice-list">
         <div
-            v-for="(item, index) in noticeList"
+            v-for="(item) in noticeList"
             :key="item.id"
             class="notice-item animate__animated animate__fadeIn"
         >

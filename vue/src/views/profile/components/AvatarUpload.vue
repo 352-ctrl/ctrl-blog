@@ -90,11 +90,11 @@
 
 <script setup>
 import {reactive, ref} from "vue";
-import { Plus, Minus, RefreshLeft, RefreshRight, Camera } from "@element-plus/icons-vue";
+import {Minus, Plus, RefreshLeft, RefreshRight} from "@element-plus/icons-vue";
+import {ElMessage} from "element-plus";
+import {uploadFile} from "@/api/file.js";
+import 'vue-cropper/dist/index.css';
 import { VueCropper } from "vue-cropper";
-import { ElMessage } from "element-plus";
-import { useUserStore } from "@/store/user.js";
-import { uploadFile } from "@/api/file.js";
 
 /**
  * =========================================================================
@@ -127,7 +127,6 @@ const emit = defineEmits([
  * 3. 状态管理
  * =========================================================================
  */
-const userStore = useUserStore();
 const dialogVisible = ref(false); // 控制弹窗显隐
 const visible = ref(false);       // 控制 cropper 组件渲染（确保弹窗打开后渲染）
 const loading = ref(false);       // 提交按钮 loading 状态
@@ -143,7 +142,9 @@ const options = reactive({
   fixedBox: true,         // 固定截图框大小 不允许改变
   outputType: "png",      // 默认生成截图为PNG格式
   centerBox: true,        // 截图框是否被限制在图片里面
-  info: true              // 裁剪框的大小信息
+  info: true,             // 裁剪框的大小信息
+  checkOrientation: true, // 检查图片方向
+  high: true,             // 开启高清模式
 });
 
 // 实时预览数据

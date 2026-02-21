@@ -2,15 +2,8 @@
   <div class="comment-item" :class="{ 'is-sub-item': isSub }">
     <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 0">
       <el-avatar
-          v-if="data.userAvatar"
           :size="isSub ? 24 : 34"
           :src="data.userAvatar"
-          style="flex-shrink: 0"
-      />
-      <el-avatar
-          v-else
-          :size="isSub ? 24 : 34"
-          :src="defaultAvatar"
           style="flex-shrink: 0"
       />
 
@@ -93,7 +86,6 @@
 
 <script setup>
 import { ref, computed, inject } from 'vue';
-import defaultAvatar from '@/assets/images/default-avatar.png';
 import CommentBox from './CommentBox.vue';
 import CommentLikeButton from './CommentLikeButton.vue';
 import { addComment } from "@/api/front/comment.js";

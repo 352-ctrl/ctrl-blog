@@ -32,10 +32,7 @@
           :align="column.align || 'center'"
       >
         <template #default="scope">
-          <el-avatar v-if="scope.row[column.prop]" :preview-src-list="[scope.row[column.prop]]" :size="40" :src="scope.row[column.prop]" />
-          <el-avatar v-else :size="40" >
-            <img src="../../../assets/images/default-avatar.png">
-          </el-avatar>
+          <el-avatar :preview-src-list="[scope.row[column.prop]]" :size="40" :src="scope.row[column.prop]" />
         </template>
       </el-table-column>
 

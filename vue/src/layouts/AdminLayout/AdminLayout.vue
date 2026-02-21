@@ -27,21 +27,7 @@
           </div>
           <div style="flex: 1"></div>
           <div>
-            <el-dropdown trigger="click">
-              <div style="cursor: pointer;">
-                <img v-if="userStore.avatar" class="user-avatar" :src="userStore.avatar" >
-                <img v-else class="user-avatar" src="../../assets/images/default-avatar.png" >
-              </div>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item disabled style="text-align: center; cursor: default; color: #333; font-weight: bold;">
-                    {{ userStore.nickname }}
-                  </el-dropdown-item>
-                  <el-dropdown-item divided @click="router.push('/admin/profile')">个人中心</el-dropdown-item>
-                  <el-dropdown-item @click="logout">退出登录</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <UserDropdown />
           </div>
         </el-header>
 

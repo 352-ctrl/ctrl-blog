@@ -1,8 +1,7 @@
 <template>
   <div class="comment-box">
     <div style="display: flex; gap: 15px">
-      <el-avatar v-if="userStore.avatar" :size="35" :src="userStore.avatar" />
-      <el-avatar v-else :size="35" :src="defaultAvatar" />
+      <el-avatar :size="35" :src="userStore.avatar" />
 
       <div style="flex: 1">
         <el-input
@@ -50,7 +49,6 @@
 <script setup>
 import { ref, nextTick, onMounted } from "vue";
 import { useUserStore } from "@/store/user.js";
-import defaultAvatar from '@/assets/images/default-avatar.png';
 import IconSmile from "@/components/common/Icon/IconSmile.vue";
 import 'emoji-picker-element'; // 导入自定义元素
 import zh_CN from 'emoji-picker-element/i18n/zh_CN'; // 导入中文包

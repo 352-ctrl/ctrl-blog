@@ -38,26 +38,7 @@
 
       <div class="header-right-tools">
         <SearchModal />
-        <el-dropdown trigger="click">
-          <div class="user-avatar-trigger">
-            <img v-if="userStore.avatar" class="user-avatar" :src="userStore.avatar" alt="avatar">
-            <img v-else class="user-avatar" src="../../assets/images/default-avatar.png" alt="default avatar">
-          </div>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <template v-if="userStore.userInfo.id">
-                <el-dropdown-item disabled class="dropdown-nickname">
-                  {{ userStore.nickname }}
-                </el-dropdown-item>
-                <el-dropdown-item divided @click="router.push('/user/profile')">个人中心</el-dropdown-item>
-                <el-dropdown-item @click="userStore.logout()">退出登录</el-dropdown-item>
-              </template>
-              <template v-else>
-                <el-dropdown-item @click="router.push('/login')">立即登录</el-dropdown-item>
-              </template>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <UserDropdown />
       </div>
     </el-header>
 
@@ -86,26 +67,7 @@
 
       <div class="header-right-tools">
         <SearchModal />
-        <el-dropdown trigger="click">
-          <div class="user-avatar-trigger">
-            <img v-if="userStore.avatar" class="user-avatar" :src="userStore.avatar" alt="avatar">
-            <img v-else class="user-avatar" src="../../assets/images/default-avatar.png" alt="default avatar">
-          </div>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <template v-if="userStore.userInfo.id">
-                <el-dropdown-item disabled class="dropdown-nickname">
-                  {{ userStore.nickname }}
-                </el-dropdown-item>
-                <el-dropdown-item divided @click="router.push('/user/profile')">个人中心</el-dropdown-item>
-                <el-dropdown-item @click="userStore.logout()">退出登录</el-dropdown-item>
-              </template>
-              <template v-else>
-                <el-dropdown-item @click="router.push('/login')">立即登录</el-dropdown-item>
-              </template>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <UserDropdown />
       </div>
     </el-header>
 
@@ -119,6 +81,7 @@
     </el-main>
 
     <el-backtop target=".page-scroll-view" :right="50" :bottom="50" />
+    <AuthDialog />
 
   </el-container>
 </template>
@@ -127,6 +90,7 @@
 import {computed, ref} from "vue";
 import { useUserStore } from '@/store/user.js'
 import { useRoute, useRouter } from "vue-router";
+import AuthDialog from "@/components/front/AuthDialog/AuthDialog.vue";
 import IconHamburger from "@/components/common/Icon/IconHamburger.vue";
 
 // 初始化路由和状态库
@@ -283,19 +247,6 @@ const isShowSidebar = computed(() => !route.meta.hideSidebar);
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-/* 用户头像触发器 */
-.user-avatar-trigger {
-  cursor: pointer;
-}
-
-/* 下拉菜单中的昵称项 */
-.dropdown-nickname {
-  text-align: center;
-  cursor: default;
-  color: #333;
-  font-weight: bold;
 }
 
 /* 桌面端 Logo 容器 */

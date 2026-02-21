@@ -22,17 +22,6 @@
     border-bottom: 1px solid #e6e6e6;
 }
 
-/* 通用登录注册背景样式 */
-.auth-bg {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background-image: url("@/assets/images/auth-bg.png");
-    background-size: cover;
-}
-
 /* 分隔线 */
 .divider {
     background-color: rgba(0, 0, 0, 0.1);
