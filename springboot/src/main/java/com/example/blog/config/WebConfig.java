@@ -35,6 +35,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/files/download/**",
                         "/error",
                         "/actuator",
+                        "/captcha/**",
                         "/doc.html",             // 放行页面
                         "/webjars/**",           // 放行静态资源
                         "/v3/api-docs/**",       // 放行接口数据
