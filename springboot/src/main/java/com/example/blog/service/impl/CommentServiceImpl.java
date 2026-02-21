@@ -186,10 +186,19 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     public IPage<CommentVO> pageComments(CommentQueryDTO queryDTO) {
         Page<Comment> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<Comment> parentQuery = new LambdaQueryWrapper<>();
-        // 文章ID查询(按时间正序排序)
+
+        // 基础查询条件：指定文章、仅查顶级评论
         parentQuery.eq(Comment::getArticleId, queryDTO.getArticleId())
-                .eq(Comment::getParentId, Constants.COMMENT_ROOT_PARENT_ID)  // 只查询顶级评论
-                .orderByDesc(Comment::getCreateTime);
+                .eq(Comment::getParentId, Constants.COMMENT_ROOT_PARENT_ID);
+
+        // 根据前端传入的 sortType 动态决定排序方式
+        if (BizStatus.CommentSort.HOTTEST.getValue().equals(queryDTO.getSortType())) {
+            // 最热：按点赞数倒序，点赞数相同的按时间倒序
+            parentQuery.orderByDesc(Comment::getLikeCount, Comment::getCreateTime);
+        } else {
+            // 最新（默认）：仅按时间倒序
+            parentQuery.orderByDesc(Comment::getCreateTime);
+        }
 
         Page<Comment> parentPage = this.page(page, parentQuery);
         if (CollUtil.isEmpty(parentPage.getRecords())) {

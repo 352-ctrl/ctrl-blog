@@ -1,14 +1,21 @@
 <template>
   <el-card class="comment-container" shadow="never">
     <div class="main-input-wrapper">
-      <div style="font-weight: bold; font-size: 20px; margin-bottom: 20px; border-left: 4px solid #409EFF; padding-left: 10px;">
-        评论 <span style="font-size: 14px; color: #999; font-weight: normal">({{ displayTotal }})</span>
+      <div class="comment-header">
+        <div class="title">
+          评论 <span class="count">({{ displayTotal }})</span>
+        </div>
+        <div class="sort-tabs" v-if="displayTotal > 0">
+          <span :class="{ active: sortType === 2 }" @click="handleSortChange(2)">最热</span>
+          <el-divider direction="vertical" />
+          <span :class="{ active: sortType === 1 }" @click="handleSortChange(1)">最新</span>
+        </div>
       </div>
 
       <CommentBox
           ref="mainBoxRef"
           placeholder="发表你的看法..."
-          submit-text="发表评论"
+          submit-text="发布"
           :rows="4"
           @submit="submitMainComment"
       />
@@ -70,6 +77,9 @@ const pageSize = ref(10);
 const loading = ref(false);
 const mainBoxRef = ref(null);
 
+// 修改点 2：新增排序状态 (1: 最新, 2: 最热)
+const sortType = ref(1);
+
 // 全局控制回复框状态
 const activeReplyId = ref(null); // 当前正在回复的评论ID
 
@@ -90,6 +100,14 @@ provide('commentState', {
   setActiveReplyId
 });
 
+// 修改点 3：切换排序方法
+const handleSortChange = (type) => {
+  if (sortType.value === type) return; // 如果点击的是当前已选的排序，不进行任何操作
+  sortType.value = type;
+  pageNum.value = 1; // 切换排序后回到第一页
+  loadComment();
+};
+
 // 加载数据
 const loadComment = async () => {
   loading.value = true;
@@ -97,6 +115,7 @@ const loadComment = async () => {
     pageNum: pageNum.value,
     pageSize: pageSize.value,
     articleId: props.articleId,
+    sortType: sortType.value // 修改点 4：把排序参数传给后端
   };
   try {
     const res = await getCommentPage(params);
@@ -130,7 +149,11 @@ const submitMainComment = async (content) => {
     if (res.code === 200) {
       ElMessage.success('评论成功');
       mainBoxRef.value?.clear(); // 清空输入框
-      pageNum.value = 1; // 回到第一页
+
+      // 发表评论后，为了让用户立刻看到自己的评论，强制切回“最新”排序，并回到第一页
+      sortType.value = 1;
+      pageNum.value = 1;
+
       displayTotal.value++;
       await loadComment(); // 刷新列表
       emit('comment-success');
@@ -145,13 +168,13 @@ const submitMainComment = async (content) => {
 // 回复子评论成功后触发
 const handleReplySuccess = async () => {
   await loadComment();
-
   emit('comment-success');
 };
 
 // 监听文章ID变化
 watch(() => props.articleId, () => {
   pageNum.value = 1;
+  sortType.value = 1; // 切换文章时重置为最新排序
   loadComment();
 });
 
@@ -169,9 +192,54 @@ onMounted(() => {
   margin-top: 20px;
   border-radius: 8px;
 }
+
 /* 专门定位主评论区域内的提交按钮 */
 .main-input-wrapper :deep(.el-button--primary) {
   width: 80px;  /* 自定义宽度 */
   height: 30px;  /* 自定义高度 */
+}
+
+/* === 新增：头部与排序切换样式 === */
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.comment-header .title {
+  font-weight: bold;
+  font-size: 20px;
+  border-left: 4px solid #409EFF;
+  padding-left: 10px;
+  line-height: 1; /* 保持对齐 */
+}
+
+.comment-header .title .count {
+  font-size: 14px;
+  color: #999;
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+.sort-tabs {
+  font-size: 14px;
+  color: #9499a0;
+  display: flex;
+  align-items: center;
+}
+
+.sort-tabs span {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sort-tabs span:hover {
+  color: #409EFF;
+}
+
+.sort-tabs span.active {
+  color: #222;
+  font-weight: bold;
 }
 </style>

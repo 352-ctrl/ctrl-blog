@@ -231,4 +231,24 @@ public final class BizStatus {
      * 任务上下文存取的 Key 名称
      */
     public static final String JOB_PROPERTIES = "JOB_PROPERTIES";
+
+    /* ============================== 6. 评论业务 ============================== */
+
+    /**
+     * 评论排序方式
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum CommentSort implements BaseEnum<Integer> {
+        LATEST(1, "按时间最新"),
+        HOTTEST(2, "按热度(点赞数)");
+
+        @EnumValue
+        private final Integer code;
+        @JsonValue
+        private final String desc;
+
+        @Override
+        public Integer getValue() { return code; }
+    }
 }

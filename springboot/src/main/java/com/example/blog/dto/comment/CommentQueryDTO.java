@@ -1,5 +1,6 @@
 package com.example.blog.dto.comment;
 
+import com.example.blog.common.enums.BizStatus;
 import com.example.blog.dto.PageQueryDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -21,5 +22,8 @@ public class CommentQueryDTO extends PageQueryDTO {
 
     @Schema(description = "文章ID", example = "1623456789012345678", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long articleId;
+
+    @Schema(description = "排序方式：1-按时间最新(默认)，2-按热度(点赞数)", example = "1")
+    private Integer sortType = BizStatus.CommentSort.LATEST.getValue();
 
 }
