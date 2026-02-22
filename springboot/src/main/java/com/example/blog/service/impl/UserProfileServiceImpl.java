@@ -3,7 +3,6 @@ package com.example.blog.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.ResultCode;
@@ -23,7 +22,7 @@ import com.example.blog.vo.UserVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
 
 import java.util.concurrent.TimeUnit;
 
@@ -50,6 +49,8 @@ public class UserProfileServiceImpl extends ServiceImpl<UserMapper, User> implem
      * @throws CustomerException 校验失败时抛出异常
      */
     private User validateUserForUpdate(Long id) {
+        Assert.notNull(id, "用户ID不能为空");
+
         // 登录状态校验
         UserPayloadDTO currentUser = UserContext.get();
         if (currentUser == null || currentUser.getId() == null) {
@@ -112,6 +113,8 @@ public class UserProfileServiceImpl extends ServiceImpl<UserMapper, User> implem
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateProfile(UserProfileUpdateDTO updateDTO) {
+        Assert.notNull(updateDTO, "更新用户信息参数不能为空");
+
         UserPayloadDTO currentUser = UserContext.get();
         // 基础校验
         if (currentUser == null || currentUser.getId() == null) {
@@ -152,6 +155,8 @@ public class UserProfileServiceImpl extends ServiceImpl<UserMapper, User> implem
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void changePassword(UserChangePwdDTO changePwdDTO, String token) {
+        Assert.notNull(changePwdDTO, "修改密码参数不能为空");
+
         UserPayloadDTO currentUser = UserContext.get();
         if (changePwdDTO == null || currentUser.getId() == null) {
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);

@@ -12,6 +12,7 @@ import com.example.blog.service.SysOperLogService;
 import com.example.blog.vo.SysOperLogVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -26,11 +27,15 @@ public class SysOperLogServiceImpl extends ServiceImpl<SysOperLogMapper, SysOper
 
     @Override
     public void addLog(SysOperLog sysOperLog) {
+        Assert.notNull(sysOperLog, "操作日志对象不能为空");
+
         this.save(sysOperLog);
     }
 
     @Override
     public IPage<SysOperLogVO> pageAdminOperLog(SysOperLogQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "分页查询参数不能为空");
+
         LambdaQueryWrapper<SysOperLog> queryWrapper = new LambdaQueryWrapper<>();
 
         // 1. 模糊匹配：模块名称和操作人昵称
@@ -52,5 +57,5 @@ public class SysOperLogServiceImpl extends ServiceImpl<SysOperLogMapper, SysOper
         IPage<SysOperLog> entityPage = this.page(page, queryWrapper);
         return entityPage.convert(sysOperLogConvert::entityToVo);
     }
-    
+
 }

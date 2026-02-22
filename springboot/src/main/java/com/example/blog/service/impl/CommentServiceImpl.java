@@ -27,12 +27,15 @@ import com.example.blog.service.CommentService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.CommentAssembler;
 import com.example.blog.utils.RedisUtil;
+import com.example.blog.utils.SensitiveWordManager;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.comment.AdminCommentVO;
 import com.example.blog.vo.comment.CommentVO;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -42,6 +45,7 @@ import java.util.stream.Collectors;
  * 系统用户业务服务实现类
  * 实现用户相关的具体业务逻辑
  */
+@Slf4j
 @Service
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements CommentService {
 
@@ -63,6 +67,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private SensitiveWordManager sensitiveWordManager;
+
     /**
      * 批量获取评论关联的附加信息（用户、文章）
      *
@@ -75,6 +82,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      * </ul>
      */
     public Map<String, Object> getCommentExtraInfo(List<Comment> comments) {
+        if (CollUtil.isEmpty(comments)) {
+            return Collections.emptyMap();
+        }
         return commentAssembler.batchQueryCommentExtraMaps(comments);
     }
 
@@ -141,6 +151,12 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      * 组装树形结构并封装结果
      */
     private IPage<CommentVO> buildCommentTree(List<CommentVO> allVOs, List<Long> parentIds, Page<Comment> page) {
+        if (CollUtil.isEmpty(allVOs)) {
+            Page<CommentVO> emptyPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+            emptyPage.setRecords(Collections.emptyList());
+            return emptyPage;
+        }
+
         Set<Long> parentIdSet = new HashSet<>(parentIds);
         List<CommentVO> rootVOs = new ArrayList<>();
         List<CommentVO> childrenVOs = new ArrayList<>();
@@ -184,6 +200,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      */
     @Override
     public IPage<CommentVO> pageComments(CommentQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "查询条件不能为空");
+        Assert.notNull(queryDTO.getArticleId(), "文章ID不能为空");
+
         Page<Comment> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<Comment> parentQuery = new LambdaQueryWrapper<>();
 
@@ -238,6 +257,8 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      */
     @Override
     public IPage<AdminCommentVO> pageAdminComments(AdminCommentQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "查询条件不能为空");
+
         Page<Comment> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
         // 用户昵称和文章标题模糊查询
@@ -285,6 +306,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addComment(CommentAddDTO addDTO) {
+        Assert.notNull(addDTO, "新增评论参数不能为空");
         UserPayloadDTO currentUser = UserContext.get();
         if (currentUser == null) {
             throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
@@ -292,6 +314,11 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
         Comment comment = commentConvert.addDtoToEntity(addDTO);
         comment.setUserId(currentUser.getId());
+
+        // 过滤敏感词，将违规词替换为星号 '*'
+        String originalContent = comment.getContent();
+        String safeContent = sensitiveWordManager.replace(originalContent, Constants.SENSITIVE_REPLACE_CHAR);
+        comment.setContent(safeContent);
 
         Long parentId = addDTO.getParentId() == null ? Constants.COMMENT_ROOT_PARENT_ID : addDTO.getParentId();
         comment.setParentId(parentId);
@@ -327,6 +354,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteCommentById(Long id) {
+        Assert.notNull(id, "评论ID不能为空");
         UserPayloadDTO currentUser = UserContext.get();
         if (currentUser == null) {
             throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
@@ -355,8 +383,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteComments(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
+        if (CollUtil.isEmpty(ids)) {
+            log.warn("批量删除评论失败：传入的 ID 列表为空");
+            return;
         }
         boolean success = this.lambdaUpdate()
                 .in(Comment::getId, ids)
@@ -375,6 +404,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      * 封装级联删除子评论的逻辑
      */
     private void deleteChildrenComments(List<Long> potentialParentIds) {
+        if (CollUtil.isEmpty(potentialParentIds)) {
+            return;
+        }
         // 只有当删除的是父评论(parentId=0)时，才需要删子评论
         // 这里为了性能，直接查找库里这些ID作为ParentId的记录进行删除
         // 如果业务逻辑严格，可以先查 selectedIds 中哪些是 parentId=0 的

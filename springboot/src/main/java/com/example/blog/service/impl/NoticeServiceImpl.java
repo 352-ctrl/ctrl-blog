@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
@@ -25,6 +24,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +45,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
 
     @Override
     public AdminNoticeVO getNoticeById(Long id) {
+        Assert.notNull(id, "公告ID不能为空");
+
         Notice notice = this.getById(id);
         if (notice == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_NOTICE_NOT_EXIST);
@@ -81,9 +83,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
 
     @Override
     public IPage<AdminNoticeVO> pageAdminNotices(NoticeQueryDTO queryDTO) {
-        if (queryDTO == null) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notNull(queryDTO, "分页查询参数不能为空");
+
         Page<Notice> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<Notice> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(StrUtil.isNotBlank(queryDTO.getContent()), Notice::getContent, queryDTO.getContent())
@@ -98,9 +99,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addNotice(NoticeAddDTO addDTO) {
-        if (addDTO == null) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notNull(addDTO, "新增公告参数不能为空");
 
         Notice notice = noticeConvert.addDtoToEntity(addDTO);
         this.save(notice);
@@ -112,6 +111,9 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateNotice(NoticeUpdateDTO updateDTO) {
+        Assert.notNull(updateDTO, "更新公告参数不能为空");
+        Assert.notNull(updateDTO.getId(), "公告ID不能为空");
+
         Notice notice = this.getById(updateDTO.getId());
         if (notice == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_NOTICE_NOT_EXIST);
@@ -127,9 +129,7 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteNoticeById(Long id) {
-        if (id == null) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notNull(id, "公告ID不能为空");
 
         boolean success = this.removeById(id);
 
@@ -141,9 +141,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
 
     @Override
     public void batchDeleteNotices(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notEmpty(ids, "公告ID列表不能为空");
+
         this.removeByIds(ids);
         // 只要有数据变动，清理缓存
         redisUtil.delete(RedisConstants.REDIS_NOTICE_LIST_KEY);

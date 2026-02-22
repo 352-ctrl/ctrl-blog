@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +61,8 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
 
     @Override
     public TagVO getTagById(Long id) {
+        Assert.notNull(id, "标签ID不能为空");
+
         Tag tag = this.getById(id);
         if (tag == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_TAG_NOT_EXIST);
@@ -132,6 +134,8 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
 
     @Override
     public IPage<TagVO> pageAdminTags(TagQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "分页查询参数不能为空");
+
         Page<Tag> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<Tag> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(StrUtil.isNotBlank(queryDTO.getName()), Tag::getName, queryDTO.getName())
@@ -143,6 +147,8 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addTag(TagAddDTO addDTO) {
+        Assert.notNull(addDTO, "新增标签参数不能为空");
+
         Tag tag = tagConvert.addDtoToEntity(addDTO);
         try {
             this.save(tag);
@@ -157,9 +163,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateTag(TagUpdateDTO updateDTO) {
-        if (StrUtil.isBlank(updateDTO.getName())) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notNull(updateDTO, "更新标签参数不能为空");
+        Assert.notNull(updateDTO.getId(), "标签ID不能为空");
+
         LambdaQueryWrapper<Tag> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Tag::getName, updateDTO.getName())
                 .ne(Tag::getId, updateDTO.getId());
@@ -185,6 +191,8 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteTagById(Long id) {
+        Assert.notNull(id, "标签ID不能为空");
+
         boolean success = this.removeById(id);
 
         // 只要有数据变动，清理缓存
@@ -196,9 +204,7 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteTags(List<Long> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
-        }
+        Assert.notEmpty(ids, "标签ID列表不能为空");
 
         this.removeBatchByIds(ids);
 

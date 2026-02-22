@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +49,8 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long likeComment(Long commentId) {
+        Assert.notNull(commentId, "评论ID不能为空");
+
         // 1. 获取当前登录用户
         UserPayloadDTO user = UserContext.get();
         if (user == null) {
@@ -90,6 +93,8 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long cancelLikeComment(Long commentId) {
+        Assert.notNull(commentId, "评论ID不能为空");
+
         // 1. 获取当前登录用户
         UserPayloadDTO user = UserContext.get();
         if (user == null) {
@@ -129,6 +134,10 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
      */
     @Override
     public List<Long> listLikedCommentIds(List<Long> commentIds) {
+        if (CollUtil.isEmpty(commentIds)) {
+            return Collections.emptyList();
+        }
+
         // 1. 获取当前登录用户
         UserPayloadDTO user = UserContext.get();
         if (user == null) {
@@ -136,10 +145,6 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
             return Collections.emptyList();
         }
         Long userId = user.getId();
-
-        if (CollUtil.isEmpty(commentIds)) {
-            return Collections.emptyList();
-        }
 
         // 2. 批量查询已点赞的评论 ID
         return this.list(new LambdaQueryWrapper<CommentLike>()

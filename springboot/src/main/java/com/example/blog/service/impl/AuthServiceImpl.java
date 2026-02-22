@@ -32,6 +32,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -141,6 +142,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void sendEmailCode(EmailRequestDTO emailRequestDTO) {
+        Assert.notNull(emailRequestDTO, "邮箱请求参数不能为空");
+
         // 滑动验证码二次校验
         verifyCaptcha(emailRequestDTO.getCaptchaVerification());
 
@@ -175,6 +178,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserLoginVO login(UserLoginDTO loginDTO) {
+        Assert.notNull(loginDTO, "登录参数不能为空");
+
         // 滑动验证码二次校验
         verifyCaptcha(loginDTO.getCaptchaVerification());
 
@@ -235,6 +240,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public UserLoginVO register(UserRegisterDTO registerDTO) {
+        Assert.notNull(registerDTO, "注册参数不能为空");
+
         // 验证密码与确认密码是否一致
         String password = registerDTO.getPassword();
         String confirmPassword = registerDTO.getConfirmPassword();

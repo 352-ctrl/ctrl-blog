@@ -1,7 +1,6 @@
 package com.example.blog.service.impl;
 
 import cn.hutool.core.io.FileUtil;
-import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.exception.CustomerException;
@@ -11,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -50,6 +50,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String upload(MultipartFile file) {
+        // 添加针对文件对象的防空断言校验
+        Assert.notNull(file, "上传文件对象不能为空");
+
         if (file.isEmpty()) {
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_FILE_IS_EMPTY);
         }
@@ -76,6 +79,10 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public void download(String fileName, HttpServletResponse response) {
+        // 添加针对文件名和响应对象的防空断言校验
+        Assert.hasText(fileName, "下载文件名不能为空");
+        Assert.notNull(response, "HTTP响应对象不能为空");
+
         // 安全检查：防止下载 files 目录以外的文件 (如 ../application.yml)
         if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
             throw new CustomerException(ResultCode.PARAM_ERROR, "非法的文件名");

@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.util.Optional;
 
@@ -44,6 +45,8 @@ public class ArticleFavoriteServiceImpl extends ServiceImpl<ArticleFavoriteMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long favoriteArticle(Long articleId) {
+        Assert.notNull(articleId, "文章ID不能为空");
+
         // 1. 获取当前登录用户
         UserPayloadDTO user = UserContext.get();
         if (user == null) {
@@ -89,6 +92,8 @@ public class ArticleFavoriteServiceImpl extends ServiceImpl<ArticleFavoriteMappe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long cancelFavoriteArticle(Long articleId) {
+        Assert.notNull(articleId, "文章ID不能为空");
+
         // 1. 获取当前登录用户
         UserPayloadDTO user = UserContext.get();
         if (user == null) {
@@ -129,6 +134,8 @@ public class ArticleFavoriteServiceImpl extends ServiceImpl<ArticleFavoriteMappe
      * @param articleId 文章ID
      */
     public boolean isFavoriteArticle(Long articleId) {
+        Assert.notNull(articleId, "文章ID不能为空");
+
         // 获取当前登录用户
         UserPayloadDTO user = UserContext.get();
         if (user == null) {

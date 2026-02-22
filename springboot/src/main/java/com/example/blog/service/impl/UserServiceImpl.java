@@ -25,6 +25,7 @@ import jakarta.annotation.Resource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,6 +45,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public UserVO getUserById(Long id) {
+        Assert.notNull(id, "用户ID不能为空");
+
         User user = this.getById(id);
         if (user == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_USER_NOT_EXIST);
@@ -53,6 +56,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public IPage<UserVO> pageAdminUsers(UserQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "分页查询参数不能为空");
+
         if (queryDTO == null) {
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
         }
@@ -67,6 +72,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addUser(UserAddDTO addDTO) {
+        Assert.notNull(addDTO, "新增用户参数不能为空");
+
         User user = userConvert.addDtoToEntity(addDTO);
         try {
             this.save(user);
@@ -78,6 +85,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateUser(UserUpdateDTO updateDTO) {
+        Assert.notNull(updateDTO, "更新用户参数不能为空");
+        Assert.notNull(updateDTO.getId(), "用户ID不能为空");
+
         User user = this.getById(updateDTO.getId());
         if (user == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_USER_NOT_EXIST);
@@ -93,9 +103,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteUserById(Long id) {
-        if (id == null) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notNull(id, "用户ID不能为空");
+
         // 防止删除自己或超级管理员
         UserPayloadDTO currentUser = UserContext.get();
         // 校验是否删除自己
@@ -123,9 +132,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteUsers(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notEmpty(ids, "用户ID列表不能为空");
 
         UserPayloadDTO currentUser = UserContext.get();
         if (currentUser == null) {

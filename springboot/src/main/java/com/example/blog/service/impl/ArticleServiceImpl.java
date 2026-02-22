@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
@@ -18,9 +19,13 @@ import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.*;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.*;
-import com.example.blog.service.*;
+import com.example.blog.service.ArticleFavoriteService;
+import com.example.blog.service.ArticleLikeService;
+import com.example.blog.service.ArticleService;
+import com.example.blog.service.ArticleTagService;
 import com.example.blog.utils.ArticleAssembler;
 import com.example.blog.utils.RedisUtil;
+import com.example.blog.utils.SensitiveWordManager;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.TagVO;
 import com.example.blog.vo.article.*;
@@ -28,6 +33,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -67,13 +73,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private CommentMapper commentMapper;
 
     @Resource
-    private AiSummaryService aiSummaryService;
-
-    @Resource
     private ArticleAssembler articleAssembler;
 
     @Resource
     private RedisUtil redisUtil;
+
+    @Resource
+    private SensitiveWordManager sensitiveWordManager;
 
     /**
      * 根据标签ID列表查询文章ID列表
@@ -196,6 +202,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      */
     @Override
     public ArticleDetailVO getArticleDetail(Long id) {
+        Assert.notNull(id, "文章ID不能为空");
+
         String articleCacheKey = RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + id;
         // 尝试从 Redis 获取完整的 VO 对象
         ArticleDetailVO vo = null;
@@ -302,6 +310,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public AdminArticleVO getArticleForEdit(Long id) {
+        Assert.notNull(id, "文章ID不能为空");
+
         Article article = this.getById(id);
         if (article == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_ARTICLE_NOT_EXIST);
@@ -414,6 +424,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @SuppressWarnings("unchecked")
     public IPage<ArticleCardVO> pageArticles(ArticleQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "查询条件不能为空");
+
         // 判断是否是“首页第一页”（无搜索、无分类、无标签、第1页）
         boolean isFirstPageHome = queryDTO.getPageNum() == 1
                 && StrUtil.isBlank(queryDTO.getTitle())
@@ -477,6 +489,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      */
     @Override
     public IPage<AdminArticleVO> pageAdminArticles(ArticleQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "查询条件不能为空");
+
         Page<Article> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<Article> articleQueryWrapper = new LambdaQueryWrapper<>();
         if (CollUtil.isNotEmpty(queryDTO.getTagIds())) {
@@ -509,6 +523,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateArticle(ArticleUpdateDTO updateDTO) {
+        Assert.notNull(updateDTO, "更新文章参数不能为空");
+
         Article article = this.getById(updateDTO.getId());
         if (article == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_ARTICLE_NOT_EXIST);
@@ -519,6 +535,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             if (category == null) {
                 throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_CATEGORY_NOT_EXIST);
             }
+        }
+
+        // 过滤敏感词，将违规词替换为 '█'
+        if (updateDTO.getContent() != null) {
+            String safeContent = sensitiveWordManager.replace(updateDTO.getContent(), Constants.SENSITIVE_REPLACE_ARTICLE);
+            updateDTO.setContent(safeContent);
         }
 
         articleConvert.updateEntityFromDto(updateDTO, article);
@@ -534,9 +556,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addArticle(ArticleAddDTO addDTO) {
+        Assert.notNull(addDTO, "新增文章参数不能为空");
+
         Category category = categoryMapper.selectById(addDTO.getCategoryId());
         if (category == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_CATEGORY_NOT_EXIST);
+        }
+
+        // 过滤敏感词，将违规词替换为 '█'
+        if (addDTO.getContent() != null) {
+            String safeContent = sensitiveWordManager.replace(addDTO.getContent(), Constants.SENSITIVE_REPLACE_ARTICLE);
+            addDTO.setContent(safeContent);
         }
 
         Article article = articleConvert.addDtoToEntity(addDTO);
@@ -557,6 +587,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteArticleById(Long id) {
+        Assert.notNull(id, "文章ID不能为空");
+
         boolean success = this.lambdaUpdate()
                 .eq(Article::getId, id)
                 .set(Article::getIsDeleted, 1)
@@ -579,6 +611,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteArticles(List<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
+            log.warn("批量删除文章失败：传入的 ID 列表为空");
             return;
         }
 
@@ -651,6 +684,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     public void incrementViewCount(ArticleVisitorDTO visitorDTO) {
+        Assert.notNull(visitorDTO, "访问记录参数不能为空");
+
         if (visitorDTO.getArticleId() == null || StrUtil.isBlank(visitorDTO.getIp())) {
             return;
         }

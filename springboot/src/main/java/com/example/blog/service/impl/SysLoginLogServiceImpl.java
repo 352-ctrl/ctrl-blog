@@ -17,6 +17,7 @@ import com.example.blog.vo.SysLoginLogVO;
 import jakarta.annotation.Resource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,10 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
     @Async // 异步执行，不阻塞主线程
     @Override
     public void recordLoginLog(String email, Integer status, String message, String ip, String userAgent) {
+        Assert.hasText(email, "登录邮箱不能为空");
+        Assert.notNull(status, "登录状态不能为空");
+        Assert.hasText(ip, "IP地址不能为空");
+
         // 解析 UserAgent 获取浏览器和系统信息
         UserAgent ua = UserAgentUtil.parse(userAgent);
 
@@ -54,6 +59,8 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
 
     @Override
     public IPage<SysLoginLogVO> pageAdminLoginLog(SysLoginLogQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "分页查询参数不能为空");
+
         LambdaQueryWrapper<SysLoginLog> queryWrapper = new LambdaQueryWrapper<>();
 
         // 时间范围过滤 (ge: 大于等于, le: 小于等于)

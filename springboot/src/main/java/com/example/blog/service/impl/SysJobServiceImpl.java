@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
@@ -23,6 +22,7 @@ import jakarta.annotation.Resource;
 import org.quartz.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
@@ -53,6 +53,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addJob(SysJobAddDTO addDTO) {
+        Assert.notNull(addDTO, "新增任务参数不能为空");
+
         // 校验 Cron 表达式
         if (!CronExpression.isValidExpression(addDTO.getCronExpression())) {
             throw new CustomerException(MessageConstants.MSG_CRON_FORMAT_ERROR);
@@ -74,6 +76,9 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateJob(SysJobUpdateDTO  updateDTO) {
+        Assert.notNull(updateDTO, "更新任务参数不能为空");
+        Assert.notNull(updateDTO.getId(), "任务ID不能为空");
+
         if (!CronExpression.isValidExpression(updateDTO.getCronExpression())) {
             throw new CustomerException(MessageConstants.MSG_CRON_FORMAT_ERROR);
         }
@@ -106,6 +111,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteJobById(Long id) {
+        Assert.notNull(id, "任务ID不能为空");
+
         SysJob job = this.getById(id);
         if (job != null) {
             // 删除 Quartz 中的任务
@@ -118,6 +125,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteJobs(List<Long> ids) {
+        Assert.notEmpty(ids, "任务ID列表不能为空");
+
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }
@@ -136,6 +145,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     @Override
     public void run(Long id) {
+        Assert.notNull(id, "任务ID不能为空");
+
         SysJob job = this.getById(id);
         if (job == null) {
             throw new CustomerException(MessageConstants.MSG_JOB_NOT_EXIST);
@@ -147,6 +158,9 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void changeStatus(Long id, Integer status) {
+        Assert.notNull(id, "任务ID不能为空");
+        Assert.notNull(status, "目标状态不能为空");
+
         SysJob job = this.getById(id);
         if (job == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_JOB_NOT_EXIST);
@@ -175,6 +189,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     @Override
     public SysJobVO getJobById(Long id) {
+        Assert.notNull(id, "任务ID不能为空");
+
         SysJob job = this.getById(id);
         if (job == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_JOB_NOT_EXIST);
@@ -184,6 +200,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     @Override
     public IPage<SysJobVO> pageAdminJobs(SysJobQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "分页查询参数不能为空");
+
         Page<SysJob> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<SysJob> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(StrUtil.isNotBlank(queryDTO.getJobName()), SysJob::getJobName, queryDTO.getJobName())

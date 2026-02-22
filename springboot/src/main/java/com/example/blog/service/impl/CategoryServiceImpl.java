@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -54,6 +55,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     @Override
     public CategoryVO getCategoryById(Long id) {
+        Assert.notNull(id, "分类ID不能为空");
+
         Category category = this.getById(id);
         if (category == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_TAG_NOT_EXIST);
@@ -120,6 +123,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     @Override
     public IPage<CategoryVO> pageAdminCategories(CategoryQueryDTO queryDTO) {
+        Assert.notNull(queryDTO, "查询条件不能为空");
+
         Page<Category> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(StrUtil.isNotBlank(queryDTO.getName()), Category::getName, queryDTO.getName())
@@ -131,6 +136,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addCategory(CategoryAddDTO addDTO) {
+        Assert.notNull(addDTO, "新增分类参数不能为空");
+
         Category category = categoryConvert.addDtoToEntity(addDTO);
         try {
             this.save(category);
@@ -145,9 +152,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCategory(CategoryUpdateDTO updateDTO) {
-        if (StrUtil.isBlank(updateDTO.getName())) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_ERROR);
-        }
+        Assert.notNull(updateDTO, "更新分类参数不能为空");
+        Assert.notNull(updateDTO.getId(), "分类ID不能为空");
+
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getName, updateDTO.getName())
                 .ne(Category::getId, updateDTO.getId());
@@ -173,6 +180,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteCategoryById(Long id) {
+        Assert.notNull(id, "分类ID不能为空");
+
         boolean success = this.removeById(id);
 
         // 只要有数据变动，清理缓存
@@ -185,6 +194,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteCategories(List<Long> ids) {
         if (CollectionUtils.isEmpty(ids)) {
+            log.warn("批量删除分类失败：传入的 ID 列表为空");
             return;
         }
 

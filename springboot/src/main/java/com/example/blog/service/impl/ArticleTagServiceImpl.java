@@ -8,6 +8,7 @@ import com.example.blog.mapper.ArticleTagMapper;
 import com.example.blog.service.ArticleTagService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
@@ -51,6 +52,8 @@ public class ArticleTagServiceImpl extends ServiceImpl<ArticleTagMapper, Article
     @Override
     @Transactional(rollbackFor = Exception.class) // 涉及写操作，建议加事务
     public void updateArticleTags(Long articleId, List<Long> tagIds) {
+        Assert.notNull(articleId, "文章ID不能为空");
+
         // 0. 判空处理：如果传入 null，视为空列表（即删除所有标签）
         if (tagIds == null) {
             tagIds = Collections.emptyList();
