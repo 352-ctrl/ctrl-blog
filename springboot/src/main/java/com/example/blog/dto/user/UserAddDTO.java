@@ -1,5 +1,6 @@
 package com.example.blog.dto.user;
 
+import com.example.blog.annotation.CheckSensitive;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.enums.BizStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -32,6 +33,7 @@ public class UserAddDTO {
             regexp = "^[\\u4e00-\\u9fa5a-zA-Z0-9_]+$",
             message = "昵称只能包含中文、字母、数字和下划线"
     )
+    @CheckSensitive(message = "用户昵称包含违规词汇，请修改")
     private String nickname;
 
     /**

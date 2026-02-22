@@ -1,5 +1,6 @@
 package com.example.blog.dto.article;
 
+import com.example.blog.annotation.CheckSensitive;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -37,11 +38,13 @@ public class ArticleUpdateDTO {
     @Schema(description = "文章标题", example = "Spring Boot 3.0 实战教程 (修订版)", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "文章标题不能为空")
     @Size(max = 255, message = "文章标题长度不能超过255个字符")
+    @CheckSensitive(message = "文章标题包含违规词汇，请修改")
     private String title;
 
     @Schema(description = "文章摘要", example = "本文增加了关于Knife4j的配置说明...")
     @NotBlank(message = "文章摘要不能为空")
     @Size(max = 255, message = "文章摘要长度不能超过255个字符")
+    @CheckSensitive(message = "文章摘要包含违规词汇，请修改")
     private String summary;
 
     @Schema(description = "摘要来源 (0:人工, 1:AI)", example = "0", defaultValue = "0")

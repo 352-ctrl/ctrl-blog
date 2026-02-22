@@ -1,5 +1,6 @@
 package com.example.blog.dto.tag;
 
+import com.example.blog.annotation.CheckSensitive;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -21,6 +22,7 @@ public class TagAddDTO {
     @Schema(description = "标签名称", example = "Spring Boot", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "标签名称不能为空")
     @Size(max = 20, message = "标签名称长度不能超过20个字符")
+    @CheckSensitive(message = "标签名称包含违规词汇，请修改")
     private String name;
 
 }

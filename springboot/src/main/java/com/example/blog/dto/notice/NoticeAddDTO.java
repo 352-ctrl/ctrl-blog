@@ -1,5 +1,6 @@
 package com.example.blog.dto.notice;
 
+import com.example.blog.annotation.CheckSensitive;
 import com.example.blog.common.enums.BizStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +23,7 @@ public class NoticeAddDTO {
 
     @Schema(description = "公告内容", example = "系统将于今晚 24:00 进行停机维护，请提前保存数据。", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "公告内容不能为空")
+    @CheckSensitive(message = "公告内容包含违规词汇，请修改")
     private String content;
 
     @Schema(description = "公告状态 (0:隐藏, 1:显示)", example = "1", defaultValue = "1")
