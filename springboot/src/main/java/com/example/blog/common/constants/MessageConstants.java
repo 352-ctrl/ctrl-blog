@@ -186,6 +186,15 @@ public final class MessageConstants {
     public static final String MSG_TAG_NOT_EXIST = "标签不存在";
 
     /**
+     * 敏感词已存在
+     */
+    public static final String MSG_WORD_EXIST = "该敏感词已存在";
+    /**
+     * 敏感词不存在
+     */
+    public static final String MSG_WORD_NOT_EXIST = "敏感词不存在";
+
+    /**
      * 评论不存在
      */
     public static final String MSG_COMMENT_NOT_EXIST = "评论不存在";
@@ -194,6 +203,11 @@ public final class MessageConstants {
      * 公告不存在
      */
     public static final String MSG_NOTICE_NOT_EXIST = "公告不存在";
+
+    /**
+     * 敏感词拦截提示
+     */
+    public static final String MSG_CONTENT_SENSITIVE = "内容包含违规词汇，请修改后提交";
 
 
     /* ============================== 5. 文件与任务消息 ============================== */

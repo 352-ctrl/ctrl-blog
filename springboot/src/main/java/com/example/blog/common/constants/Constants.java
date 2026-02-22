@@ -94,6 +94,16 @@ public final class Constants {
     public static final String MASK_PASSWORD = "******";
 
     /**
+     * 敏感词替换字符 (用于评论、文章等内容的违规词过滤)
+     */
+    public static final char SENSITIVE_REPLACE_CHAR = '*';
+
+    /**
+     * 文章内容专用的敏感词替换字符
+     */
+    public static final char SENSITIVE_REPLACE_ARTICLE = '█';
+
+    /**
      * 需要脱敏的字段 Key 列表 (用于 JSON 遍历)
      */
     public static final String[] SENSITIVE_KEYS = {"password", "confirmPassword", "oldPassword", "newPassword"};

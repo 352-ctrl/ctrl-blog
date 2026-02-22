@@ -70,6 +70,12 @@ export const adminRoutes = {
                     meta: { title: '公告管理', icon: 'Bell' }
                 },
                 {
+                    path: 'words',
+                    name: 'AdminSensitiveWordList',
+                    component: () => import('@/views/admin/system/word/SensitiveWordList.vue'),
+                    meta: { title: '敏感词管理', icon: 'Warning' }
+                },
+                {
                     path: 'log',
                     name: 'SystemLog',
                     component: BlankLayout,
