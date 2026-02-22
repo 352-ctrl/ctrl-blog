@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.List;
  * 系统用户管理控制器
  * 提供用户的增删改查 RESTful API 接口
  */
+@Validated
 @RestController
 @RequestMapping("/api/admin/users")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)

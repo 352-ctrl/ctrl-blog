@@ -14,15 +14,17 @@ import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/admin/monitor/login-log")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台登录日志管理")
-public class SysLoginLogController {
+public class AdminSysLoginLogController {
 
     @Resource
     private SysLoginLogService sysLoginLogService;

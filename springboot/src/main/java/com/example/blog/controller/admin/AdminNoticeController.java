@@ -10,7 +10,6 @@ import com.example.blog.dto.notice.NoticeQueryDTO;
 import com.example.blog.dto.notice.NoticeUpdateDTO;
 import com.example.blog.service.NoticeService;
 import com.example.blog.vo.notice.AdminNoticeVO;
-import com.example.blog.vo.notice.NoticeVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -18,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +26,7 @@ import java.util.List;
  * 公告管理控制器
  * 提供公告的增删改查 RESTful API 接口
  */
+@Validated
 @RestController
 @RequestMapping("/api/admin/notices")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)

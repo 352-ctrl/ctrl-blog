@@ -23,7 +23,7 @@ import java.util.Map;
 @RequestMapping("/api/admin/monitor/server")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台服务监控")
-public class ServerMonitorController {
+public class AdminServerMonitorController {
 
     @Resource
     private MeterRegistry meterRegistry;

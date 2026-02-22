@@ -24,7 +24,7 @@ import java.util.*;
 @RequestMapping("/api/admin/monitor/redis")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台缓存监控")
-public class RedisMonitorController {
+public class AdminRedisMonitorController {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
