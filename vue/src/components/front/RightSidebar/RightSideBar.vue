@@ -8,8 +8,8 @@
 
       <template v-else>
         <NoticeCard />
+        <HotArticleCard />
         <TagCloudCard />
-
       </template>
 
     </div>
@@ -22,6 +22,7 @@ import { useRoute } from 'vue-router';
 import NoticeCard from '@/components/front/RightSidebar/cards/NoticeCard.vue';
 import TagCloudCard from '@/components/front/RightSidebar/cards/TagCloudCard.vue';
 import ArticleTocCard from '@/components/front/RightSidebar/cards/ArticleTocCard.vue';
+import HotArticleCard from '@/components/front/RightSidebar/cards/HotArticleCard.vue';
 
 const route = useRoute();
 </script>

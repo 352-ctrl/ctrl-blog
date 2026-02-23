@@ -95,12 +95,12 @@
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
+import { onMounted, onUnmounted, reactive, ref } from "vue";
 import {ElMessage} from "element-plus";
 import {useRoute, useRouter} from "vue-router";
 import 'emoji-picker-element';
 import {sanitizeHtml} from "@/utils/filter.js";
-import {getArticleById} from "@/api/front/article.js";
+import { getArticleById, incrementArticleView } from "@/api/front/article.js";
 import CommentSection from '@/components/front/Comment/CommentSection.vue';
 
 const route = useRoute();
@@ -116,9 +116,32 @@ const data = reactive({
   commentList:[],
 })
 
+let viewTimer = null;
+
 // 初始化加载
 onMounted(() => {
   loadArticle();
+
+  // 延迟 5 秒发送增加阅读量请求 (防爬虫、防秒退)
+  viewTimer = setTimeout(() => {
+    if (data.articleId) {
+      incrementArticleView(data.articleId).then(res => {
+        if (res.code === 200) {
+          data.articleData.viewCount = (parseInt(data.articleData.viewCount) || 0) + 1;
+        }
+      }).catch(err => {
+        console.error('记录阅读量异常:', err);
+      });
+    }
+  }, 5000);
+});
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (viewTimer) {
+    clearTimeout(viewTimer);
+    viewTimer = null;
+  }
 });
 
 const handleTagClick = (id) => {

@@ -3,7 +3,7 @@ import request from "@/utils/request.js";
 // 基础路径
 const BASE_URL = '/api/front/articles'
 
-// 1. 根据ID查询
+// 1. 根据ID查询 (获取详情)
 export function getArticleById(id) {
     return request({
         url: `${BASE_URL}/${id}`,
@@ -19,7 +19,7 @@ export function getArticleArchive() {
     })
 }
 
-// 3. 分页查询
+// 3. 分页查询 (前台文章列表)
 export function getArticlePage(params) {
     return request({
         url: BASE_URL,
@@ -41,5 +41,21 @@ export function getArticleCarousel() {
     return request({
         url: `${BASE_URL}/carousel`,
         method: 'get'
+    })
+}
+
+// 6. 获取热门文章
+export function getHotArticles() {
+    return request({
+        url: `${BASE_URL}/hot`,
+        method: 'get'
+    })
+}
+
+// 7. 增加文章阅读量
+export function incrementArticleView(id) {
+    return request({
+        url: `${BASE_URL}/${id}/view`,
+        method: 'post'
     })
 }
