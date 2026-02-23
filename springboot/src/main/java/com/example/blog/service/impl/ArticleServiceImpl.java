@@ -38,6 +38,8 @@ import org.springframework.util.Assert;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -114,70 +116,79 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     /**
-     * 专门给 Article 实体用的浏览量同步方法
+     * 通用的浏览量同步方法 (利用 Java 8 函数式接口)
      *
-     * @param articles 文章列表
+     * @param list            需要同步的列表 (Entity 或各种 VO 均可)
+     * @param idExtractor     提取 ID 的方法引用 (例如：Article::getId)
+     * @param viewCountSetter 设置浏览量的方法引用 (例如：Article::setViewCount)
+     * @param <T>             对象的泛型类型
      */
-    private void syncViewCountForEntities(List<Article> articles) {
-        if (CollUtil.isEmpty(articles)) {
+    private <T> void syncViewCount(List<T> list, Function<T, Long> idExtractor, BiConsumer<T, Long> viewCountSetter) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
 
-        // 收集所有文章的浏览量 Key
-        List<Object> articleIds = articles.stream()
-                .map(Article::getId)
+        // 1. 动态提取 ID 列表
+        List<Object> articleIds = list.stream()
+                .map(idExtractor)       // 动态调用 getId()
                 .map(String::valueOf)
                 .collect(Collectors.toList());
 
-        // 内存中赋值
+        // 2. 从 Redis 批量获取实时阅读量
         List<Object> viewCounts = redisUtil.hMultiGet(RedisConstants.REDIS_VIEW_HASH_KEY, articleIds);
 
-        for (int i = 0; i < articles.size(); i++) {
+        // 3. 遍历覆盖旧值
+        for (int i = 0; i < list.size(); i++) {
             Object countObj = viewCounts.get(i);
-
-            // 如果 Redis 里有数据，就覆盖 Entity 里的值
-            // 如果 Redis 里是 null (说明没人访问过或被清空了)，就保持 DB 里的原值
             if (ObjectUtil.isNotNull(countObj)) {
-                // 安全转换：先转 String 再转 Integer，防止 Redis 底层存储类型差异报错
-                Long realTimeCount = Long.valueOf((countObj.toString()));
-                articles.get(i).setViewCount(realTimeCount);
+                try {
+                    Long realTimeCount = Long.valueOf(countObj.toString());
+                    // 动态调用 setViewCount()
+                    viewCountSetter.accept(list.get(i), realTimeCount);
+                } catch (NumberFormatException e) {
+                    // 忽略异常，保持原值
+                    log.warn("同步浏览量转换异常，保持原值: {}", countObj);
+                }
             }
         }
     }
 
-    /**
-     * 专门给 ArticleListVO 用的浏览量同步方法
-     *
-     * @param voList 文章VO列表
-     */
-    private void syncViewCountForVOs(List<ArticleCardVO> voList) {
-        if (CollUtil.isEmpty(voList)) {
-            return;
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<ArticleHotVO> listHotArticles() {
+        // 1. 定义 Redis Key
+        String cacheKey = RedisConstants.REDIS_ARTICLE_HOT_KEY;
+
+        // 2. 尝试从 Redis 获取缓存
+        Object cacheValue = redisUtil.get(cacheKey);
+        if (cacheValue != null) {
+            return (List<ArticleHotVO>) cacheValue;
         }
 
-        // 收集 ID
-        List<Object> articleIds = voList.stream()
-                .map(ArticleCardVO::getId)
-                .collect(Collectors.toList());
+        // 3. 缓存未命中，查询数据库
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(Article::getId, Article::getTitle, Article::getViewCount, Article::getCover, Article::getCreateTime)
+                .eq(Article::getStatus, BizStatus.Article.PUBLISHED)
+                // 使用 last 拼接复杂的加权排序 SQL
+                // 权重公式：阅读量(x1) + 点赞量(x5) + 收藏量(x10)
+                .last("ORDER BY (view_count + like_count * 5 + favorite_count * 10) DESC LIMIT 5");
 
-        // 从 Redis Hash 中批量获取实时阅读量
-        List<Object> viewCounts = redisUtil.hMultiGet(RedisConstants.REDIS_VIEW_HASH_KEY, articleIds);
+        List<Article> articles = this.list(wrapper);
 
-        // 覆盖 VO 中的旧值
-        for (int i = 0; i < voList.size(); i++) {
-            Object countObj = viewCounts.get(i);
-
-            // 如果 Redis Hash 里有值，就覆盖；如果是 null，说明可能被清空了，保持缓存里的原值
-            if (ObjectUtil.isNotNull(countObj)) {
-                try {
-                    // 安全转换：Object -> String -> Integer
-                    Long realTimeCount = Long.valueOf((countObj.toString()));
-                    voList.get(i).setViewCount(realTimeCount);
-                } catch (NumberFormatException e) {
-                    // 忽略异常，保持原值
-                }
-            }
+        if (CollUtil.isEmpty(articles)) {
+            return Collections.emptyList();
         }
+
+        // 4. 同步 Redis 中的最新浏览量到实体中
+        syncViewCount(articles, Article::getId, Article::setViewCount);
+
+        // 5. 实体类转 VO
+        List<ArticleHotVO> voList = articleConvert.entitiesToHotVos(articles);
+
+        // 6. 写入 Redis
+        redisUtil.set(cacheKey, voList, RedisConstants.EXPIRE_ARTICLE_HOT, TimeUnit.HOURS);
+
+        return voList;
     }
 
     /**
@@ -437,7 +448,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 Object cache = redisUtil.get(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
                 if (cache != null) {
                     IPage<ArticleCardVO> page = (IPage<ArticleCardVO>) cache;
-                    syncViewCountForVOs(page.getRecords());
+                    syncViewCount(page.getRecords(), ArticleCardVO::getId, ArticleCardVO::setViewCount);
                     return page;
                 }
             } catch (Exception e) {
@@ -469,7 +480,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         // 同步 Redis 中的最新浏览量到文章实体中
-        syncViewCountForEntities(articles);
+        syncViewCount(articles, Article::getId, Article::setViewCount);
 
         Map<String, Object> extraMaps = articleAssembler.batchQueryArticleExtraMaps(articles);
         List<ArticleCardVO> vos = articleConvert.entitiesToListVos(articles, extraMaps);
@@ -511,7 +522,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         articles = CollUtil.isEmpty(articles) ? Collections.emptyList() : articles;
 
         // 同步 Redis 中的最新浏览量到文章实体中
-        syncViewCountForEntities(articles);
+        syncViewCount(articles, Article::getId, Article::setViewCount);
 
         Map<String, Object> extraMaps = articleAssembler.batchQueryArticleExtraMaps(articles);
         List<AdminArticleVO> adminVos = articleConvert.entitiesToAdminVos(articles, extraMaps);
@@ -683,6 +694,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return list;
     }
 
+    /**
+     * 增加文章阅读量 (基于 Redis 缓存与防刷机制)
+     * <p>
+     * 核心处理逻辑：
+     * 1. 【防刷拦截】：根据访客的 IP 和 UserAgent 生成唯一 MD5 指纹，利用 Redis 键的过期机制实现 1 分钟内同一用户的访问仅记录一次。
+     * 2. 【实时计数】：通过 Redis Hash 结构 (hIncr) 实时对对应文章的阅读量进行原子自增。如果 Redis 中暂无记录，则先从数据库回源初始化。
+     * 3. 【异步标记】：将被访问过的文章 ID 存入 Redis Set 集合作为“脏数据”标记，等待后台定时任务统一步伐持久化到 MySQL，大幅降低数据库写压力。
+     * </p>
+     *
+     * @param visitorDTO 访客请求信息对象，必须包含文章ID (articleId) 与 IP地址 (ip)
+     */
     public void incrementViewCount(ArticleVisitorDTO visitorDTO) {
         Assert.notNull(visitorDTO, "访问记录参数不能为空");
 
@@ -710,33 +732,39 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 标记该访客已访问，1分钟过期
         redisUtil.set(limitKey, RedisConstants.VIEW_LIMIT_VALUE, RedisConstants.VIEW_LIMIT_EXPIRE, TimeUnit.MINUTES);
 
-        String hashKey = RedisConstants.REDIS_VIEW_HASH_KEY;
-
         try {
-            // 检查 Hash 中是否有该文章的记录
-            // hHasKey 对应 Redis: HEXISTS key field
-            if (!redisUtil.hHasKey(hashKey, articleId.toString())) {
-                // 如果 Redis 里没有，先从数据库查出来初始化
-                Article article = this.getById(articleId);
-                long initViewCount = (article != null && article.getViewCount() != null) ? article.getViewCount() : 0L;
+            String hashKey = RedisConstants.REDIS_VIEW_HASH_KEY;
+            String field = articleId.toString();
 
-                // 初始化到 Redis Hash 中
-                redisUtil.hSet(hashKey, articleId.toString(), initViewCount);
+            // 1. 直接自增
+            Long currentCount = redisUtil.hIncr(hashKey, field, 1L);
+
+            // 2. 如果自增后结果为 1，说明 Redis 之前没这文章的数据，需要从 DB 补齐
+            if (currentCount == 1) {
+                Article article = this.getById(articleId);
+                long dbCount = (article != null && article.getViewCount() != null) ? article.getViewCount() : 0L;
+                // 补偿：DB 值 + 1（因为刚才那次访问也是有效的）
+                redisUtil.hSet(hashKey, field, dbCount + 1);
             }
 
-            // 原子自增 (Hash 结构)
-            // hIncr 对应 Redis: HINCRBY key field increment
-            redisUtil.hIncr(hashKey, articleId.toString(), 1L);
-
-            // 将文章ID放入脏数据 Set，等待定时任务同步
-            // sSet 对应 Redis: SADD key member
+            // 3. 记录脏数据
             redisUtil.sSet(RedisConstants.REDIS_VIEW_DIRTY_SET, articleId);
-
         } catch (Exception e) {
-            log.error("Redis 计数或记录脏数据异常，文章ID: {}", articleId, e);
+            log.error("Redis 计数异常", e);
         }
     }
 
+    /**
+     * 异步定时同步 Redis 中的文章阅读量到 MySQL 数据库
+     * <p>
+     * 核心处理逻辑：
+     * 1. 从 Redis 的“脏数据” Set 集合中提取出自上次同步以来被访问过的所有文章 ID。
+     * 2. 根据取出的 ID 列表，从 Redis Hash 中批量 (HMGET) 获取这些文章的最新实时阅读量。
+     * 3. 组装实体对象，利用 MyBatis-Plus 提供的批量更新功能 (updateBatchById) 将数据统一落盘。
+     * 4. 【安全移除】：落盘成功后，仅从“脏数据” Set 中移除本次参与处理的 ID，以防止在同步期间产生的新增访问记录被误删。
+     * </p>
+     * 注意：此方法需配合 Spring Task (@Scheduled) 定时调度触发。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncArticleViewsToDb() {

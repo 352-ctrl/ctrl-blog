@@ -93,7 +93,6 @@ public final class RedisConstants {
      * 首页轮播图缓存 Key
      */
     public static final String REDIS_ARTICLE_CAROUSEL_KEY = "blog:article:carousel";
-
     /**
      * 轮播图缓存时间 (1小时)
      */
@@ -138,6 +137,15 @@ public final class RedisConstants {
      * 首页列表缓存时间 (30分钟)
      */
     public static final long EXPIRE_ARTICLE_LIST_FIRST_PAGE = 30L;
+
+    /**
+     * 热门文章 Key
+     */
+    public static final String REDIS_ARTICLE_HOT_KEY = "blog:article:hot";
+    /**
+     * 热门文章列表缓存时间 (30分钟)
+     */
+    public static final long EXPIRE_ARTICLE_HOT = 30L;
 
 
     /* ============================== 4. 公共元数据 (分类/标签/公告) ============================== */

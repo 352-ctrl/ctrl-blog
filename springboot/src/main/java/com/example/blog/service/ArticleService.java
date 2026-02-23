@@ -15,6 +15,13 @@ import java.util.List;
 public interface ArticleService extends IService<Article> {
 
     /**
+     * 获取侧边栏热门文章列表
+     *
+     * @return 热门文章列表
+     */
+    List<ArticleHotVO> listHotArticles();
+
+    /**
      * 获取全站搜索索引数据
      *
      * @return 文章搜索索引列表

@@ -176,6 +176,22 @@ public interface ArticleConvert extends BaseConvert<Article, ArticleAddDTO, Arti
     List<ArticleSearchVO> entitiesToSearchVos(List<Article> articles, @Context Map<String, Object> extraMaps);
 
     /**
+     * 将 Article 实体转换为热门文章 VO
+     *
+     * @param article 实体
+     * @return 热门文章 VO
+     */
+    ArticleHotVO entityToHotVo(Article article);
+
+    /**
+     * 将 Article 实体列表转换为热门文章 VO 列表
+     *
+     * @param articles 实体列表
+     * @return 热门文章 VO 列表
+     */
+    List<ArticleHotVO> entitiesToHotVos(List<Article> articles);
+
+    /**
      * 从附加信息Map中安全获取文章作者昵称
      *
      * @param article   文章实体（不可为null）
