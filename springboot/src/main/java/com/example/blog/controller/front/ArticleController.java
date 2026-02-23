@@ -14,6 +14,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
  * 文章前台控制器
  * 提供文章的查询、归档、搜索等 RESTful API 接口
  */
+@Validated
 @RestController
 @RequestMapping("/api/front/articles")
 @Tag(name = "前台文章")
@@ -34,7 +36,7 @@ public class ArticleController {
      * 获取文章详情
      */
     @GetMapping("/{id}")
-    @Operation(summary = "获取文章详情", description = "根据文章ID查询完整内容、作者信息及评论数。<br><strong>注意：调用此接口会自动增加文章浏览量 (PV)。</strong>")
+    @Operation(summary = "获取文章详情", description = "根据文章ID查询完整内容、作者信息及评论数。")
     public Result<ArticleDetailVO> getArticleDetail(@PathVariable @Positive(message = "文章ID非法") Long id) {
         ArticleDetailVO detailVO = articleService.getArticleDetail(id);
         return Result.success(detailVO);
@@ -78,6 +80,16 @@ public class ArticleController {
     public Result<List<ArticleCarouselVO>> listCarousel() {
         List<ArticleCarouselVO> carouselList = articleService.listCarousel();
         return Result.success(carouselList);
+    }
+
+    /**
+     * 获取侧边栏热门文章
+     */
+    @GetMapping("/hot")
+    @Operation(summary = "获取热门文章", description = "按浏览量倒序返回前5篇热门文章，专用于侧边栏展示。")
+    public Result<List<ArticleHotVO>> listHotArticles() {
+        List<ArticleHotVO> hotArticles = articleService.listHotArticles();
+        return Result.success(hotArticles);
     }
 
     /**
