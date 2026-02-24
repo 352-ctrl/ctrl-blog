@@ -122,8 +122,12 @@ const menuRoutes = computed(() => {
 </script>
 
 <style scoped>
+/* ====================================
+   侧边栏整体与 Logo 区域
+   ==================================== */
 .sidebar-menu {
   border-right: none;
+  background-color: transparent; /* 背景透明，跟随父容器 Aside 的颜色 */
 }
 
 .sidebar-logo-container {
@@ -132,20 +136,66 @@ const menuRoutes = computed(() => {
   align-items: center;
   padding: 0 10px;
   overflow: hidden;
+  border-bottom: 1px solid var(--el-border-color-lighter); /* 增加极淡的底部分割线 */
+  background-color: transparent;
 }
 
 .logo-img {
-  height: 40px;
+  height: 32px; /* 稍微缩小一点 Logo 让其看起来更精致 */
   border-radius: 50%;
   padding: 0 5px;
 }
 
 .logo-text {
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 16px;
   white-space: nowrap;
   margin-left: 5px;
+  color: var(--el-text-color-primary); /* 适配暗黑模式字体颜色 */
 }
 
+/* ====================================
+   菜单项悬浮与激活态
+   ==================================== */
+:deep(.el-menu),
+:deep(.el-menu--inline) {
+  background-color: transparent !important;
+}
+
+/* 常规文本颜色适配 */
+:deep(.el-menu-item),
+:deep(.el-sub-menu__title) {
+  color: var(--el-text-color-regular);
+}
+
+/* 悬浮态：极淡的背景色填充 */
+:deep(.el-menu-item:hover),
+:deep(.el-sub-menu__title:hover) {
+  color: var(--el-color-primary) !important;
+  background-color: var(--el-fill-color-light) !important;
+}
+
+/* 激活态：品牌色浅色背景 + 左侧边框高亮 */
+:deep(.el-menu-item.is-active) {
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9);
+  font-weight: bold;
+  border-left: 3px solid var(--el-color-primary); /* 左边框高亮条 */
+}
+
+/* 针对暗黑模式修正激活态底色 */
+html.dark :deep(.el-menu-item.is-active) {
+  background-color: var(--el-color-primary-light-8);
+}
+
+/* 抵消掉由于左侧增加边框导致的内边距偏移 */
+:deep(.el-menu-item) {
+  border-left: 3px solid transparent;
+}
+
+/* ====================================
+   子菜单层级缩进
+   ==================================== */
 /* 1. 二级菜单统一缩进（同时囊括“无子菜单的项”和“有子菜单的标题”） */
 :deep(.el-menu--inline .el-menu-item),
 :deep(.el-menu--inline .el-sub-menu__title) {

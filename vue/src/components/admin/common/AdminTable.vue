@@ -15,7 +15,7 @@
 
     <el-table-column v-if="expandable" type="expand">
       <template #default="scope">
-        <div style="padding: 20px; background-color: #fafafa;">
+        <div class="expand-wrapper">
           <slot name="expand" :row="scope.row"></slot>
         </div>
       </template>
@@ -48,7 +48,7 @@
           <el-image
               v-if="scope.row[column.prop]"
               :src="scope.row[column.prop]"
-              style="width: 80px; height: 60px; object-fit: cover;"
+              class="cover-image"
               :preview-src-list="[scope.row[column.prop]]"
           />
           <span v-else>无封面</span>
@@ -69,7 +69,7 @@
                 v-for="(tag, index) in scope.row[column.prop]"
                 :key="index"
                 size="small"
-                style="margin-right: 5px; margin-bottom: 5px;"
+                class="tag-item"
             >
               {{ tag }}
             </el-tag>
@@ -153,10 +153,10 @@
         <template #default="scope">
           <slot :name="column.slotName || 'reply'" :row="scope.row" :index="scope.$index">
             <div v-if="scope.row[column.prop] && scope.row[column.prop] !== '--'">
-              <span style="color: #409EFF; font-weight: bold;">
+              <span class="reply-user">
                 @{{ scope.row[column.prop] }}
               </span>
-              <span v-if="scope.row[column.contentProp]" style="color: #909399; font-size: 12px; margin-left: 5px;">
+              <span v-if="scope.row[column.contentProp]" class="reply-content">
                 : {{ scope.row[column.contentProp] }}
               </span>
             </div>
@@ -194,7 +194,7 @@
             icon="Edit"
             circle
             @click="handleEditClick(scope.row)"
-            :style="deletable ? 'margin-right: 8px;' : ''"
+            :class="{ 'action-btn-mr': deletable }"
         />
         <el-button
             v-if="deletable"
@@ -213,91 +213,32 @@ import { defineProps, defineEmits, computed } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { sanitizeHtml } from "@/utils/filter.js";
 
-/**
- * =========================================================================
- * 类型定义 (Type Definitions)
- * =========================================================================
- */
-
-/**
- * @typedef {Object} TableColumn
- * @property {string} prop - 字段名
- * @property {string} label - 表头文案
- * @property {'avatar'|'cover'|'tags'|'status'|'top'|'html'|'reply'} [type] - 列类型，留空为默认文本
- * @property {number} [width] - 固定宽度 (px)
- * @property {number} [minWidth] - 最小宽度 (px)
- * @property {string} [align='center'] - 对齐方式
- * @property {Object} [statusMap] - 状态映射配置 { [key]: { text: string, type: string } }
- */
-
-/**
- * =========================================================================
- * Props 定义
- * =========================================================================
- */
 const props = defineProps({
-  /** 表格数据源 */
   tableData: { type: Array, required: true, default: () => [] },
-
-  /** 列配置数组 */
   columns: { type: Array, required: true, default: () => [] },
-
-  /** 是否显示最左侧多选列 */
   showSelection: { type: Boolean, default: true },
-
-  /** 是否显示最右侧操作列基础开关 */
   showAction: { type: Boolean, default: true },
-
-  /** v-model:selectedIds 绑定的选中行 ID 集合 */
   selectedIds: { type: Array, default: () => [] },
-
-  /** 是否开启编辑功能 */
   editable: { type: Boolean, default: true },
-
-  /** 是否开启删除功能 */
   deletable: { type: Boolean, default: true },
-
-  /** * 删除接口函数
-   * @param {number} id - 数据 ID
-   * @returns {Promise} 返回含 code 字段的响应对象
-   */
   deleteApi: { type: Function, required: true },
-
-  /** 删除确认弹窗内容 */
   deleteTip: { type: String, default: '确定删除该数据吗？' },
-
-  /** 删除确认弹窗标题 */
   deleteTitle: { type: String, default: '提示' },
-
-  /** 是否开启展开行功能 */
   expandable: { type: Boolean, default: false }
 })
 
-/**
- * =========================================================================
- * Events 定义
- * =========================================================================
- */
 const emit = defineEmits([
-  'update:selectedIds', // 双向绑定选中 ID
-  'selection-change',   // 透传原生多选事件
-  'edit',               // 触发编辑
-  'delete-success',     // 删除成功回调
-  'status-change'       // 状态修改事件 (Switch 开关切换时触发，回传当前行数据 row)
+  'update:selectedIds',
+  'selection-change',
+  'edit',
+  'delete-success',
+  'status-change'
 ])
 
-/**
- * =========================================================================
- * 计算属性 (Computed Properties) - 新增
- * =========================================================================
- */
-
-// 1. 实际是否显示操作列（基础开关打开 且 至少有一个按钮时才显示）
 const realShowAction = computed(() => {
   return props.showAction && (props.editable || props.deletable)
 })
 
-// 2. 动态计算操作列宽度（两个按钮 150px，只有一个按钮时缩小为 90px）
 const actionColumnWidth = computed(() => {
   if (props.editable && props.deletable) {
     return 150
@@ -305,34 +246,16 @@ const actionColumnWidth = computed(() => {
   return 90
 })
 
-/**
- * =========================================================================
- * 交互逻辑 (Interaction Logic)
- * =========================================================================
- */
-
-/**
- * 处理多选变更
- * 同步更新父组件的 selectedIds 数据模型
- */
 const handleSelectionChange = (selectedRows) => {
   const ids = selectedRows.map(row => row.id)
   emit('update:selectedIds', ids)
   emit('selection-change', selectedRows)
 }
 
-/**
- * 处理编辑操作
- * 将当前行数据回传给父组件
- */
 const handleEditClick = (row) => {
   emit('edit', row)
 }
 
-/**
- * 处理删除操作
- * 包含二次确认弹窗和接口调用逻辑
- */
 const handleDeleteClick = async (id) => {
   try {
     await ElMessageBox.confirm(
@@ -355,25 +278,50 @@ const handleDeleteClick = async (id) => {
   }
 }
 
-/**
- * 处理 Switch 状态变更
- * @param {Object} row 当前行数据
- */
 const handleSwitchChange = (row) => {
-  // 可以在这里加个 loading 效果防止重复点击
   row.loading = true;
-
-  // 抛出事件给父组件，父组件负责调用 API
-  // 传递 row 对象，父组件处理完后记得把 loading 改回 false
   emit('status-change', row);
 }
 </script>
 
 <style scoped>
-/* 强制统一表头背景色，增强视觉识别度 */
+/* 强制统一表头背景色，自适应暗黑模式 */
 :deep(.common-table-header) {
-  background-color: #f8f8f9 !important;
-  color: #515a6e;
+  background-color: var(--el-fill-color-light) !important;
+  color: var(--el-text-color-primary);
   font-weight: 600;
+}
+
+/* 提取的行内样式 */
+.expand-wrapper {
+  padding: 20px;
+  background-color: var(--el-fill-color-lighter); /* 浅灰/深灰自适应 */
+}
+
+.cover-image {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.tag-item {
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.reply-user {
+  color: var(--el-color-primary);
+  font-weight: bold;
+}
+
+.reply-content {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+.action-btn-mr {
+  margin-right: 8px;
 }
 </style>

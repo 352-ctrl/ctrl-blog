@@ -60,17 +60,19 @@ const handleLink = (item) => {
 }
 
 .no-redirect {
-  color: #97a8be;
+  color: var(--el-text-color-secondary); /* 适配暗黑模式的次要文字颜色 */
   cursor: text;
 }
 
 .redirect {
-  color: #666;
+  color: var(--el-text-color-regular); /* 适配暗黑模式的常规文字颜色 */
   font-weight: 600;
   cursor: pointer;
+  transition: color 0.3s;
 }
+
 .redirect:hover {
-  color: #409eff;
+  color: var(--el-color-primary); /* 悬浮显示主题色 */
 }
 
 /* 动画 */

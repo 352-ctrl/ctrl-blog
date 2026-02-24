@@ -73,16 +73,23 @@ const handleChange = () => {
 }
 
 /* ==========================================
- * 现代化按钮样式优化 (UI/UX 增强)
+ * 现代化按钮样式优化 (UI/UX 增强，完美适配暗黑)
  * ========================================== */
 
-/* 统一按钮圆角与过渡动画 */
+/* 文字颜色自适应（总条数、跳页等辅助文字） */
+:deep(.custom-pagination .el-pagination__total),
+:deep(.custom-pagination .el-pagination__jump) {
+  color: var(--el-text-color-regular);
+}
+
+/* 统一按钮圆角、过渡动画与自适应背景 */
 :deep(.custom-pagination.is-background .el-pager li),
 :deep(.custom-pagination.is-background .btn-prev),
 :deep(.custom-pagination.is-background .btn-next) {
   border-radius: 6px !important; /* 现代感圆角 */
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; /* 平滑动效 */
-  background-color: #f4f4f5; /* 柔和的基础背景色 */
+  background-color: var(--el-fill-color-light) !important; /* 柔和的填充色，亮色浅灰/暗色深灰 */
+  color: var(--el-text-color-regular) !important; /* 字体颜色适配暗黑 */
   border: 1px solid transparent;
 }
 
@@ -91,15 +98,15 @@ const handleChange = () => {
 :deep(.custom-pagination.is-background .btn-prev:not(.is-disabled):hover),
 :deep(.custom-pagination.is-background .btn-next:not(.is-disabled):hover) {
   color: var(--el-color-primary) !important;
-  background-color: var(--el-color-primary-light-9) !important;
+  background-color: var(--el-color-primary-light-9) !important; /* Element 会自动反转暗色系下的 light-9 */
 }
 
 /* 激活状态 (Active) */
 :deep(.custom-pagination.is-background .el-pager li.is-active) {
   background-color: var(--el-color-primary) !important;
-  color: #ffffff !important;
+  color: var(--el-color-white) !important; /* 保持白色，因为背景已经是实心主题色 */
   font-weight: 600;
-  box-shadow: 0 3px 8px var(--el-color-primary-light-5) !important; /* 添加柔和的发光投影 */
+  box-shadow: 0 3px 8px var(--el-color-primary-light-5) !important; /* 动态发光投影 */
   transform: translateY(-1px); /* 选中项微微上浮 */
 }
 

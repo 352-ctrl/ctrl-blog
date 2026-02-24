@@ -76,8 +76,8 @@
         <el-form-item label="公告内容" prop="content">
           <MdEditor
               v-model="data.form.content"
+              :theme="isDark ? 'dark' : 'light'"
               :preview="false"
-              style="width: 100%; max-width: 100%;"
           />
         </el-form-item>
       </el-form>
@@ -94,6 +94,7 @@ import { reactive, ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { MdEditor } from 'md-editor-v3';
 import 'md-editor-v3/lib/style.css';
+import { useDark } from '@vueuse/core';
 // 引入 API 模块
 import {
   getNoticePage,
@@ -104,6 +105,9 @@ import {
   getNoticeById
 } from "@/api/admin/notice.js";
 import AdminPagination from "@/components/admin/AdminPagination/AdminPagination.vue";
+
+// 实例化暗黑模式响应式变量
+const isDark = useDark();
 
 const formRef = ref(null);
 

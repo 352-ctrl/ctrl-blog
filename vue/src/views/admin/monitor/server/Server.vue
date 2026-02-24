@@ -2,7 +2,7 @@
   <div class="monitor-container" v-loading="loading">
     <el-row :gutter="20">
       <el-col :span="12" :xs="24" class="mb-col">
-        <el-card class="monitor-card" shadow="always">
+        <el-card class="monitor-card card" shadow="never">
           <template #header>
             <div class="card-header"><el-icon><Cpu /></el-icon> <span>CPU使用率</span></div>
           </template>
@@ -33,7 +33,7 @@
       </el-col>
 
       <el-col :span="12" :xs="24" class="mb-col">
-        <el-card class="monitor-card" shadow="always">
+        <el-card class="monitor-card card" shadow="never">
           <template #header>
             <div class="card-header"><el-icon><Memo /></el-icon> <span>内存使用率</span></div>
           </template>
@@ -66,7 +66,7 @@
 
     <el-row :gutter="20" class="mt-4">
       <el-col :span="24">
-        <el-card class="monitor-card" shadow="always">
+        <el-card class="monitor-card card" shadow="never">
           <template #header>
             <div class="card-header"><el-icon><Platform /></el-icon> <span>JVM & 服务器信息</span></div>
           </template>
@@ -75,7 +75,7 @@
             <div class="info-item"><span class="label">系统架构</span><span class="value">{{ info.sys.osArch }}</span></div>
             <div class="info-item"><span class="label">Java版本</span><span class="value">{{ info.jvm.version }}</span></div>
             <div class="info-item"><span class="label">运行时长</span><span class="value">{{ info.jvm.uptime }}</span></div>
-            <div class="info-item" style="grid-column: span 2;">
+            <div class="info-item is-full">
               <span class="label">安装路径</span><span class="value">{{ info.jvm.home }}</span>
             </div>
           </div>
@@ -85,7 +85,7 @@
 
     <el-row :gutter="20" class="mt-4">
       <el-col :span="24">
-        <el-card class="monitor-card" shadow="always">
+        <el-card class="monitor-card card" shadow="never">
           <template #header>
             <div class="card-header"><el-icon><Files /></el-icon> <span>磁盘状态</span></div>
           </template>
@@ -113,7 +113,11 @@ import { Cpu, Memo, Platform, Files } from '@element-plus/icons-vue';
 
 const loading = ref(true);
 const info = ref({ cpu:{}, memory:{}, jvm:{}, sys:{}, disk:{} });
-const colors = [{ color: '#67C23A', percentage: 70 }, { color: '#E6A23C', percentage: 90 }, { color: '#F56C6C', percentage: 100 }];
+const colors = [
+  { color: '#67C23A', percentage: 70 },
+  { color: '#E6A23C', percentage: 90 },
+  { color: '#F56C6C', percentage: 100 }
+];
 
 const parseP = (s) => s ? parseFloat(s.replace('%','')) : 0;
 
@@ -136,24 +140,16 @@ onUnmounted(() => clearInterval(timer));
   padding: 15px;
 }
 
-/* 统一间距控制 */
-.mt-4 { margin-top: 10px; }
+.mt-4 { margin-top: 20px; }
 
-/* 1. 解决移动端垂直堆叠时的间距问题 */
+/* 响应式间距控制 */
 .mb-col {
-  margin-bottom: 0; /* 默认无底部间距 (PC端) */
+  margin-bottom: 0;
 }
 
-/* 响应式样式 */
 @media screen and (max-width: 768px) {
-  /* 在移动端，让第一列有底部间距，从而与第二列产生间隔 */
   .mb-col {
-    margin-bottom: 10px;
-  }
-
-  /* 确保最后一列（如果是堆叠的最后一个）不需要margin，或者保持一致 */
-  .mb-col:last-child {
-    margin-bottom: 0;
+    margin-bottom: 20px;
   }
 }
 
@@ -162,62 +158,61 @@ onUnmounted(() => clearInterval(timer));
   align-items: center;
   gap: 8px;
   font-weight: bold;
+  color: var(--el-text-color-primary);
 }
 
-/* 2. 优化仪表盘布局：Flex 左右布局 */
+/* 布局：Flex 左右布局 */
 .dashboard-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 10px;
-  gap: 20px; /* 进度条和文字区之间的间距 */
-  flex-wrap: wrap; /* 允许换行，适应极小屏幕 */
+  gap: 30px;
+  flex-wrap: wrap;
 }
 
 .chart-box {
-  flex: 0 0 auto; /* 保持进度条区域不被压缩 */
-  display: flex;
-  justify-content: center;
+  flex: 0 0 auto;
 }
 
-/* 3. 优化文字容器样式：Grid 2x2 布局 */
+/* 文字区域网格 */
 .detail-grid {
-  flex: 1; /* 占据剩余空间 */
+  flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 两列 */
+  grid-template-columns: 1fr 1fr;
   gap: 15px;
-  min-width: 200px; /* 防止过窄 */
+  min-width: 200px;
 }
 
-/* 单个文字项样式优化 */
 .detail-item {
   display: flex;
-  flex-direction: column; /* 上下排列：标签在上，数值在下 */
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 12px 5px;
-  background-color: #f8f9fa; /* 轻微背景色 */
-  border-radius: 6px; /* 圆角 */
-  transition: all 0.3s;
+  padding: 15px 10px;
+  /* 使用 Element Plus 变量适配暗黑模式 */
+  background-color: var(--el-fill-color-light);
+  border-radius: 8px;
+  transition: all 0.3s ease;
 
   &:hover {
-    background-color: #f0f2f5;
+    background-color: var(--el-fill-color);
   }
 
   .label {
     font-size: 12px;
-    color: #909399;
-    margin-bottom: 4px;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 6px;
   }
 
   .value {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
-    color: #303133;
+    color: var(--el-text-color-primary);
   }
 }
 
-/* JVM 信息网格 (保持原样或微调) */
+/* JVM & 服务器信息网格 */
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -227,32 +222,47 @@ onUnmounted(() => clearInterval(timer));
 
 .info-item {
   display: flex;
-  justify-content: space-between; /* 左右分布 */
+  justify-content: space-between;
   align-items: center;
-  background: #f8f9fa;
-  padding: 12px 15px;
-  border-radius: 4px;
+  background-color: var(--el-fill-color-light);
+  padding: 12px 18px;
+  border-radius: 6px;
+
+  &.is-full {
+    grid-column: span 2;
+  }
 
   .label {
-    color: #909399;
+    color: var(--el-text-color-secondary);
     font-size: 13px;
   }
 
   .value {
     font-weight: 500;
-    color: #303133;
+    color: var(--el-text-color-primary);
     font-size: 14px;
-    word-break: break-all; /* 防止长路径溢出 */
+    word-break: break-all;
   }
 }
 
-/* 移动端 JVM 信息单列显示 */
+/* 适配移动端表格及网格 */
 @media screen and (max-width: 768px) {
   .info-grid {
     grid-template-columns: 1fr;
   }
-  .info-item[style*="span 2"] {
-    grid-column: span 1 !important;
+  .info-item.is-full {
+    grid-column: span 1;
   }
+
+  .dashboard-wrapper {
+    gap: 15px;
+  }
+}
+
+/* 覆盖表格在暗黑模式下的基础外观 */
+:deep(.el-table) {
+  background-color: transparent !important;
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
 }
 </style>

@@ -1,9 +1,12 @@
 <template>
   <div class="app-container">
-    <el-card shadow="hover" v-loading="infoLoading">
+    <el-card shadow="never" class="redis-card" v-loading="infoLoading">
       <template #header>
         <div class="card-header">
-          <span><el-icon><Monitor /></el-icon> Redis 监控信息</span>
+          <span class="header-title">
+            <el-icon><Monitor /></el-icon>
+            <span>Redis 监控信息</span>
+          </span>
           <el-button type="primary" link icon="Refresh" @click="loadInfo">刷新状态</el-button>
         </div>
       </template>
@@ -28,10 +31,13 @@
       </el-descriptions>
     </el-card>
 
-    <el-card shadow="hover" style="margin-top: 20px;">
+    <el-card shadow="never" class="redis-card keys-card">
       <template #header>
-        <div class="card-header">
-          <span><el-icon><Key /></el-icon> 键值列表</span>
+        <div class="card-header responsive-header">
+          <span class="header-title">
+            <el-icon><Key /></el-icon>
+            <span>键值列表</span>
+          </span>
 
           <el-form :inline="true" class="header-form">
             <el-form-item>
@@ -42,18 +48,18 @@
                   clearable
                   @clear="handleSearch"
                   @keyup.enter="handleSearch"
-                  style="width: 250px"
+                  class="search-input"
               />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="handleSearch">查 询</el-button>
-              <el-button @click="resetQuery" class="reset-btn">重 置</el-button>
+              <el-button @click="resetQuery">重 置</el-button>
             </el-form-item>
           </el-form>
         </div>
       </template>
 
-      <el-table v-loading="tableLoading" :data="keyList" stripe style="width: 100%" height="500">
+      <el-table v-loading="tableLoading" :data="keyList" stripe class="keys-table" height="500">
         <el-table-column type="index" label="#" width="60" align="center" />
         <el-table-column prop="key" label="Key 键名" min-width="200" show-overflow-tooltip />
 
@@ -80,12 +86,14 @@
         </el-table-column>
       </el-table>
 
-      <AdminPagination
-          v-model:current-page="queryParams.pageNum"
-          v-model:page-size="queryParams.pageSize"
-          :total="total"
-          @change="loadKeys"
-      />
+      <div class="pagination-wrapper">
+        <AdminPagination
+            v-model:current-page="queryParams.pageNum"
+            v-model:page-size="queryParams.pageSize"
+            :total="total"
+            @change="loadKeys"
+        />
+      </div>
     </el-card>
   </div>
 </template>
@@ -159,7 +167,6 @@ const loadKeys = () => {
   tableLoading.value = true
   getRedisKeys(queryParams).then(res => {
     if (res.code === 200) {
-      // 匹配 MyBatis-Plus IPage 返回结构
       keyList.value = res.data.records
       total.value = res.data.total
     } else {
@@ -194,25 +201,95 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ==========================================
+ * 卡片基础样式
+ * ========================================== */
+.redis-card {
+  border-radius: 8px;
+  background-color: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-lighter);
+}
+
+.keys-card {
+  margin-top: 15px;
+}
+
+/* ==========================================
+ * 头部排版
+ * ========================================== */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-title {
   font-weight: bold;
+  color: var(--el-text-color-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.reset-btn {
-  background-color: #f5f7fa;
-  color: #606266;
-}
+
+/* ==========================================
+ * 搜索表单排版
+ * ========================================== */
 .header-form {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: -18px; /* 抵消 el-form-item 默认的 bottom margin */
+  align-items: center;
 }
-.header-form .el-form-item {
+
+/* 抵消 el-form-item 默认的 bottom margin */
+.header-form :deep(.el-form-item) {
+  margin-bottom: 0;
   margin-right: 12px;
 }
-.header-form .el-form-item:last-child {
+
+.header-form :deep(.el-form-item:last-child) {
   margin-right: 0;
+}
+
+.search-input {
+  width: 250px;
+}
+
+/* ==========================================
+ * 表格与分页
+ * ========================================== */
+.keys-table {
+  width: 100%;
+}
+
+.pagination-wrapper {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ==========================================
+ * 移动端响应式适配
+ * ========================================== */
+@media screen and (max-width: 768px) {
+  .responsive-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .header-form {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header-form :deep(.el-form-item) {
+    margin-right: 0;
+    width: 100%;
+  }
+
+  /* 手机端搜索框撑满容器 */
+  .search-input {
+    width: 100%;
+  }
 }
 </style>

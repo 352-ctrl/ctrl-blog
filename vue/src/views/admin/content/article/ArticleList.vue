@@ -186,6 +186,7 @@
             <el-form-item label="文章内容" prop="content">
               <MdEditor
                   v-model="data.form.content"
+                  :theme="isDark ? 'dark' : 'light'"
                   :onUploadImg="onUploadImg"
                   :preview="false"
               />
@@ -208,6 +209,7 @@ import {nextTick, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage} from "element-plus";
 import { MdEditor } from 'md-editor-v3';
 import 'md-editor-v3/lib/style.css';
+import { useDark } from '@vueuse/core';
 import { useUserStore } from '@/store/user.js'
 // 引入 API 模块
 import {
@@ -220,6 +222,9 @@ import {
 } from "@/api/admin/article.js";
 import {getCategoryList} from "@/api/admin/category.js";
 import {getTagList} from "@/api/admin/tag.js";
+
+// 实例化暗黑模式响应式变量
+const isDark = useDark();
 
 const userStore = useUserStore()
 
@@ -359,7 +364,7 @@ const loadPage = () => {
 const loadOptions = () => {
   getCategoryList().then(res => {
     if (res.code === 200) {
-      data.categoryOptions = res.data.records;
+      data.categoryOptions = res.data;
     } else {
       ElMessage.error('加载分类失败：' + res.msg);
     }
@@ -367,7 +372,7 @@ const loadOptions = () => {
 
   getTagList().then(res => {
     if (res.code === 200) {
-      data.tagOptions = res.data.records;
+      data.tagOptions = res.data;
     } else {
       ElMessage.error('加载标签失败：' + res.msg);
     }

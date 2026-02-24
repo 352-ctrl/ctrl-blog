@@ -54,7 +54,7 @@
           <el-input v-model="data.form.password" type="password" show-password autocomplete="off" placeholder="请输入密码" />
         </el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-select v-model="data.form.role" placeholder="请选择角色" style="width: 100%">
+          <el-select v-model="data.form.role" placeholder="请选择角色">
             <el-option label="管理员" value="ADMIN" />
             <el-option label="普通用户" value="USER" />
           </el-select>
