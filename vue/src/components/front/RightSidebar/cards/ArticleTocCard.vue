@@ -13,7 +13,7 @@
               :width="20"
               :stroke-width="3"
               :show-text="false"
-              color="#67C23A"
+              color="var(--el-color-success)"
           />
         </div>
       </div>
@@ -134,36 +134,25 @@ const generateToc = () => {
 };
 
 const handleAnchorClick = (e) => {
-  // 1. 阻止默认行为和冒泡，彻底切断 Element Plus 原生锚点逻辑的干扰
   if (e.preventDefault) e.preventDefault();
   e.stopPropagation();
 
-  // 2. 获取点击的链接
   const linkNode = e.target.closest('a');
   if (!linkNode) return;
 
   const href = linkNode.getAttribute('href');
   if (!href) return;
 
-  // 3. 解析目标元素
   const id = href.replace('#', '');
   const target = document.getElementById(id);
   const container = scrollContainer.value;
 
   if (target && container) {
-    // 4. 【核心修改】使用 getBoundingClientRect 计算相对位置
-    // 这种方式不受父级 position: relative 等样式影响，计算结果是物理像素级的精准
     const targetRect = target.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-
-    // 逻辑：目标距离视口顶部的距离 - 容器距离视口顶部的距离 = 目标在容器内的相对偏移量
     const offsetInsideContainer = targetRect.top - containerRect.top;
-
-    // 5. 计算最终滚动位置
-    // 当前滚动位置 + 相对偏移量
     const targetScrollTop = container.scrollTop + offsetInsideContainer;
 
-    // 6. 执行滚动
     container.scrollTo({
       top: targetScrollTop,
       behavior: 'smooth'
@@ -173,18 +162,37 @@ const handleAnchorClick = (e) => {
 
 const handleScroll = () => {
   const el = scrollContainer.value;
-  if (!el) return;
+  const articleDom = document.querySelector(props.containerSelector);
 
-  const scrollTop = el.scrollTop;
-  const scrollHeight = el.scrollHeight;
-  const clientHeight = el.clientHeight;
+  // 1. 兜底逻辑：如果找不到文章DOM，退回原有的整个容器滚动计算
+  if (!el || !articleDom) {
+    if (!el) return;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    const progress = maxScroll <= 0 ? 100 : (el.scrollTop / maxScroll) * 100;
+    readProgress.value = Math.min(100, Math.max(0, Math.round(progress)));
+    return;
+  }
 
-  const maxScroll = scrollHeight - clientHeight;
+  // 2. 获取文章主体和可视容器的物理坐标
+  const articleRect = articleDom.getBoundingClientRect();
+  const containerRect = el.getBoundingClientRect();
 
-  if (maxScroll <= 0) {
+  // 3. 计算滚动的距离：容器顶部坐标 - 文章顶部坐标
+  // 当文章正文的顶部刚好碰到视口顶部时，这个值为 0；继续往下滑，值变为正数
+  const scrolledDistance = containerRect.top - articleRect.top;
+
+  // 4. 计算文章正文部分的真正可滚动总距离：文章总高度 - 视口高度
+  const totalScrollable = articleRect.height - containerRect.height;
+
+  // 5. 计算并更新进度
+  if (totalScrollable <= 0) {
+    // 情况 A：文章很短，一屏就能全部看完，直接 100%
     readProgress.value = 100;
   } else {
-    const progress = (scrollTop / maxScroll) * 100;
+    // 情况 B：正常长文章，计算百分比
+    const progress = (scrolledDistance / totalScrollable) * 100;
+    // 使用 Math.min 和 Math.max 将进度严格限制在 0 ~ 100 之间
+    // 防止用户没滑到文章正文时出现负数，或者滑到评论区时超过 100
     readProgress.value = Math.min(100, Math.max(0, Math.round(progress)));
   }
 };
@@ -192,14 +200,14 @@ const handleScroll = () => {
 
 <style scoped lang="scss">
 .toc-card {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
-  background: #fff;
+  background: var(--el-bg-color-overlay);
   margin-bottom: 20px;
 
   :deep(.el-card__header) {
     padding: 15px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
   .card-header {
@@ -212,11 +220,11 @@ const handleScroll = () => {
       align-items: center;
       font-size: 16px;
       font-weight: 600;
-      color: #333;
+      color: var(--el-text-color-primary);
 
       .icon-reading {
         margin-right: 10px;
-        color: #67C23A;
+        color: var(--el-color-success);
         font-size: 18px;
       }
     }
@@ -225,12 +233,12 @@ const handleScroll = () => {
       display: flex;
       align-items: center;
       font-size: 12px;
-      color: #909399;
+      color: var(--el-text-color-secondary);
 
       .progress-num {
         margin-right: 8px;
         font-weight: bold;
-        color: #67C23A;
+        color: var(--el-color-success);
       }
     }
   }
@@ -244,7 +252,7 @@ const handleScroll = () => {
       width: 4px;
     }
     &::-webkit-scrollbar-thumb {
-      background: #e0e0e0;
+      background: var(--el-border-color-darker);
       border-radius: 4px;
     }
   }
@@ -252,12 +260,38 @@ const handleScroll = () => {
   .empty-toc {
     padding: 20px;
     text-align: center;
-    color: #999;
+    color: var(--el-text-color-secondary);
     font-size: 13px;
   }
 }
 
-/* 样式优化：修复 Element Plus Anchor 的默认样式 */
+:deep(.el-anchor) {
+  background-color: transparent;
+}
+
+/* ====================================
+   底线与绿色激活滑块
+   ==================================== */
+:deep(.el-anchor::before) {
+  background-color: var(--el-border-color) !important;
+  width: 2px !important;
+}
+
+html.dark :deep(.el-anchor::before) {
+  background-color: var(--el-border-color-light) !important;
+}
+
+:deep(.el-anchor__marker) {
+  display: block;
+  background-color: var(--el-color-success);
+  width: 2px;
+  height: 24px !important;
+  border-radius: 2px;
+}
+
+/* ====================================
+   目录链接的样式
+   ==================================== */
 :deep(.el-anchor__link) {
   font-size: 14px;
   line-height: 1.8;
@@ -265,28 +299,24 @@ const handleScroll = () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #606266;
+  color: var(--el-text-color-regular);
   text-decoration: none;
 
   &:hover {
-    color: #67C23A;
+    color: var(--el-color-success);
     background-color: transparent;
   }
 
   &.is-active {
-    color: #67C23A;
+    color: var(--el-color-success);
     font-weight: bold;
-    background-color: #f0f9eb;
+    background-color: var(--el-color-success-light-9);
     border-radius: 0 4px 4px 0;
-    border-left: 2px solid #67C23A;
-    padding-left: 14px;
+    /* 取消原有直接加在文本上的左边框，交由 el-anchor__marker 统一控制游标滑动 */
   }
 }
 
-:deep(.el-anchor__marker) {
-  display: none;
-}
-
+/* 层级缩进 */
 :deep(.toc-item-level-2 .el-anchor__link) {
   padding-left: 30px !important;
   font-size: 13px;
@@ -294,6 +324,6 @@ const handleScroll = () => {
 :deep(.toc-item-level-3 .el-anchor__link) {
   padding-left: 45px !important;
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 </style>

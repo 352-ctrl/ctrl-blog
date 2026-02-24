@@ -71,7 +71,7 @@ const closeDialog = () => {
 
 .nav-item {
   font-size: 18px;
-  color: #8a919f;
+  color: var(--el-text-color-secondary); /* 使用文字次要颜色，自适应暗黑模式 */
   cursor: pointer;
   transition: all 0.3s ease;
   user-select: none;
@@ -84,7 +84,7 @@ const closeDialog = () => {
 }
 
 .nav-item.active {
-  color: #1e80ff;
+  color: var(--el-color-primary); /* 使用主题色 */
   font-weight: 600;
   font-size: 20px;
 }
@@ -97,14 +97,14 @@ const closeDialog = () => {
   transform: translateX(-50%);
   width: 16px;
   height: 3px;
-  background-color: #1e80ff;
+  background-color: var(--el-color-primary); /* 使用主题色 */
   border-radius: 2px;
 }
 
 .nav-divider {
   width: 1px;
   height: 16px;
-  background-color: #e4e6eb;
+  background-color: var(--el-border-color-lighter); /* 使用边框颜色 */
   border-radius: 1px;
 }
 
@@ -130,10 +130,12 @@ const closeDialog = () => {
 </style>
 
 <style>
+/* 针对弹窗顶层类名进行样式覆盖 (不加 scoped) */
 .auth-dialog-custom {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  /* 阴影使用 Element Plus 变量适配暗黑模式 */
+  box-shadow: var(--el-box-shadow-dark);
 }
 
 .auth-dialog-custom .el-dialog__header {
@@ -152,7 +154,8 @@ const closeDialog = () => {
 }
 
 .auth-dialog-custom .el-input__wrapper {
-  background-color: #f4f5f7;
+  /* 使用 Element 的填充背景色变量，亮色下是浅灰，暗色下是深灰 */
+  background-color: var(--el-fill-color-light);
   box-shadow: none;
   border-radius: 8px;
   padding: 2px 15px;
@@ -160,7 +163,8 @@ const closeDialog = () => {
 }
 
 .auth-dialog-custom .el-input__wrapper.is-focus {
-  background-color: #ffffff;
+  /* 聚焦时使用纯背景色 */
+  background-color: var(--el-bg-color);
   box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
 }
 
@@ -171,12 +175,13 @@ const closeDialog = () => {
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 4px;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+  /* 按钮阴影使用含透明度的主题色 */
+  box-shadow: 0 4px 12px var(--el-color-primary-light-5);
   transition: all 0.3s ease;
 }
 
 .auth-dialog-custom .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+  box-shadow: 0 6px 16px var(--el-color-primary-light-3);
 }
 </style>

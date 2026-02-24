@@ -57,7 +57,7 @@ const route = useRoute();
 
 /* Firefox：鼠标悬浮时显示减淡的颜色 */
 .sidebar-sticky-content:hover {
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+  scrollbar-color: var(--el-border-color-darker) transparent;
 }
 
 /* 防止内部卡片被压缩 */
@@ -83,12 +83,12 @@ const route = useRoute();
 
 /* 鼠标悬浮到整个侧边栏区域时：显示减淡的滑块 */
 .sidebar-sticky-content:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.15); /* 15%透明度的黑，非常柔和 */
+  background-color: var(--el-border-color-darker);
 }
 
 /* 鼠标放在滚动条上时稍微加深 */
 .sidebar-sticky-content::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: var(--el-text-color-secondary);
 }
 
 /* 响应式：中屏以下隐藏 */

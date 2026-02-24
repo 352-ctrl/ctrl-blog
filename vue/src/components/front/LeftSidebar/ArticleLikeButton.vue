@@ -135,21 +135,21 @@ const handleLike = async () => {
   position: relative;
   width: 50px !important;
   height: 50px !important;
-  background-color: #fff !important;
+  background-color: var(--el-bg-color-overlay) !important;
   border-radius: 50%;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: var(--el-box-shadow-light);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
-  color: #8a919f;
+  color: var(--el-text-color-secondary);
   transition: all 0.3s;
 
   &:hover {
-    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15);
-    color: #515767;
-    background-color: #fff !important;
+    box-shadow: var(--el-box-shadow);
+    color: var(--el-text-color-primary);
+    background-color: var(--el-bg-color-overlay) !important;
   }
 
 }
@@ -161,7 +161,7 @@ const handleLike = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  .is-active & { color: #1e80ff; }
+  .is-active & { color: var(--el-color-primary); }
 }
 
 /* 徽标样式 */
@@ -176,7 +176,7 @@ const handleLike = async () => {
   font-size: 11px;
   text-align: center;
   white-space: nowrap;
-  background-color: #c2c8d1;
+  background-color: var(--el-text-color-disabled);
   color: #fff;
   transform: translateY(-20%);
   z-index: 10;
@@ -185,7 +185,7 @@ const handleLike = async () => {
 
 /* 激活时徽标背景变色 */
 .panel-btn.is-active .badge {
-  background-color: #1e80ff;
+  background-color: var(--el-color-primary);
 }
 
 /* 动画 */

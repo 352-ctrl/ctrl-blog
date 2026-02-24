@@ -83,7 +83,7 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
             const clickShow = ref(false)
             const verifyType = ref(undefined)
             const componentType = ref(undefined)
-            
+
             const instance = ref({})
 
             const showBox = computed(()=>{
@@ -112,7 +112,7 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
                     clickShow.value = true;
                 }
             }
-            watchEffect(()=>{   
+            watchEffect(()=>{
                 switch (captchaType.value) {
                     case 'blockPuzzle':
                         verifyType.value = '2'
@@ -134,7 +134,7 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
                 closeBox,
                 show
             }
-        },  
+        },
     }
 </script>
 <style>
@@ -142,9 +142,9 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
         position: relative;
         box-sizing: border-box;
         border-radius: 2px;
-        border: 1px solid #e4e7eb;
-        background-color: #fff;
-        box-shadow: 0 0 10px rgba(0,0,0,.3);
+        border: 1px solid var(--el-border-color); /* 替换 #e4e7eb */
+        background-color: var(--el-bg-color-overlay); /* 替换 #fff */
+        box-shadow: var(--el-box-shadow);
         left: 50%;
         top:50%;
         transform: translate(-50%,-50%);
@@ -155,8 +155,8 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
         line-height: 50px;
         text-align: left;
         font-size: 16px;
-        color: #45494c;
-        border-bottom: 1px solid #e4e7eb;
+        color: var(--el-text-color-primary);
+        border-bottom: 1px solid var(--el-border-color);
         box-sizing: border-box;
     }
     .verifybox-bottom{
@@ -193,11 +193,11 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
         color: #fff;
     }
     .suc-bg{
-       background-color:rgba(92, 184, 92,.5);  
+       background-color:rgba(92, 184, 92,.5);
        filter: progid:DXImageTransform.Microsoft.gradient(startcolorstr=#7f5CB85C, endcolorstr=#7f5CB85C);
     }
     .err-bg{
-       background-color:rgba(217, 83, 79,.5);  
+       background-color:rgba(217, 83, 79,.5);
        filter: progid:DXImageTransform.Microsoft.gradient(startcolorstr=#7fD9534F, endcolorstr=#7fD9534F);
     }
     .tips-enter,.tips-leave-to{
@@ -213,7 +213,7 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
         text-align: center;
         cursor: pointer;
         margin-bottom: 5px;
-        border: 1px solid #ddd;
+        border: 1px solid var(--el-border-color);
     }
 
     .cerify-code-panel {
@@ -244,29 +244,29 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
     }
 
     .verify-change-code {
-        color: #337AB7;
+        color: var(--el-color-primary);
         cursor: pointer;
     }
 
     .verify-btn {
         width: 200px;
         height: 30px;
-        background-color: #337AB7;
+      background-color: var(--el-color-primary);
         color: #FFFFFF;
         border: none;
         margin-top: 10px;
     }
-    
-    
+
+
     /*滑动验证码*/
     .verify-bar-area {
         position: relative;
-        background: #FFFFFF;
+        background: var(--el-bg-color);
         text-align: center;
         -webkit-box-sizing: content-box;
         -moz-box-sizing: content-box;
         box-sizing: content-box;
-        border: 1px solid #ddd;
+        border: 1px solid var(--el-border-color);
         -webkit-border-radius: 4px;
     }
 
@@ -274,17 +274,17 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
         position: absolute;
         top: 0px;
         left: 0;
-        background: #fff;
+        background: var(--el-bg-color);
         cursor: pointer;
         -webkit-box-sizing: content-box;
         -moz-box-sizing: content-box;
         box-sizing: content-box;
-        box-shadow: 0 0 2px #888888;
+        box-shadow: var(--el-box-shadow-light);
         -webkit-border-radius: 1px;
     }
 
     .verify-bar-area .verify-move-block:hover {
-        background-color: #337ab7;
+        background-color: var(--el-color-primary);
         color: #FFFFFF;
     }
 
@@ -292,12 +292,12 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
         position: absolute;
         top: -1px;
         left: -1px;
-        background: #f0fff0;
+        background: var(--el-color-success-light-9);
         cursor: pointer;
         -webkit-box-sizing: content-box;
         -moz-box-sizing: content-box;
         box-sizing: content-box;
-        border: 1px solid #ddd;
+        border: 1px solid var(--el-border-color);
     }
 
     .verify-img-panel {
@@ -305,8 +305,8 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
         -webkit-box-sizing: content-box;
         -moz-box-sizing: content-box;
         box-sizing: content-box;
-        border-top: 1px solid #ddd;
-        border-bottom: 1px solid #ddd;
+        border-top: 1px solid var(--el-border-color);
+        border-bottom: 1px solid var(--el-border-color);
         border-radius: 3px;
         position: relative;
     }
@@ -329,10 +329,10 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
     }
 
     .verify-img-panel .verify-gap {
-        background-color: #fff;
+        background-color: var(--el-bg-color);
         position: relative;
         z-index: 2;
-        border: 1px solid #fff;
+        border: 1px solid var(--el-bg-color);
     }
 
     .verify-bar-area .verify-move-block .verify-sub-block {

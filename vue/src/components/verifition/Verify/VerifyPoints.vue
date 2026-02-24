@@ -10,7 +10,7 @@
                 <div class="verify-refresh" style="z-index:3" @click="refresh" v-show="showRefresh">
                     <i class="iconfont icon-refresh"></i>
                 </div>
-                <img :src="'data:image/png;base64,'+pointBackImgBase" 
+                <img :src="'data:image/png;base64,'+pointBackImgBase"
                 ref="canvas"
                 alt=""  style="width:100%;height:100%;display:block"
                 @click="bindingClick?canvasClick($event):undefined">
@@ -111,8 +111,8 @@
                 showRefresh = ref(true),
                 bindingClick = ref(true)
 
-                
-               
+
+
 
                 const init = ()=>{
                     //加载页面
@@ -186,8 +186,8 @@
                 }
                  //获取坐标
                 const getMousePos = function (obj, e) {
-                    var x = e.offsetX 
-                    var y = e.offsetY 
+                    var x = e.offsetX
+                    var y = e.offsetY
                     return {x, y}
                 }
                 //创建坐标点
@@ -197,8 +197,8 @@
                 }
                 const refresh = function () {
                     tempPoints.splice(0, tempPoints.length)
-                    barAreaColor.value = '#000'
-                    barAreaBorderColor.value = '#ddd'
+                    barAreaColor.value = 'var(--el-text-color-primary)'
+                    barAreaBorderColor.value = 'var(--el-border-color)'
                     bindingClick.value = true
                     fontPos.splice(0, fontPos.length)
                     checkPosArr.splice(0, checkPosArr.length)
@@ -228,8 +228,8 @@
                 //坐标转换函数
                 const pointTransfrom = function(pointArr,imgSize){
                     var newPointArr = pointArr.map(p=>{
-                        let x = Math.round(310 * p.x/parseInt(imgSize.imgWidth)) 
-                        let y =Math.round(155 * p.y/parseInt(imgSize.imgHeight)) 
+                        let x = Math.round(310 * p.x/parseInt(imgSize.imgWidth))
+                        let y =Math.round(155 * p.y/parseInt(imgSize.imgHeight))
                         return {x,y}
                     })
                     return newPointArr

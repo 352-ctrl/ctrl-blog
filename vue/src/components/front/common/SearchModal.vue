@@ -34,7 +34,7 @@
 
     <div class="search-results">
       <div v-if="!keyword" class="empty-tip init-state">
-        <el-icon size="40" color="#c0c4cc"><Document /></el-icon>
+        <el-icon class="empty-icon"><Document /></el-icon>
         <p>输入关键词开始全站搜索</p>
       </div>
 
@@ -233,21 +233,21 @@ onUnmounted(() => {
 .search-trigger {
   display: flex;
   align-items: center;
-  background: #f4f5f7;
+  background: var(--el-fill-color-light); /* 替换 #f4f5f7 */
   border: 1px solid transparent;
   border-radius: 20px;
   padding: 6px 12px 6px 16px;
   cursor: pointer;
-  color: #606266;
+  color: var(--el-text-color-regular); /* 替换 #606266 */
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   height: 36px;
   box-sizing: border-box;
 }
 
 .search-trigger:hover {
-  background: #fff;
+  background: var(--el-bg-color-overlay); /* 替换 #fff */
   border-color: var(--el-color-primary-light-5);
-  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+  box-shadow: 0 2px 8px var(--el-color-primary-light-5);
   color: var(--el-color-primary);
 }
 
@@ -257,12 +257,12 @@ onUnmounted(() => {
 }
 
 .key-badge {
-  background: #ffffff;
-  border: 1px solid #e4e7ed;
+  background: var(--el-bg-color); /* 替换 #ffffff */
+  border: 1px solid var(--el-border-color-light); /* 替换 #e4e7ed */
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary); /* 替换 #909399 */
   font-family: monospace;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
@@ -274,7 +274,7 @@ onUnmounted(() => {
 .search-box {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--el-border-color-lighter); /* 替换 #ebeef5 */
   padding: 0 10px 18px 10px;
   margin-bottom: 15px;
 }
@@ -289,11 +289,11 @@ onUnmounted(() => {
   outline: none;
   font-size: 18px;
   margin-left: 12px;
-  color: #303133;
+  color: var(--el-text-color-primary); /* 替换 #303133 */
   background: transparent;
 }
 .custom-input::placeholder {
-  color: #a8abb2;
+  color: var(--el-text-color-placeholder); /* 替换 #a8abb2 */
   font-size: 16px;
 }
 
@@ -304,15 +304,15 @@ onUnmounted(() => {
   justify-content: center;
   width: 28px;
   height: 28px;
-  color: #909399;
-  background: #f4f5f7;
+  color: var(--el-text-color-secondary); /* 替换 #909399 */
+  background: var(--el-fill-color-light); /* 替换 #f4f5f7 */
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 .close-btn:hover {
-  background: #fde2e2;
-  color: #f56c6c;
+  background: var(--el-color-danger-light-9); /* 替换 #fde2e2 */
+  color: var(--el-color-danger); /* 替换 #f56c6c */
   transform: rotate(90deg); /* 增加一点灵动的交互效果 */
 }
 
@@ -328,11 +328,11 @@ onUnmounted(() => {
   width: 6px;
 }
 .search-results::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
+  background: var(--el-border-color); /* 替换 #dcdfe6 */
   border-radius: 4px;
 }
 .search-results::-webkit-scrollbar-thumb:hover {
-  background: #c0c4cc;
+  background: var(--el-text-color-secondary); /* 替换 #c0c4cc */
 }
 
 .empty-tip {
@@ -340,9 +340,16 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #909399;
+  color: var(--el-text-color-secondary); /* 替换 #909399 */
   padding: 50px 0;
 }
+
+/* 替换行内样式的空图标 */
+.empty-icon {
+  font-size: 40px;
+  color: var(--el-text-color-disabled);
+}
+
 .init-state p {
   margin-top: 15px;
   font-size: 14px;
@@ -354,28 +361,28 @@ onUnmounted(() => {
   border-radius: 10px;
   cursor: pointer;
   margin-bottom: 10px;
-  background: #ffffff;
+  background: var(--el-bg-color-overlay); /* 替换 #ffffff */
   border: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
 .result-item:hover {
-  background-color: #f6f8fa;
+  background-color: var(--el-fill-color-light); /* 替换 #f6f8fa */
   border-color: var(--el-color-primary-light-8);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--el-box-shadow-light); /* 替换 0 4px 12px rgba(0, 0, 0, 0.05) */
   transform: translateY(-1px);
 }
 
 .item-title {
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary); /* 替换 #303133 */
   font-size: 16px;
   margin-bottom: 8px;
   line-height: 1.4;
 }
 
 .item-summary {
-  color: #606266;
+  color: var(--el-text-color-regular); /* 替换 #606266 */
   font-size: 13px;
   line-height: 1.5;
   margin-bottom: 10px;
@@ -396,7 +403,7 @@ onUnmounted(() => {
 /* === 响应式设计 === */
 @media screen and (max-width: 992px) {
   .pc-only { display: none !important; }
-  .mobile-only { display: inline-flex !important; color: #303133; }
+  .mobile-only { display: inline-flex !important; color: var(--el-text-color-primary); } /* 替换 #303133 */
 
   :deep(.custom-search-dialog) {
     width: 95% !important;
@@ -418,12 +425,13 @@ onUnmounted(() => {
 
 .custom-search-dialog {
   border-radius: 16px !important;
+  background: var(--el-bg-color-overlay) !important;
   box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15) !important;
 }
 
 .highlight-text {
-  background-color: #fdf6ec; /* 浅橙色背景 */
-  color: #e6a23c;            /* 主题橙色文字 */
+  background-color: var(--el-color-warning-light-9); /* 替换 #fdf6ec */
+  color: var(--el-color-warning);            /* 替换 #e6a23c */
   font-weight: bold;
   padding: 2px 4px;
   border-radius: 4px;

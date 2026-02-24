@@ -7,8 +7,8 @@
       </el-form-item>
 
       <el-form-item prop="code">
-        <div style="display: flex; width: 100%; gap: 12px;">
-          <el-input size="large" v-model="data.form.code" prefix-icon="CircleCheck" placeholder="请输入验证码" style="flex: 1" />
+        <div class="code-input-row">
+          <el-input size="large" v-model="data.form.code" prefix-icon="CircleCheck" placeholder="请输入验证码" class="code-input-field" />
           <el-button class="send-code-btn" type="primary" plain :disabled="data.sendBtnDisabled" @click="sendCode">
             {{ data.sendBtnText }}
           </el-button>
@@ -152,6 +152,16 @@ const handleRegister = () => {
 <style scoped>
 .form-wrapper {
   width: 100%;
+}
+
+.code-input-row {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+}
+
+.code-input-field {
+  flex: 1;
 }
 
 .bottom-action-area {

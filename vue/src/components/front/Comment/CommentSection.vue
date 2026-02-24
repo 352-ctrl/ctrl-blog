@@ -24,7 +24,7 @@
     <el-divider />
 
     <div class="comment-list-wrapper" v-loading="loading">
-      <div v-if="commentList.length === 0" style="text-align: center; color: #999; padding: 40px 0">
+      <div v-if="commentList.length === 0" class="empty-comment">
         暂无评论，快来抢沙发吧~
       </div>
 
@@ -55,6 +55,7 @@ import { useUserStore } from "@/store/user.js";
 import { ElMessage } from "element-plus";
 import CommentBox from './CommentBox.vue';
 import CommentItem from './CommentItem.vue';
+import FrontPagination from '@/components/front/FrontPagination/FrontPagination.vue'; // 假设此处依赖你项目中的分页组件
 
 const emit = defineEmits(['comment-success']);
 
@@ -72,7 +73,7 @@ const pageSize = ref(10);
 const loading = ref(false);
 const mainBoxRef = ref(null);
 
-// 修改点 2：新增排序状态 (1: 最新, 2: 最热)
+// 新增排序状态 (1: 最新, 2: 最热)
 const sortType = ref(1);
 
 // 全局控制回复框状态
@@ -95,7 +96,7 @@ provide('commentState', {
   setActiveReplyId
 });
 
-// 修改点 3：切换排序方法
+// 切换排序方法
 const handleSortChange = (type) => {
   if (sortType.value === type) return; // 如果点击的是当前已选的排序，不进行任何操作
   sortType.value = type;
@@ -110,7 +111,7 @@ const loadComment = async () => {
     pageNum: pageNum.value,
     pageSize: pageSize.value,
     articleId: props.articleId,
-    sortType: sortType.value // 修改点 4：把排序参数传给后端
+    sortType: sortType.value
   };
   try {
     const res = await getCommentPage(params);
@@ -186,15 +187,23 @@ onMounted(() => {
 .comment-container {
   margin-top: 20px;
   border-radius: 8px;
+  /* El-Card 自动适应暗黑模式，背景等无需干预 */
 }
 
 /* 专门定位主评论区域内的提交按钮 */
 .main-input-wrapper :deep(.el-button--primary) {
-  width: 80px;  /* 自定义宽度 */
-  height: 30px;  /* 自定义高度 */
+  width: 80px;
+  height: 30px;
 }
 
-/* === 新增：头部与排序切换样式 === */
+/* 空评论提示样式 */
+.empty-comment {
+  text-align: center;
+  color: var(--el-text-color-secondary);
+  padding: 40px 0;
+}
+
+/* === 头部与排序切换样式 === */
 .comment-header {
   display: flex;
   justify-content: space-between;
@@ -203,38 +212,55 @@ onMounted(() => {
 }
 
 .comment-header .title {
+  color: var(--el-text-color-primary);
   font-weight: bold;
   font-size: 20px;
-  border-left: 4px solid #409EFF;
+  border-left: 4px solid var(--el-color-primary);
   padding-left: 10px;
-  line-height: 1; /* 保持对齐 */
+  line-height: 1;
 }
 
 .comment-header .title .count {
   font-size: 14px;
-  color: #999;
+  color: var(--el-text-color-secondary);
   font-weight: normal;
   margin-left: 5px;
 }
 
+/* ==========================================
+ * 独立胶囊按钮 (适配暗黑模式)
+ * ========================================== */
 .sort-tabs {
-  font-size: 14px;
-  color: #9499a0;
   display: flex;
   align-items: center;
+  gap: 6px;
+  font-size: 13px;
 }
 
+/* 隐藏原有生硬的竖向分割线 */
+.sort-tabs :deep(.el-divider) {
+  display: none;
+}
+
+/* 未选中的独立按钮样式 */
 .sort-tabs span {
   cursor: pointer;
-  transition: color 0.2s;
+  padding: 6px 16px;
+  border-radius:5px; /* 独立药丸形状 */
+  color: var(--el-text-color-regular);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .sort-tabs span:hover {
-  color: #409EFF;
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9);
 }
 
+/* 选中状态的独立滑块样式 */
 .sort-tabs span.active {
-  color: #222;
-  font-weight: bold;
+  color: var(--el-color-primary);
+  font-weight: 600;
+  /* 激活时变为柔和的主题淡色背景 */
+  background-color: var(--el-color-primary-light-9);
 }
 </style>

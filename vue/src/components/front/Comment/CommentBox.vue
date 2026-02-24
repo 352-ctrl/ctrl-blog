@@ -1,9 +1,9 @@
 <template>
   <div class="comment-box">
-    <div style="display: flex; gap: 15px">
+    <div class="box-wrapper">
       <el-avatar :size="35" :src="userStore.avatar" />
 
-      <div style="flex: 1">
+      <div class="input-container">
         <el-input
             v-model="content"
             type="textarea"
@@ -13,7 +13,7 @@
             :placeholder="placeholder"
         />
 
-        <div style="display: flex; justify-content: space-between; padding-top: 10px">
+        <div class="action-row">
           <el-popover
               v-model:visible="emojiVisible"
               placement="bottom-start"
@@ -21,14 +21,14 @@
               width="auto"
           >
             <template #reference>
-              <el-button text style="padding: 0" title="插入表情">
+              <el-button text class="emoji-btn" title="插入表情">
                 <IconSmile size="24"/>
               </el-button>
             </template>
 
             <emoji-picker
                 ref="pickerRef"
-                class="light"
+                :class="isDark ? 'dark' : 'light'"
                 locale="zh"
                 @emoji-click="onEmojiSelect"
             ></emoji-picker>
@@ -49,6 +49,7 @@
 <script setup>
 import { ref, nextTick, onMounted } from "vue";
 import { useUserStore } from "@/store/user.js";
+import { useDark } from '@vueuse/core';
 import IconSmile from "@/components/common/Icon/IconSmile.vue";
 import 'emoji-picker-element'; // 导入自定义元素
 import zh_CN from 'emoji-picker-element/i18n/zh_CN'; // 导入中文包
@@ -63,6 +64,7 @@ const props = defineProps({
 
 const emit = defineEmits(['submit', 'cancel']);
 const userStore = useUserStore();
+const isDark = useDark();
 
 const content = ref('');
 const emojiVisible = ref(false);
@@ -78,7 +80,6 @@ const initEmojiPicker = () => {
 };
 
 // 监听 Popover 显示，初始化 Picker
-// 注意：emoji-picker-element 是 Web Component，有时需要延迟设置属性
 const onEmojiSelect = (event) => {
   const emoji = event.detail.unicode;
   content.value += emoji;
@@ -102,5 +103,23 @@ defineExpose({ clear });
 </script>
 
 <style scoped>
-/* 简单的样式调整 */
+/* 提取后的排版样式 */
+.box-wrapper {
+  display: flex;
+  gap: 15px;
+}
+
+.input-container {
+  flex: 1;
+}
+
+.action-row {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+}
+
+.emoji-btn {
+  padding: 0;
+}
 </style>

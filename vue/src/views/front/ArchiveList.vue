@@ -37,7 +37,7 @@
               <div class="info-box">
                 <div class="article-title">{{ article.title }}</div>
                 <div class="article-meta">
-                  <el-icon><Clock /></el-icon>
+                  <el-icon class="meta-icon"><Clock /></el-icon>
                   {{ formatFullDate(article.createTime) }}
                 </div>
               </div>
@@ -120,16 +120,24 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ====================================
+   外层卡片
+   ==================================== */
 .archive-card {
   border-radius: 8px;
+  /* 核心优化：使用 overlay 让卡片在暗黑模式下与底层 page 背景区分开，更具立体感 */
+  background-color: var(--el-bg-color-overlay);
+  border-color: var(--el-border-color-light);
 }
 
-/* 头部样式 */
+/* ====================================
+   头部区域
+   ==================================== */
 .archive-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  border-bottom: 2px solid #f0f2f5;
+  border-bottom: 2px solid var(--el-border-color-lighter);
   padding-bottom: 15px;
   margin-bottom: 20px;
 }
@@ -137,7 +145,7 @@ onMounted(() => {
 .header-title {
   font-size: 24px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -145,22 +153,23 @@ onMounted(() => {
 
 .header-subtitle {
   font-size: 14px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .header-subtitle .count {
   font-size: 20px;
   font-weight: bold;
-  color: #409EFF;
+  color: var(--el-color-primary);
   margin: 0 4px;
 }
 
-/* 年份区域 */
+/* ====================================
+   年份时间轴区域
+   ==================================== */
 .year-section {
   margin-bottom: 20px;
 }
 
-/* 年份标题 */
 .year-header {
   display: flex;
   align-items: center;
@@ -170,19 +179,20 @@ onMounted(() => {
 }
 
 .year-header:hover .year-text {
-  color: #409EFF;
+  color: var(--el-color-primary);
 }
 
 .year-text {
   font-size: 26px;
   font-weight: bold;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-right: 10px;
-  /* 类似时间轴的大圆点效果 */
   position: relative;
   padding-left: 15px;
+  transition: color 0.3s;
 }
 
+/* 时间轴的大圆点/竖线效果 */
 .year-text::before {
   content: '';
   position: absolute;
@@ -191,19 +201,19 @@ onMounted(() => {
   transform: translateY(-50%);
   width: 6px;
   height: 24px;
-  background-color: #409EFF;
+  background-color: var(--el-color-primary);
   border-radius: 4px;
 }
 
 .year-count {
   font-size: 14px;
-  color: #999;
-  margin-right: auto; /* 让箭头靠右 */
+  color: var(--el-text-color-secondary);
+  margin-right: auto;
 }
 
 .arrow-icon {
   font-size: 16px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   transition: transform 0.3s;
 }
 
@@ -211,33 +221,36 @@ onMounted(() => {
   transform: rotate(90deg);
 }
 
-/* 文章列表容器 */
+/* ====================================
+   文章列表与项
+   ==================================== */
 .article-list {
-  padding-left: 20px; /* 缩进 */
-  border-left: 2px dashed #e4e7ed; /* 左侧虚线引导线 */
-  margin-left: 18px; /* 配合 year-text 的位置 */
+  padding-left: 20px;
+  border-left: 2px dashed var(--el-border-color);
+  margin-left: 18px;
 }
 
-/* 单个文章项 */
 .article-item {
   display: flex;
   align-items: center;
   padding: 15px;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: transparent; /* 透明继承卡片底色，使页面更干净 */
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent; /* 预留边框位置避免抖动 */
+  border: 1px solid transparent;
 }
 
 .article-item:hover {
-  transform: translateX(10px); /* 向右轻微移动 */
-  background-color: #f7f8fa;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateX(10px);
+  background-color: var(--el-fill-color-light); /* 悬浮时填充规范的浅色 */
+  box-shadow: var(--el-box-shadow-light);
 }
 
-/* 左侧日期方块 */
+/* ====================================
+   左侧日期方块
+   ==================================== */
 .date-box {
   display: flex;
   flex-direction: column;
@@ -245,11 +258,11 @@ onMounted(() => {
   justify-content: center;
   width: 50px;
   height: 50px;
-  background-color: #ecf5ff;
+  background-color: var(--el-color-primary-light-9);
   border-radius: 8px;
   margin-right: 15px;
-  color: #409EFF;
-  flex-shrink: 0; /* 防止被压缩 */
+  color: var(--el-color-primary);
+  flex-shrink: 0;
 }
 
 .date-box .day {
@@ -264,7 +277,9 @@ onMounted(() => {
   line-height: 1;
 }
 
-/* 右侧信息区 */
+/* ====================================
+   右侧文章信息
+   ==================================== */
 .info-box {
   flex: 1;
   display: flex;
@@ -274,25 +289,31 @@ onMounted(() => {
 
 .article-title {
   font-size: 16px;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-bottom: 6px;
   font-weight: 500;
   transition: color 0.3s;
 }
 
 .article-item:hover .article-title {
-  color: #409EFF;
+  color: var(--el-color-primary);
 }
 
 .article-meta {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   display: flex;
   align-items: center;
   gap: 5px;
 }
 
-/* 响应式调整 */
+.meta-icon {
+  font-size: 14px; /* 让时间图标和文字比例更协调 */
+}
+
+/* ====================================
+   响应式调整
+   ==================================== */
 @media screen and (max-width: 768px) {
   .year-text {
     font-size: 20px;

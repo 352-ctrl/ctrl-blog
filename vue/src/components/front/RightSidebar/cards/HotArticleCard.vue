@@ -88,7 +88,6 @@ const loadHotArticles = async () => {
 
 // 判断是否是当前正在查看的文章 (被选中状态)
 const isActive = (id) => {
-  // 假设你的文章详情页路由是 /article/:id，这里的参数名是 id
   return route.params.id === String(id);
 };
 
@@ -101,15 +100,15 @@ const goToArticle = (id) => {
 <style scoped lang="scss">
 /* 1. 卡片整体样式复用 */
 .hot-article-card {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
-  background: #fff;
+  background: var(--el-bg-color-overlay);
   margin-bottom: 20px;
 
   /* 2. 头部样式复用 */
   :deep(.el-card__header) {
     padding: 15px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
   .card-header {
@@ -122,11 +121,11 @@ const goToArticle = (id) => {
       align-items: center;
       font-size: 16px;
       font-weight: 600;
-      color: #333;
+      color: var(--el-text-color-primary);
 
       .icon-hot {
         margin-right: 10px;
-        color: #f56c6c;
+        color: var(--el-color-danger);
         font-size: 18px;
         animation: swing 2s infinite linear;
         transform-origin: bottom center;
@@ -158,40 +157,40 @@ const goToArticle = (id) => {
   .hot-item {
     display: flex;
     align-items: center;
-    padding: 12px 10px; /* 增加左右 padding */
-    margin: 0 -10px;    /* 使用负 margin 抵消 padding，让悬浮背景能溢出文字边界 */
-    border-radius: 8px; /* 悬浮背景圆角 */
+    padding: 12px 10px;
+    margin: 0 -10px;
+    border-radius: 8px;
     border-bottom: 1px dashed transparent;
     cursor: pointer;
     transition: all 0.3s ease;
-    position: relative; /* 为绝对定位的选中指示条做准备 */
+    position: relative;
 
     &:not(:last-child) {
-      border-bottom-color: #ebeef5; /* 正常状态下的底部分割线 */
+      border-bottom-color: var(--el-border-color-lighter);
     }
 
     /* ====== 鼠标悬浮特效 ====== */
     &:hover {
-      background-color: var(--el-fill-color-light); /* 浅灰底色 */
-      border-bottom-color: transparent; /* 悬浮时隐藏分割线 */
-      transform: translateX(4px); /* 整体轻微右移，产生互动感 */
+      background-color: var(--el-fill-color-light);
+      border-bottom-color: transparent;
+      transform: translateX(4px);
 
       .article-info .title {
         color: var(--el-color-primary);
       }
       .article-cover {
-        transform: scale(1.05); /* 封面放大 */
+        transform: scale(1.05);
       }
     }
 
     /* ====== 当前选中(Active)特效 ====== */
     &.is-active {
-      background-color: var(--el-color-primary-light-9); /* 极浅的主题色背景 */
+      background-color: var(--el-color-primary-light-9);
       border-bottom-color: transparent;
 
       .article-info .title {
         color: var(--el-color-primary);
-        font-weight: 600; /* 标题加粗 */
+        font-weight: 600;
       }
 
       .date {
@@ -218,16 +217,16 @@ const goToArticle = (id) => {
       line-height: 24px;
       text-align: center;
       border-radius: 6px;
-      background-color: #f4f4f5;
-      color: #909399;
+      background-color: var(--el-fill-color-darker);
+      color: var(--el-text-color-secondary);
       font-size: 13px;
       font-weight: bold;
       margin-right: 12px;
       flex-shrink: 0;
 
-      &.rank-1 { background-color: #f56c6c; color: #fff; }
-      &.rank-2 { background-color: #ff9800; color: #fff; }
-      &.rank-3 { background-color: #fac858; color: #fff; }
+      &.rank-1 { background-color: var(--el-color-danger); color: #fff; }
+      &.rank-2 { background-color: var(--el-color-warning); color: #fff; }
+      &.rank-3 { background-color: var(--el-color-warning-light-3); color: #fff; }
     }
 
     /* 封面图样式 */
@@ -245,8 +244,8 @@ const goToArticle = (id) => {
         align-items: center;
         width: 100%;
         height: 100%;
-        background: #f5f7fa;
-        color: #909399;
+        background: var(--el-fill-color-light);
+        color: var(--el-text-color-secondary);
         font-size: 18px;
         border-radius: 4px;
       }
@@ -259,7 +258,7 @@ const goToArticle = (id) => {
 
       .title {
         font-size: 14px;
-        color: #303133;
+        color: var(--el-text-color-primary);
         margin-bottom: 4px;
         white-space: nowrap;
         overflow: hidden;
@@ -269,7 +268,7 @@ const goToArticle = (id) => {
 
       .date {
         font-size: 12px;
-        color: #909399;
+        color: var(--el-text-color-secondary);
         transition: color 0.3s;
       }
     }

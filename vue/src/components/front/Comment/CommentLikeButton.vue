@@ -95,8 +95,8 @@ const handleLike = async () => {
 .like-btn {
   padding: 0 4px;
   height: auto;
-  font-size: 13px; /* 字体稍大一点更清晰 */
-  color: #8a919f; /* 掘金默认灰色 */
+  font-size: 13px;
+  color: var(--el-text-color-secondary); /* 替换 #8a919f */
   display: flex;
   align-items: center;
   border: none;
@@ -106,7 +106,7 @@ const handleLike = async () => {
 
 .like-btn:hover {
   background: transparent;
-  color: #515767; /* hover 稍微深一点的灰 */
+  color: var(--el-text-color-primary); /* 替换 #515767 */
 }
 
 /* 计数文字 */
@@ -117,16 +117,16 @@ const handleLike = async () => {
 
 /* 图标容器 */
 .icon-wrapper {
-  transition: transform 0.2s; /* 点击时的缩放动画 */
+  transition: transform 0.2s;
 }
 
 /* 激活状态 (点赞后) */
 .like-btn.is-active {
-  color: #1e80ff; /* 掘金蓝 */
+  color: var(--el-color-primary); /* 替换 #1e80ff */
 }
 
 .like-btn.is-active:hover {
-  color: #1e80ff; /* 保持蓝色 */
+  color: var(--el-color-primary); /* 替换 #1e80ff */
 }
 
 /* 点赞时的微动画 */

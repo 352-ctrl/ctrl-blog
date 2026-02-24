@@ -8,8 +8,6 @@
 </template>
 
 <script setup>
-import { ChatDotRound } from '@element-plus/icons-vue';
-
 // 接收外部传来的数据
 const props = defineProps({
   count: {
@@ -37,20 +35,20 @@ const formatCount = (num) => {
   position: relative;
   width: 50px;
   height: 50px;
-  background-color: #fff;
+  background-color: var(--el-bg-color-overlay);
   border-radius: 50%;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  box-shadow: var(--el-box-shadow-light);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
-  color: #8a919f;
+  color: var(--el-text-color-secondary);
   transition: all 0.3s;
 
   &:hover {
-    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15);
-    color: #515767;
+    box-shadow: var(--el-box-shadow);
+    color: var(--el-text-color-primary);
   }
 }
 
@@ -71,7 +69,7 @@ const formatCount = (num) => {
   font-size: 11px;
   text-align: center;
   white-space: nowrap;
-  background-color: #c2c8d1;
+  background-color: var(--el-text-color-disabled);
   color: #fff;
   transform: translateY(-20%);
 }

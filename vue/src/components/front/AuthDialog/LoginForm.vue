@@ -6,7 +6,7 @@
         <el-input size="large" v-model="data.form.email" prefix-icon="User" placeholder="请输入邮箱" />
       </el-form-item>
 
-      <el-form-item prop="password" style="margin-bottom: 10px;">
+      <el-form-item prop="password" class="pwd-form-item">
         <el-input size="large" show-password v-model="data.form.password" prefix-icon="Lock" placeholder="请输入密码" />
       </el-form-item>
 
@@ -101,6 +101,10 @@ const handleForgotPwd = () => {
   width: 100%;
 }
 
+.pwd-form-item {
+  margin-bottom: 10px;
+}
+
 .forgot-pwd-row {
   display: flex;
   justify-content: flex-end; /* 靠右对齐 */
@@ -109,7 +113,7 @@ const handleForgotPwd = () => {
 
 .forgot-pwd-link {
   font-size: 13px;
-  color: #8a919f;
+  color: var(--el-text-color-secondary); /* 适配暗黑模式 */
   cursor: pointer;
   transition: color 0.3s;
   user-select: none;

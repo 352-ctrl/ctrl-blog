@@ -16,7 +16,7 @@
       </el-tabs>
     </div>
 
-    <div>
+    <div class="article-list-wrapper">
       <ArticleListCard
           :articles="data.articleList"
           @click="navToArticle"
@@ -46,7 +46,7 @@ import { getArticlePage } from "@/api/front/article.js";
 import { getCategoryList } from '@/api/front/category.js';
 import { getHomepageNotices } from "@/api/front/notice.js";
 import { ElMessage } from "element-plus";
-import {useRoute, useRouter} from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
@@ -128,20 +128,29 @@ const handleTabChange = (tabName) => {
  * 主容器卡片优化
  * ========================================== */
 .home-main-card {
-  border: none;
+  /* 增加极其轻微的边框，防止暗黑模式下阴影失效导致卡片与背景融为一体 */
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  transition: box-shadow 0.3s ease;
+  background: var(--el-bg-color-overlay);
+  box-shadow: var(--el-box-shadow-light);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    /* 悬浮加深阴影 */
+    box-shadow: var(--el-box-shadow);
   }
 
   :deep(.el-card__body) {
     /* 这里的 padding-bottom 控制最后一个卡片距离分隔线的距离 */
     padding: 20px 24px 0px 24px;
   }
+}
+
+/* ==========================================
+ * 文章列表区域
+ * ========================================== */
+.article-list-wrapper {
+  min-height: 200px; /* 给予一个最小高度，防止切换 Tab 时高度塌陷导致闪烁 */
 }
 
 /* ==========================================
@@ -152,7 +161,7 @@ const handleTabChange = (tabName) => {
 
   :deep(.custom-category-tabs) {
     .el-tabs__nav-wrap::after {
-      display: none;
+      display: none; /* 隐藏默认的灰色底部长线 */
     }
 
     .el-tabs__header {
@@ -161,16 +170,20 @@ const handleTabChange = (tabName) => {
 
     .el-tabs__item {
       font-size: 16px;
-      color: #606266;
+      color: var(--el-text-color-regular); /* 自动适配暗黑模式的常规文本色 */
       padding: 0 20px;
       height: 40px;
       line-height: 40px;
       transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
+      &:hover {
+        color: var(--el-color-primary);
+      }
+
       &.is-active {
         font-size: 17px;
         font-weight: 600;
-        color: #222226;
+        color: var(--el-text-color-primary); /* 激活态使用更亮/更深的主文本色 */
       }
     }
 
@@ -178,7 +191,8 @@ const handleTabChange = (tabName) => {
       height: 4px;
       border-radius: 2px;
       background-color: var(--el-color-primary);
-      box-shadow: 0 2px 6px rgba(64, 158, 255, 0.4);
+      /* 利用品牌色的半透明版本作为发光阴影，适配暗黑/明亮双模式 */
+      box-shadow: 0 2px 4px var(--el-color-primary-light-5);
       bottom: 0px;
     }
   }
@@ -188,10 +202,11 @@ const handleTabChange = (tabName) => {
  * 分页容器
  * ========================================== */
 .pagination-container {
-  border-top: 1px solid #dcdfe6;
+  border-top: 1px solid var(--el-border-color-lighter); /* 使用淡色边框衔接 */
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: border-color 0.3s ease;
 
   padding: 20px 0;
   margin-top: 0;

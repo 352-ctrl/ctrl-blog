@@ -5,24 +5,22 @@
     </div>
 
     <div class="article-meta">
-      <div style="margin-right: 10px">
+      <div class="avatar-box">
         <el-avatar :size="35" :src="data.articleData.userAvatar" />
       </div>
-      <div style="display: flex; flex-direction: column">
+      <div class="meta-author-info">
         <span class="nickname">{{ data.articleData.userNickname }}</span>
-        <div style="display: flex; align-items: center; font-size: 13px; color: #999;">
+        <div class="meta-time-category">
           {{ data.articleData.createTime }}
-          <el-tag size="small" style="margin-left: 10px">
+          <el-tag size="small" class="category-tag">
             {{ data.articleData.categoryName }}
           </el-tag>
         </div>
       </div>
-      <div style="flex: 1"></div>
-      <div style="display: flex; align-items: center; gap: 20px; color: #666;">
-        <div>
-          <el-icon style="vertical-align: middle"><View /></el-icon>
-          {{ data.articleData.viewCount }} 阅读
-        </div>
+      <div class="flex-spacer"></div>
+      <div class="meta-view-count">
+        <el-icon class="view-icon"><View /></el-icon>
+        {{ data.articleData.viewCount }} 阅读
       </div>
     </div>
 
@@ -40,7 +38,7 @@
       <div v-else class="normal-summary">
         <div class="normal-header">
           <el-icon><Collection /></el-icon>
-          <span style="margin-left: 5px; font-weight: bold">摘要</span>
+          <span class="normal-summary-text">摘要</span>
         </div>
         <div class="normal-content">
           {{ data.articleData.summary }}
@@ -55,13 +53,13 @@
         v-html="sanitizeHtml(data.articleData.contentHtml)"
     ></div>
 
-    <div v-if="data.articleData.tags && data.articleData.tags.length > 0" style="margin-top: 20px">
+    <div v-if="data.articleData.tags && data.articleData.tags.length > 0" class="article-tags">
       <el-tag
           v-for="(tag, index) in data.articleData.tags"
           :key="index"
           size="small"
           effect="plain"
-          style="margin-right: 5px; margin-bottom: 5px; cursor: pointer"
+          class="tag-item"
           @click="handleTagClick(tag.id)"
       >
         # {{ tag.name }}
@@ -69,7 +67,7 @@
     </div>
   </el-card>
 
-  <div id="comment-section" style="margin-top: 20px;">
+  <div id="comment-section" class="comment-container">
     <CommentSection
         :article-id="data.articleId"
         :initial-total="data.articleData.commentCount"
@@ -96,10 +94,10 @@
 
 <script setup>
 import { onMounted, onUnmounted, reactive, ref } from "vue";
-import {ElMessage} from "element-plus";
-import {useRoute, useRouter} from "vue-router";
+import { ElMessage } from "element-plus";
+import { useRoute, useRouter } from "vue-router";
 import 'emoji-picker-element';
-import {sanitizeHtml} from "@/utils/filter.js";
+import { sanitizeHtml } from "@/utils/filter.js";
 import { getArticleById, incrementArticleView } from "@/api/front/article.js";
 import CommentSection from '@/components/front/Comment/CommentSection.vue';
 
@@ -184,8 +182,15 @@ const handleCommentSuccess = () => {
 </script>
 
 <style scoped>
+/* ====================================
+   全局及布局样式
+   ==================================== */
 .article-container {
   padding: 10px;
+  /* 核心优化：使用 overlay 以与 page 背景形成高级感的层级落差 */
+  background-color: var(--el-bg-color-overlay);
+  border-color: var(--el-border-color-light);
+  border-radius: 8px;
 }
 
 .article-title {
@@ -193,31 +198,79 @@ const handleCommentSuccess = () => {
   font-size: 32px;
   text-align: center;
   padding-bottom: 20px;
-  color: #333;
+  color: var(--el-text-color-primary); /* 适配暗黑标题 */
 }
 
+.flex-spacer {
+  flex: 1;
+}
+
+.comment-container {
+  margin-top: 20px;
+}
+
+/* ====================================
+   元数据区域 (作者、时间、阅读量)
+   ==================================== */
 .article-meta {
   display: flex;
   align-items: center;
   padding-bottom: 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--el-border-color-lighter); /* 适配分割线 */
   margin-bottom: 20px;
+}
+
+.avatar-box {
+  margin-right: 10px;
+}
+
+.meta-author-info {
+  display: flex;
+  flex-direction: column;
 }
 
 .nickname {
   font-weight: 500;
   font-size: 15px;
+  color: var(--el-text-color-primary);
 }
 
-/* 摘要区域通用样式 */
+.meta-time-category {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: var(--el-text-color-secondary); /* 适配暗黑次级文本 */
+  margin-top: 2px;
+}
+
+.category-tag {
+  margin-left: 10px;
+}
+
+.meta-view-count {
+  display: flex;
+  align-items: center;
+  color: var(--el-text-color-regular); /* 适配暗黑常规文本 */
+  font-size: 14px;
+}
+
+.view-icon {
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* ====================================
+   摘要区域 (AI 摘要 & 普通摘要)
+   ==================================== */
 .summary-wrapper {
   margin-bottom: 25px;
 }
 
 /* AI 摘要样式 */
 .ai-summary {
-  background-color: #ecf5ff; /* Element Plus 浅蓝色 */
-  border: 1px solid #d9ecff;
+  /* 使用 el-color-primary-light-9，它在明亮模式是浅蓝，在暗黑模式会自动变成深色适配蓝 */
+  background-color: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
   border-radius: 8px;
   padding: 15px;
   position: relative;
@@ -226,7 +279,7 @@ const handleCommentSuccess = () => {
 .ai-header {
   display: flex;
   align-items: center;
-  color: #409eff; /* Primary Blue */
+  color: var(--el-color-primary); /* 品牌主色 */
   font-weight: bold;
   margin-bottom: 8px;
   font-size: 14px;
@@ -235,20 +288,21 @@ const handleCommentSuccess = () => {
 .ai-icon {
   margin-right: 5px;
   font-size: 18px;
-  animation: pulse 2s infinite; /* 简单的呼吸动画 */
+  animation: pulse 2s infinite;
 }
 
 .ai-content {
   font-size: 14px;
-  color: #555;
+  color: var(--el-text-color-regular);
   line-height: 1.6;
   text-align: justify;
 }
 
 /* 普通摘要样式 */
 .normal-summary {
-  background-color: #f8f8f8;
-  border-left: 4px solid #909399; /* 灰色左边框 */
+  /* fill-color-light 在明亮是浅灰，暗黑是深灰 */
+  background-color: var(--el-fill-color-light);
+  border-left: 4px solid var(--el-border-color-dark);
   padding: 15px;
   border-radius: 4px;
 }
@@ -256,35 +310,92 @@ const handleCommentSuccess = () => {
 .normal-header {
   display: flex;
   align-items: center;
-  color: #606266;
+  color: var(--el-text-color-primary);
   margin-bottom: 5px;
+}
+
+.normal-summary-text {
+  margin-left: 5px;
+  font-weight: bold;
 }
 
 .normal-content {
   font-size: 14px;
-  color: #666;
+  color: var(--el-text-color-regular);
   line-height: 1.6;
 }
 
-/* 正文区域样式 */
+/* ====================================
+   正文区域
+   ==================================== */
 .article-content {
   font-size: 16px;
   line-height: 1.8;
-  color: #2c3e50;
+  color: var(--el-text-color-primary); /* 适配暗黑模式正文内容 */
   overflow-wrap: break-word;
 }
 
-/* 定义一个简单的动画 */
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* 深度选择器处理 v-html 内部样式 (如果 scoped 阻挡了样式) */
+/* 深度选择器处理 v-html 内部样式 */
 :deep(.article-content img) {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
+}
+
+/* 对于 v-html 中的其他原生标签做一下基础暗黑适配 */
+:deep(.article-content h1),
+:deep(.article-content h2),
+:deep(.article-content h3),
+:deep(.article-content h4),
+:deep(.article-content h5),
+:deep(.article-content h6) {
+  color: var(--el-text-color-primary);
+}
+
+:deep(.article-content a) {
+  color: var(--el-color-primary);
+  text-decoration: none;
+}
+
+:deep(.article-content a:hover) {
+  text-decoration: underline;
+}
+
+:deep(.article-content blockquote) {
+  color: var(--el-text-color-secondary);
+  border-left: 4px solid var(--el-border-color);
+  background: var(--el-fill-color-light);
+  padding: 10px 15px;
+  margin: 15px 0;
+  border-radius: 4px;
+}
+
+:deep(.article-content code) {
+  background-color: var(--el-fill-color);
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--el-color-danger); /* 类似 GitHub 的代码高亮色 */
+}
+
+/* ====================================
+   标签区域
+   ==================================== */
+.article-tags {
+  margin-top: 20px;
+}
+
+.tag-item {
+  margin-right: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+/* ====================================
+   动画
+   ==================================== */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }
 </style>

@@ -33,12 +33,14 @@
     />
   </div>
 
-  <FrontPagination
-      v-model:current-page="data.pageNum"
-      v-model:page-size="data.pageSize"
-      :total="data.total"
-      @change="loadPage"
-  />
+  <div class="pagination-wrapper">
+    <FrontPagination
+        v-model:current-page="data.pageNum"
+        v-model:page-size="data.pageSize"
+        :total="data.total"
+        @change="loadPage"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -151,11 +153,13 @@ const handleTagClick = (tagKey) => {
  * 卡片容器与标题样式
  * ========================================== */
 .tag-main-card {
-  border: none;
+  /* 增加轻微边框，适配暗黑模式下阴影不可见的问题 */
+  border: 1px solid var(--el-border-color-lighter);
   border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  background: var(--el-bg-color-overlay);
+  box-shadow: var(--el-box-shadow-light);
   margin-bottom: 20px;
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
 
   :deep(.el-card__body) {
     padding: 25px 30px;
@@ -169,7 +173,8 @@ const handleTagClick = (tagKey) => {
   margin-bottom: 25px;
   font-size: 20px;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--el-text-color-primary);
+  transition: color 0.3s;
 
   .header-icon {
     margin-right: 8px;
@@ -188,7 +193,7 @@ const handleTagClick = (tagKey) => {
 .tag-cloud-box {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center; /* 标签也整体居中，如果不喜欢可以删掉这行靠左对齐 */
+  justify-content: center; /* 标签也整体居中 */
   gap: 12px 16px;
   align-items: center;
 }
@@ -199,10 +204,11 @@ const handleTagClick = (tagKey) => {
   justify-content: center;
   padding: 8px 18px;
   font-size: 14px;
-  color: #606266;
-  background-color: #ffffff;
+  color: var(--el-text-color-regular);
+  /* 优化底色，在明暗模式下都能保持绝佳的内部对比度 */
+  background-color: var(--el-fill-color-blank);
 
-  /* 边框颜色使用注入的 CSS 变量 */
+  /* 边框颜色使用动态注入的 CSS 变量 */
   border: 1px solid var(--random-color);
   border-radius: 8px;
   cursor: pointer;
@@ -212,7 +218,7 @@ const handleTagClick = (tagKey) => {
   .tag-icon {
     margin-right: 6px;
     font-size: 14px;
-    /* 图标颜色使用注入的 CSS 变量 */
+    /* 图标颜色使用动态注入的 CSS 变量 */
     color: var(--random-color);
     transition: color 0.3s;
   }
@@ -225,22 +231,32 @@ const handleTagClick = (tagKey) => {
   &:hover {
     color: var(--random-color); /* 悬浮时字体也变成对应颜色 */
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--el-box-shadow-light);
   }
 
   /* 激活(选中)状态 */
   &.is-active {
     background-color: var(--random-color);
     border-color: var(--random-color);
+    /* 激活时背景被随机颜色填充，为了保证对比度，文字强制设为白色 */
     color: #ffffff;
     transform: translateY(-2px);
-    /* 通用柔和阴影，如果浏览器支持，可以使用带有颜色的发光阴影 */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--el-box-shadow);
 
     .tag-icon {
       color: #ffffff; /* 激活时图标变成白色 */
     }
   }
+}
+
+/* ==========================================
+ * 分页容器
+ * ========================================== */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+  margin-top: 10px;
 }
 
 /* ==========================================

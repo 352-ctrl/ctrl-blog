@@ -24,15 +24,9 @@ import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { getTagList } from '@/api/front/tag.js';
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
-import { Collection } from '@element-plus/icons-vue'; // 引入适合标签的图标
 
 const router = useRouter();
 
-/**
- * =========================================================================
- * 配置与逻辑保持不变
- * =========================================================================
- */
 const CONFIG = {
   RADIUS_RATIO: 0.9,
   PERSPECTIVE: 500,
@@ -55,9 +49,7 @@ let resumeTimer = null;
 let activeRotation = { x: CONFIG.AUTO_ROTATE_SPEED, y: CONFIG.AUTO_ROTATE_SPEED };
 
 onMounted(() => {
-  // 注意：ResizeObserver 需要在数据加载后，DOM 存在时才有意义
   loadTags();
-  // 全局事件绑定延后到 initTagCloud 中判断
 });
 
 onUnmounted(() => {
@@ -74,7 +66,6 @@ const loadTags = async () => {
       tagList.value = res.data || [];
       await nextTick();
 
-      // 只有有数据时才初始化 3D 云
       if (tagList.value.length > 0) {
         setTimeout(() => {
           initResizeObserver();
@@ -118,7 +109,7 @@ const initTagCloud = () => {
 
   tagList.value.forEach((tag, index) => {
     const tagEl = document.createElement('div');
-    tagEl.className = 'tag-cloud-word'; // 注意：这个类名需要在全局样式或非 scoped 样式中定义，或者手动设置样式
+    tagEl.className = 'tag-cloud-word';
     tagEl.textContent = tag.name;
 
     tagEl.style.position = 'absolute';
@@ -291,9 +282,7 @@ const bindGlobalEvents = () => {
   window.addEventListener('touchend', onEnd);
 };
 
-const unbindGlobalEvents = () => {
-  // window listeners cleanup if necessary
-};
+const unbindGlobalEvents = () => {};
 
 const getRandomColor = () => {
   const r = Math.floor(Math.random() * 200);
@@ -304,17 +293,15 @@ const getRandomColor = () => {
 </script>
 
 <style scoped lang="scss">
-/* 1. 复用卡片整体样式 */
 .tag-card {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
-  background: #fff;
-  margin-bottom: 20px; /* 保持原有间距 */
+  background: var(--el-bg-color-overlay);
+  margin-bottom: 20px;
 
-  /* 2. 头部样式复用 */
   :deep(.el-card__header) {
     padding: 15px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
   .card-header {
@@ -327,33 +314,31 @@ const getRandomColor = () => {
       align-items: center;
       font-size: 16px;
       font-weight: 600;
-      color: #333;
+      color: var(--el-text-color-primary);
 
       .icon-tag {
         margin-right: 10px;
-        color: #409eff; /* 使用蓝色区分公告的红色 */
+        color: var(--el-color-primary);
         font-size: 18px;
-        animation: swing 2s infinite linear; /* 复用摇晃动画 */
+        animation: swing 2s infinite linear;
         transform-origin: top center;
       }
     }
   }
 
-  /* 3. 内容区域 */
   .card-body {
     min-height: 100px;
-    position: relative; /* 为绝对定位的标签提供基准 */
+    position: relative;
   }
 
   .tag-cloud-container {
     position: relative;
     width: 100%;
-    height: 300px; /* 保持原高度 */
+    height: 300px;
     overflow: hidden;
     user-select: none;
   }
 
-  /* 4. 空状态 */
   .empty-state {
     display: flex;
     justify-content: center;
@@ -365,7 +350,6 @@ const getRandomColor = () => {
   }
 }
 
-/* 5. 复用动画 Keyframes */
 @keyframes swing {
   0% { transform: rotate(0deg); }
   10% { transform: rotate(15deg); }

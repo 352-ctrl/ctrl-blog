@@ -2,12 +2,12 @@
   <div :class="[isManager ? null : 'content-container']">
     <el-row :gutter="20">
       <el-col :xs="24" :md="7">
-        <el-card class="box-card">
+        <el-card class="box-card" shadow="never">
           <template #header>
-            <span>个人信息</span>
+            <span class="card-header-text">个人信息</span>
           </template>
 
-          <div style="text-align: center;">
+          <div class="avatar-container">
             <AvatarUpload
                 v-model="data.userForm.avatar"
                 :size="100"
@@ -16,20 +16,22 @@
 
             <ul class="user-info-list">
               <li class="list-group-item">
-                <div><el-icon><User /></el-icon>用户名称</div>
-                <div>{{ userStore.nickname || '未设置' }}</div>
+                <div class="item-label"><el-icon><User /></el-icon>用户名称</div>
+                <div class="item-value">{{ userStore.nickname || '未设置' }}</div>
               </li>
               <li class="list-group-item">
-                <div><el-icon><Message /></el-icon>用户邮箱</div>
-                <div>{{ userStore.email || '未设置' }}</div>
+                <div class="item-label"><el-icon><Message /></el-icon>用户邮箱</div>
+                <div class="item-value">{{ userStore.email || '未设置' }}</div>
               </li>
               <li v-if="isManager" class="list-group-item">
-                <div><el-icon><UserFilled /></el-icon>所属角色</div>
-                <div>{{ userStore.role }}</div>
+                <div class="item-label"><el-icon><UserFilled /></el-icon>所属角色</div>
+                <div class="item-value">
+                  <el-tag size="small" type="success">{{ userStore.role }}</el-tag>
+                </div>
               </li>
               <li class="list-group-item">
-                <div><el-icon><Calendar /></el-icon>创建日期</div>
-                <div>{{ userStore.createTime }}</div>
+                <div class="item-label"><el-icon><Calendar /></el-icon>创建日期</div>
+                <div class="item-value">{{ userStore.createTime }}</div>
               </li>
             </ul>
           </div>
@@ -37,10 +39,11 @@
       </el-col>
 
       <el-col :xs="24" :md="17">
-        <el-card class="box-card">
-          <el-tabs v-model="activeTab" style="width: 100%">
+        <el-card class="box-card" shadow="never">
+          <el-tabs v-model="activeTab" class="settings-tabs">
+
             <el-tab-pane label="基本设置" name="base">
-              <div style="font-size: 20px; font-weight: bold;margin-bottom: 20px">基本设置</div>
+              <div class="tab-title">基本设置</div>
 
               <el-form ref="baseFormRef" :rules="baseRules" :model="data.userForm" label-width="100px">
                 <el-form-item label="昵称">
@@ -48,13 +51,14 @@
                 </el-form-item>
               </el-form>
 
-              <div style="text-align: right">
-                <el-button type="primary" style="padding: 18px 35px" @click="submitBaseForm">保存</el-button>
+              <div class="form-actions">
+                <el-button type="primary" class="submit-btn" @click="submitBaseForm">保存</el-button>
               </div>
             </el-tab-pane>
 
             <el-tab-pane label="安全设置" name="security">
-              <div style="font-size: 20px; font-weight: bold;margin-bottom: 20px">修改密码</div>
+              <div class="tab-title">修改密码</div>
+
               <el-form ref="passwordFormRef" :rules="passwordRules" :model="passwordData" label-width="100px">
                 <el-form-item label="当前密码" prop="oldPassword">
                   <el-input v-model="passwordData.oldPassword" type="password" show-password autocomplete="off" placeholder="请输入当前密码" />
@@ -67,8 +71,8 @@
                 </el-form-item>
               </el-form>
 
-              <div style="text-align: right">
-                <el-button type="primary" style="padding: 18px 35px" @click="submitPasswordForm">保存</el-button>
+              <div class="form-actions">
+                <el-button type="primary" class="submit-btn" @click="submitPasswordForm">保存</el-button>
               </div>
             </el-tab-pane>
 
@@ -80,31 +84,25 @@
 </template>
 
 <script setup>
-import {computed, onMounted, reactive, ref} from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserStore } from '@/store/user.js'
 import AvatarUpload from "./components/AvatarUpload.vue";
-import {validateNickname, validatePasswordComplexity} from "@/utils/validate.js";
-// 引入 API 模块
-import {updateProfile,changePassword} from "@/api/userInfo.js"
-import {useRoute} from "vue-router";
+import { validateNickname, validatePasswordComplexity } from "@/utils/validate.js";
+import { updateProfile, changePassword } from "@/api/userInfo.js"
+import { useRoute } from "vue-router";
 
 const userStore = useUserStore()
-
-// 根据路由路径判断当前环境
 const route = useRoute();
 const isManager = computed(() => route.path.startsWith('/manager'));
 
 const BASE_API = 'http://localhost:9999'
-// 定义上传接口地址
 const uploadFileUrl = `${BASE_API}/api/files/upload`;
 
-// 默认选中基本设置
 const activeTab = ref('base');
 const baseFormRef = ref(null);
 const passwordFormRef = ref(null);
 
-// 单独为密码表单创建数据
 const passwordData = reactive({
   oldPassword: '',
   newPassword: '',
@@ -112,7 +110,7 @@ const passwordData = reactive({
 });
 
 const data = reactive({
-  userForm:{}
+  userForm: {}
 });
 
 onMounted(() => {
@@ -120,28 +118,24 @@ onMounted(() => {
 })
 
 const handleSuccess = (url) => {
-  // 构造参数，只更新头像
   if (data.userForm) {
     data.userForm.avatar = url;
   }
 }
 
 const initBaseForm = () => {
-  // 确保 store 里有数据
   if (userStore.userInfo) {
-    // 这种解构赋值方式，假设 Store 里的 userInfo 就是扁平的对象（id, nickname, avatar...）
-    // 如果你的 Store 结构是 { user: { ... } }，请改为 userStore.userInfo.user
     data.userForm.id = userStore.userInfo.id
     data.userForm.nickname = userStore.userInfo.nickname
     data.userForm.avatar = userStore.userInfo.avatar
   }
 }
 
-// 确认密码验证
+// 确认密码验证 (修复了变量引用错误)
 const validateConfirmPassword = (rule, value, callback) => {
   if (!value) {
     callback(new Error("请再次确认新密码"));
-  } else if (value !== data.userForm.newPassword) {
+  } else if (value !== passwordData.newPassword) {
     callback(new Error("两次输入的密码不匹配"));
   } else {
     callback();
@@ -150,7 +144,7 @@ const validateConfirmPassword = (rule, value, callback) => {
 
 const baseRules = {
   nickname: [
-      { required: true, validator: validateNickname, trigger: 'blur' }
+    { required: true, validator: validateNickname, trigger: 'blur' }
   ]
 }
 
@@ -168,7 +162,6 @@ const passwordRules = {
 
 // 修改基本信息
 const submitBaseForm = () => {
-  // 直接发送更新请求，因为没有验证规则
   updateProfile(data.userForm).then(async res => {
     if (res.code === 200) {
       ElMessage.success('保存成功');
@@ -185,7 +178,6 @@ const submitBaseForm = () => {
 const submitPasswordForm = () => {
   passwordFormRef.value.validate((valid) => {
     if (valid) {
-      // 构造正确的请求参数
       const requestData = {
         id: data.userForm.id,
         oldPassword: passwordData.oldPassword,
@@ -207,34 +199,92 @@ const submitPasswordForm = () => {
     }
   });
 };
-
 </script>
 
-
 <style scoped>
-/* 右侧卡片头部文字大小 */
-.box-card :deep(.el-card__header) {
-  padding: 14px 15px 7px;
-  min-height: 40px;
+/* ==========================================
+ * 全局卡片样式
+ * ========================================== */
+.box-card {
+  border-radius: 8px;
+  background-color: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-lighter);
+  margin-bottom: 20px;
 }
-/* 左侧头像区域居中 */
-.avatar-box {
+
+.card-header-text {
+  font-weight: bold;
+  color: var(--el-text-color-primary);
+}
+
+:deep(.el-card__header) {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+/* ==========================================
+ * 左侧：个人信息区域
+ * ========================================== */
+.avatar-container {
   text-align: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #eee;
+  padding-top: 10px;
 }
-/* 列表样式 */
+
 .user-info-list {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 25px 0 0 0;
 }
+
 .list-group-item {
-  border-bottom: 1px solid #e7eaec;
-  padding: 11px 0;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  padding: 15px 0;
   font-size: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+  padding-bottom: 5px;
+}
+
+/* 列表项的标签与图标 */
+.item-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--el-text-color-primary);
+  font-weight: 500;
+}
+
+/* 列表项的值 */
+.item-value {
+  color: var(--el-text-color-regular);
+}
+
+/* ==========================================
+ * 右侧：设置区域卡片
+ * ========================================== */
+.settings-tabs {
+  width: 100%;
+}
+
+.tab-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 25px;
+  color: var(--el-text-color-primary);
+}
+
+.form-actions {
+  text-align: right;
+  margin-top: 30px;
+}
+
+.submit-btn {
+  padding: 18px 35px;
+  border-radius: 6px;
 }
 </style>

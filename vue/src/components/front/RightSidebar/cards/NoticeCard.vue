@@ -32,7 +32,6 @@ import { sanitizeHtml } from "@/utils/filter.js";
 import { onMounted, ref } from "vue";
 import { getHomepageNotices } from "@/api/front/notice.js";
 import { ElMessage } from "element-plus";
-import { Bell } from '@element-plus/icons-vue' // 引入图标
 
 const noticeList = ref([])
 
@@ -54,14 +53,14 @@ const loadNotice = () => {
 <style scoped lang="scss">
 /* 卡片整体样式 */
 .notice-card {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
-  background: #fff;
+  background: var(--el-bg-color-overlay);
 
   /* 头部样式 */
   :deep(.el-card__header) {
     padding: 15px 20px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--el-border-color-lighter);
   }
 
   .card-header {
@@ -74,26 +73,26 @@ const loadNotice = () => {
       align-items: center;
       font-size: 16px;
       font-weight: 600;
-      color: #333;
+      color: var(--el-text-color-primary);
 
       .icon-bell {
         margin-right: 10px;
-        color: #f56c6c; /* 红色警示色或主题色 */
+        color: var(--el-color-danger);
         font-size: 18px;
-        animation: swing 2s infinite linear; /* 添加摇晃动画 */
+        animation: swing 2s infinite linear;
         transform-origin: top center;
       }
     }
   }
 
   .notice-body {
-    min-height: 100px; /* 防止内容为空时塌陷 */
+    min-height: 100px;
   }
 
   /* 列表项样式 */
   .notice-item {
     padding: 10px 0;
-    border-bottom: 1px dashed #eee;
+    border-bottom: 1px dashed var(--el-border-color-lighter);
 
     &:last-child {
       border-bottom: none;
@@ -108,7 +107,7 @@ const loadNotice = () => {
   /* v-html 内容样式控制 (必须使用 :deep) */
   .notice-content {
     font-size: 14px;
-    color: #666;
+    color: var(--el-text-color-regular);
     line-height: 1.6;
     word-break: break-all;
 
@@ -125,7 +124,7 @@ const loadNotice = () => {
     }
 
     :deep(a) {
-      color: #409eff;
+      color: var(--el-color-primary);
       text-decoration: none;
       &:hover {
         text-decoration: underline;
@@ -145,7 +144,6 @@ const loadNotice = () => {
   }
 }
 
-/* 简单的摇铃动画 keyframes */
 @keyframes swing {
   0% { transform: rotate(0deg); }
   10% { transform: rotate(15deg); }

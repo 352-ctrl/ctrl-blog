@@ -127,7 +127,7 @@
                 leftBarWidth = ref(undefined),
                 // 移动中样式
                 moveBlockBackgroundColor = ref(undefined),
-                leftBarBorderColor = ref('#ddd'),
+                leftBarBorderColor = ref('var(--el-border-color)'),
                 iconColor = ref(undefined),
                 iconClass = ref('icon-right'),
                 status = ref(false),	    //鼠标状态
@@ -135,7 +135,7 @@
                 showRefresh = ref(true),
                 transitionLeft = ref(''),
                 transitionWidth = ref(''),
-                startLeft = ref(0) 
+                startLeft = ref(0)
 
                 const barArea = computed(()=>{
                     return proxy.$el.querySelector('.verify-bar-area')
@@ -195,7 +195,7 @@
                 //鼠标按下
                 function start(e) {
                     e = e || window.event
-                    if (!e.touches) {  //兼容PC端 
+                    if (!e.touches) {  //兼容PC端
                         var x = e.clientX;
                     } else {           //兼容移动端
                         var x = e.touches[0].pageX;
@@ -216,7 +216,7 @@
                 function move(e) {
                     e = e || window.event
                     if (status.value && isEnd.value == false) {
-                        if (!e.touches) {  //兼容PC端 
+                        if (!e.touches) {  //兼容PC端
                             var x = e.clientX;
                         } else {           //兼容移动端
                             var x = e.touches[0].pageX;
@@ -237,7 +237,7 @@
 
                 //鼠标松开
                 function end() {
-                    endMovetime.value = +new Date(); 
+                    endMovetime.value = +new Date();
                     //判断是否重合
                     if (status.value && isEnd.value == false) {
                         var moveLeftDistance = parseInt((moveBlockLeft.value || '').replace('px', ''));
@@ -254,7 +254,7 @@
                                 iconColor.value = '#fff'
                                 iconClass.value = 'icon-check'
                                 showRefresh.value = false
-                                isEnd.value = true;   
+                                isEnd.value = true;
                                 if (mode.value=='pop') {
                                     setTimeout(()=>{
                                         proxy.$parent.clickShow = false;
@@ -299,9 +299,9 @@
                     leftBarWidth.value = undefined
                     transitionWidth.value = 'width .3s'
 
-                    leftBarBorderColor.value = '#ddd'
-                    moveBlockBackgroundColor.value = '#fff'
-                    iconColor.value = '#000'
+                    leftBarBorderColor.value = 'var(--el-border-color)'
+                    moveBlockBackgroundColor.value = 'var(--el-bg-color)'
+                    iconColor.value = 'var(--el-text-color-primary)'
                     iconClass.value = 'icon-right'
                     isEnd.value = false
 

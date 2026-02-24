@@ -1,13 +1,13 @@
 <template>
   <div class="comment-item" :class="{ 'is-sub-item': isSub }">
-    <div style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 0">
+    <div class="comment-item-inner">
       <el-avatar
           :size="isSub ? 24 : 34"
           :src="data.userAvatar"
-          style="flex-shrink: 0"
+          class="user-avatar"
       />
 
-      <div style="flex: 1; min-width: 0;">
+      <div class="comment-main-content">
         <div class="info-row">
           <span class="nickname" :class="{ 'sub-nickname': isSub }">
             {{ data.userNickname }}
@@ -34,7 +34,7 @@
               class="reply-btn"
               @click="toggleReplyBox"
           >
-            <el-icon size="16" style="margin-right: 2px"><ChatDotRound /></el-icon>
+            <el-icon size="16" class="reply-icon"><ChatDotRound /></el-icon>
 
             <span>
               {{ (isSub || !data.replyCount) ? '回复' : data.replyCount }}
@@ -66,13 +66,13 @@
 
           <div v-if="data.replyCount > FOLD_THRESHOLD" class="expand-control">
             <div v-if="!isExpanded" @click="isExpanded = true" class="expand-btn">
-              <span style="display: flex; align-items: center; gap: 4px;">
+              <span class="expand-text">
                 查看全部 {{ data.replyCount }} 条回复
                 <el-icon><ArrowDown /></el-icon>
               </span>
             </div>
             <div v-else @click="isExpanded = false" class="expand-btn">
-              <span style="display: flex; align-items: center; gap: 4px;">
+              <span class="expand-text">
                 收起 <el-icon><ArrowUp /></el-icon>
               </span>
             </div>
@@ -154,15 +154,41 @@ const handleSubmitReply = async (content) => {
 </script>
 
 <style scoped>
-/* 容器样式微调 */
+/* ====== 布局提取 ====== */
 .comment-item {
   transition: background-color 0.2s;
 }
 
+.comment-item-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.user-avatar {
+  flex-shrink: 0;
+}
+
+.comment-main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.reply-icon {
+  margin-right: 2px;
+}
+
+.expand-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* 子评论项的样式调整 */
-.is-sub-item {
-  padding-top: 5px !important;
-  padding-bottom: 5px !important;
+.is-sub-item .comment-item-inner {
+  padding-top: 5px;
+  padding-bottom: 5px;
 }
 
 /* === 1. 昵称行 === */
@@ -174,20 +200,20 @@ const handleSubmitReply = async (content) => {
 .nickname {
   font-size: 14px;
   font-weight: bold;
-  color: #61666d; /* B站风格昵称色 */
+  color: var(--el-text-color-secondary); /* 替换 #61666d */
 }
 .sub-nickname {
   font-size: 13px;
-  color: #61666d;
+  color: var(--el-text-color-secondary); /* 替换 #61666d */
 }
 
 /* === 2. 内容行 === */
 .comment-content {
-  color: #18191c;
+  color: var(--el-text-color-primary); /* 替换 #18191c */
   font-size: 15px;
   line-height: 1.6;
   margin-bottom: 4px;
-  word-break: break-all; /* 防止长英文不换行 */
+  word-break: break-all;
 }
 .sub-content {
   font-size: 14px;
@@ -195,7 +221,7 @@ const handleSubmitReply = async (content) => {
 }
 
 .reply-target {
-  color: #409EFF;
+  color: var(--el-color-primary); /* 替换 #409EFF */
   margin-right: 4px;
   font-weight: 500;
   font-size: 14px;
@@ -207,18 +233,18 @@ const handleSubmitReply = async (content) => {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: #9499a0; /* 弱化灰色 */
+  color: var(--el-text-color-placeholder); /* 替换 #9499a0 */
 }
 .reply-btn {
   padding: 0;
   height: auto;
   font-size: 12px;
-  color: #9499a0; /* 默认灰色 */
-  display: flex; /* 让图标和文字对齐 */
+  color: var(--el-text-color-placeholder); /* 替换 #9499a0 */
+  display: flex;
   align-items: center;
 }
 .reply-btn:hover {
-  color: #409EFF; /* 悬停变色 */
+  color: var(--el-color-primary); /* 替换 #409EFF */
   background: transparent;
 }
 
@@ -227,19 +253,18 @@ const handleSubmitReply = async (content) => {
   margin-top: 10px;
 }
 
-/* === 子评论容器 (对齐调整) === */
+/* === 子评论容器 === */
 .sub-comment-wrapper {
   margin-top: 10px;
   border-radius: 4px;
-  padding: 10px 0; /* 增加内边距 */
+  padding: 10px 0;
 }
 
 /* 展开控制条样式 */
 .expand-control {
   margin-top: 8px;
   font-size: 12px;
-  color: #9499a0;
-  /* 如果 sub-comment-wrapper 有 padding，这里就不需要 padding-left 了 */
+  color: var(--el-text-color-placeholder); /* 替换 #9499a0 */
 }
 
 .expand-btn {
@@ -250,6 +275,6 @@ const handleSubmitReply = async (content) => {
 }
 
 .expand-btn:hover {
-  color: #409EFF;
+  color: var(--el-color-primary); /* 替换 #409EFF */
 }
 </style>

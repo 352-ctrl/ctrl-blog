@@ -1,5 +1,5 @@
 <template>
-  <el-row v-for="item in articles" :key="item.id" style="margin-bottom: 20px;">
+  <el-row v-for="item in articles" :key="item.id" class="article-row">
     <el-col @click="handleCardClick(item.id)">
 
       <el-card class="article-card" shadow="hover" :body-style="{ padding: '16px 20px' }">
@@ -115,10 +115,16 @@ const formatTimeAgo = (timeStr) => {
 
 <style scoped>
 /* ==================== 1. 卡片整体与交互效果 ==================== */
+.article-row {
+  margin-bottom: 20px;
+}
+
 .article-card {
   cursor: pointer;
   border-radius: 8px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: var(--el-bg-color-overlay);
+  border-color: var(--el-border-color-light);
 }
 
 .article-card:hover {
@@ -166,7 +172,7 @@ const formatTimeAgo = (timeStr) => {
 }
 
 .title-text {
-  color: #303133;
+  color: var(--el-text-color-primary); /* 替换为 CSS 变量 */
   font-weight: 600;
   font-size: 18px;
   line-height: 1.4;
@@ -199,7 +205,7 @@ const formatTimeAgo = (timeStr) => {
 }
 
 .article-summary {
-  color: #606266;
+  color: var(--el-text-color-regular); /* 替换为 CSS 变量 */
   font-size: 14px;
   line-height: 1.6;
   flex: 1;
@@ -212,7 +218,7 @@ const formatTimeAgo = (timeStr) => {
 
 .custom-divider {
   margin: 16px 0;
-  border-top-color: #ebeef5;
+  border-top-color: var(--el-border-color-lighter); /* 替换为 CSS 变量 */
 }
 
 /* ==================== 3. 底部元信息区（头像、图标、标签） ==================== */
@@ -221,7 +227,7 @@ const formatTimeAgo = (timeStr) => {
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary); /* 替换为 CSS 变量 */
 }
 
 .meta-left {
@@ -234,7 +240,7 @@ const formatTimeAgo = (timeStr) => {
 }
 
 .nickname {
-  color: #606266;
+  color: var(--el-text-color-regular); /* 替换为 CSS 变量 */
   font-weight: 500;
 }
 
