@@ -96,10 +96,9 @@ blog:
 
 file:
   # 这里的 ${user.dir} 会自动被 Spring 替换为当前项目运行的根目录
-  # 也可以写绝对路径，例如: /var/www/blog/files/
   upload-path: ${FILE_UPLOAD_PATH:${user.dir}/files/}
   # 访问前缀 (开发环境写 localhost，生产环境改域名)
-  access-path: ${FILE_ACCESS_HOST}
+  access-path: ${FILE_ACCESS_HOST}/api/files/download/
 
 management:
   endpoints:

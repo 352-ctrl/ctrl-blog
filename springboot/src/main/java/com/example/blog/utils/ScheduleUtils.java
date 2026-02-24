@@ -72,6 +72,7 @@ public class ScheduleUtils {
                 scheduler.pauseJob(jobKey);
             }
 
+
             log.info("定时任务创建成功 - ID: {}, 名称: {}", job.getId(), job.getJobName());
         } catch (SchedulerException e) {
             log.error("创建定时任务失败，任务ID: {}", job.getId(), e);
