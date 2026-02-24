@@ -75,13 +75,13 @@ const router = useRouter();
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #e3e5e7;
+  border: 1px solid var(--el-border-color); /* 适配暗黑模式的边框 */
   transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.3s ease;
 }
 
 .user-avatar-trigger:hover .user-avatar {
   transform: scale(1.15) translateY(2px);
-  border-color: #c9ccd0;
+  border-color: var(--el-border-color-darker);
 }
 
 /* ================= 登录按钮样式 (未登录) ================= */
@@ -89,33 +89,34 @@ const router = useRouter();
   padding: 8px 14px;
   font-weight: bold;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2); /* 淡淡的蓝色发光阴影，更吸引眼球 */
+  /* 阴影使用带有透明度的主题色变量 */
+  box-shadow: 0 4px 12px var(--el-color-primary-light-5);
   transition: all 0.3s ease;
 }
 
 .login-action-btn:hover {
-  transform: translateY(-2px); /* 鼠标悬浮时微微上浮 */
-  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--el-color-primary-light-3);
 }
 
 /* ================= 下拉菜单全局覆盖 ================= */
 .custom-dropdown-menu {
   border-radius: 8px;
   padding: 6px 0;
-  box-shadow: 0 8px 24px rgba(18, 18, 18, 0.1);
+  box-shadow: var(--el-box-shadow-light); /* Element Plus 官方浅色/深色自适应阴影 */
 }
 
 /* 菜单项的基础样式和交互 */
 :deep(.el-dropdown-menu__item) {
   padding: 10px 24px;
   font-size: 14px;
-  color: #515767;
+  color: var(--el-text-color-regular); /* 自适应文字颜色 */
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 :deep(.el-dropdown-menu__item:not(.is-disabled):hover) {
-  background-color: #f2f3f5;
-  color: #1e80ff;
+  background-color: var(--el-fill-color-light); /* 悬浮背景色 */
+  color: var(--el-color-primary); /* 悬浮文字颜色 */
 }
 
 :deep(.el-dropdown-menu__item .el-icon) {
@@ -138,7 +139,7 @@ const router = useRouter();
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #e4e6eb;
+  border: 1px solid var(--el-border-color-light);
   margin-right: 16px;
 }
 
@@ -151,7 +152,7 @@ const router = useRouter();
 }
 
 .nickname {
-  color: #252933;
+  color: var(--el-text-color-primary); /* 主要文字颜色，亮色下黑，暗色下白 */
   font-size: 16px;
   font-weight: 600;
   max-width: 130px;
@@ -169,12 +170,12 @@ const router = useRouter();
 }
 
 .admin-tag {
-  color: #1e80ff;
-  background: rgba(30, 128, 255, 0.1);
+  color: var(--el-color-primary); /* 主题色文字 */
+  background: var(--el-color-primary-light-9); /* 主题色的极浅背景，Element Plus在暗黑模式下会自动把 light-9 转换为深色背景 */
 }
 
 .user-tag {
-  color: #515767;
-  background: #f2f3f5;
+  color: var(--el-text-color-secondary); /* 次级文字颜色 */
+  background: var(--el-fill-color); /* 填充背景色，亮色浅灰，暗色深灰 */
 }
 </style>

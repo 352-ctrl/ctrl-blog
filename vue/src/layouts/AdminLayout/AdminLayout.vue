@@ -1,12 +1,12 @@
 <template>
-  <div>
-    <el-container style="display: flex; flex-direction: row">
+  <div class="admin-layout">
+    <el-container class="layout-wrapper">
 
       <el-drawer v-model="drawer" direction="ltr" :show-close="false" class="hide-md-up" :size="250">
         <template #header>
-          <div style="height: 60px; display: flex; align-items: center; padding-right: 20px">
-            <img src="../../assets/images/logo.png" style="height: 40px; border-radius: 50%" >
-            <span style="font-weight: bold; white-space: nowrap">个人网站</span>
+          <div class="drawer-header">
+            <img src="../../assets/images/logo.png" class="logo-img" alt="logo">
+            <span class="logo-text">个人网站</span>
           </div>
         </template>
         <template #default>
@@ -18,15 +18,26 @@
         <AdminSidebar :is-collapse="isCollapse" :show-logo="true" />
       </el-aside>
 
-      <el-container style="flex: 1">
+      <el-container class="main-container">
+
         <el-header class="common-header">
-          <div style="display: flex; align-items: center">
-            <el-button class="hide-md-down" text @click="toggleCollapse" :icon="isCollapse ? 'Fold' : 'Expand'" style="padding: 0; font-size: 20px"></el-button>
-            <el-button class="hide-md-up" text @click="drawer = true" :icon="isCollapse ? 'Fold' : 'Expand'" style="padding: 0; font-size: 20px"></el-button>
-            <AdminBreadcrumb />
+          <div class="header-left">
+            <el-button class="hide-md-down action-btn" text @click="toggleCollapse" :icon="isCollapse ? 'Expand' : 'Fold'"></el-button>
+            <el-button class="hide-md-up action-btn" text @click="drawer = true" icon="Expand"></el-button>
+
+            <div class="breadcrumb-nav">
+              <AdminBreadcrumb />
+            </div>
           </div>
-          <div style="flex: 1"></div>
-          <div>
+
+          <div class="header-right">
+            <el-button
+                class="action-btn theme-toggle-btn"
+                text
+                @click="toggleDark()"
+                :icon="isDark ? 'Sunny' : 'Moon'"
+            ></el-button>
+
             <UserDropdown />
           </div>
         </el-header>
@@ -41,10 +52,11 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from "vue";
-import {ElMessage} from "element-plus";
+import { onMounted, ref } from "vue";
+import { ElMessage } from "element-plus";
 import { useUserStore } from '@/store/user.js'
-import {useRouter} from "vue-router";
+import { useRouter } from "vue-router";
+import { useDark, useToggle } from '@vueuse/core'; // 引入暗黑模式 API
 
 const userStore = useUserStore()
 const router = useRouter();
@@ -52,10 +64,13 @@ const drawer = ref(false)
 const isCollapse = ref(window.innerWidth <= 992);
 let lastSmallScreenState = window.innerWidth <= 992; // 记录上次的状态
 
+// 实例化暗黑模式切换逻辑
+const isDark = useDark();
+const toggleDark = useToggle(isDark);
+
 onMounted(() => {
   // 初始检测
   checkScreenSize();
-
   // 监听窗口大小变化
   window.addEventListener('resize', checkScreenSize);
 });
@@ -72,7 +87,7 @@ const toggleCollapse = () => {
 // 检测屏幕宽度并更新状态
 const checkScreenSize = () => {
   const width = window.innerWidth;
-  const currentIsSmall  = width <= 992;
+  const currentIsSmall = width <= 992;
   const isMobile = width <= 768;
 
   // 只有当小屏幕状态发生改变时（跨越992px阈值）才自动调整侧边栏
@@ -93,6 +108,131 @@ const logout = () => {
 </script>
 
 <style scoped>
+/* ====================================
+   全局外层容器布局
+   ==================================== */
+.admin-layout {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.layout-wrapper {
+  height: 100%;
+  display: flex;
+}
+
+/* ====================================
+   左侧侧边栏 (Aside)
+   ==================================== */
+.custom-aside {
+  transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; /* 让侧边栏收缩更丝滑 */
+  overflow: hidden;
+  height: 100vh;
+  /* ✨ 核心优化：使用 overlay 变量，暗黑模式下比主体背景稍亮（偏灰），白天是纯白 */
+  background-color: var(--el-bg-color-overlay);
+  border-right: 1px solid var(--el-border-color-lighter); /* 使用较淡的边框色 */
+}
+
+/* 抽屉(Drawer)头部样式 */
+.drawer-header {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding-right: 20px;
+}
+
+.logo-img {
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.logo-text {
+  font-weight: bold;
+  white-space: nowrap;
+  color: var(--el-text-color-primary); /* 适配暗黑模式字体 */
+}
+
+/* ====================================
+   右侧区域 (Container & Header)
+   ==================================== */
+.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column; /* 让头部和主体上下自动排布 */
+  overflow: hidden;
+}
+
+.common-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  /* ✨ 核心优化：使用 overlay 变量，保证头部和侧边栏融为一体 */
+  background-color: var(--el-bg-color-overlay);
+  border-bottom: 1px solid var(--el-border-color-lighter); /* 较淡的底部分割线 */
+  padding: 0 20px;
+  flex-shrink: 0; /* 防止头部被压缩 */
+}
+
+.header-left, .header-right {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-nav {
+  margin-left: 15px; /* 面包屑和折叠按钮拉开距离 */
+}
+
+/* ====================================
+   通用操作按钮样式 (包括折叠和暗黑切换)
+   ==================================== */
+.action-btn {
+  padding: 0;
+  font-size: 20px;
+  color: var(--el-text-color-regular); /* 使用较柔和的图标颜色 */
+  transition: color 0.3s;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.action-btn:hover {
+  color: var(--el-color-primary); /* 悬浮时显示品牌主题色 */
+  background-color: transparent !important;
+}
+
+.theme-toggle-btn {
+  margin-right: 15px; /* 距离右侧头像下拉框一定的间距 */
+}
+
+/* ====================================
+   下方内容容器 (Main)
+   ==================================== */
+.page-container {
+  flex: 1;
+  overflow-y: auto; /* 内容超出时显示滚动条 */
+  /* ✨ 主体内容容器：使用最底层的 page 背景色（白天浅灰，暗夜极黑） */
+  background-color: var(--el-bg-color-page);
+  padding: 15px; /* 可以给页面统一加内边距，根据需要调整 */
+  margin: 0 !important;
+}
+
+/* ====================================
+   媒体查询与深度覆盖 (:deep)
+   ==================================== */
+@media screen and (max-width: 992px) {
+  .common-header {
+    padding: 0 10px; /* 移动端减小 Header 的左右内边距 */
+  }
+}
+
+/* 覆盖 Element Plus 抽屉组件的默认背景和边距 */
+:deep(.el-drawer) {
+  /* 确保抽屉背景色也和侧边栏一样淡一点 */
+  background-color: var(--el-bg-color-overlay) !important;
+}
+
 :deep(.el-drawer__body) {
   padding: 0 !important;
 }
@@ -104,32 +244,9 @@ const logout = () => {
   height: auto !important;
   min-height: 0 !important;
 }
-:deep(.page-container) {
-  margin-top: 0 !important;
-}
-.custom-aside {
-  transition: width 0.2s ease-in-out !important;
-  overflow: hidden;
-  height: 100vh;
-  border-right: 1px solid #dcdfe6; /* 添加右侧边框 */
-}
 
 /* 修正菜单层级缩进 */
-.el-menu--inline .el-menu-item {
+:deep(.el-menu--inline .el-menu-item) {
   padding-left: 48px !important;
-}
-
-.page-container {
-  overflow-y: auto; /* 内容超出时显示滚动条，否则隐藏 */
-  background-color: #f5f5f5;
-  height: calc(100vh - 60px); /* 容器高度 = 视口高度 - 菜单栏高度（60px），顶部刚好对齐菜单栏底部 */
-  margin-top: 60px; /* 容器顶部距离页面顶部60px，和菜单栏高度一致 */
-}
-
-@media screen and (max-width: 992px) {
-  .common-header {
-    /* 移动端减小 Header 的左右内边距 */
-    padding: 0 10px;
-  }
 }
 </style>

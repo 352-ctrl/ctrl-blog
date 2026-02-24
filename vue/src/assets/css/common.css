@@ -4,13 +4,22 @@
     border-radius: 50%;
 }
 
-/* 通用卡片样式 */
+/* ====================================
+   通用卡片样式 (适配暗黑模式)
+   ==================================== */
 .card {
-    background-color: #fff;
-    border-radius: 5px;
+    /* 使用 overlay 变量使卡片背景在暗黑模式下与页面深灰底色产生层级落差 */
+    background-color: var(--el-bg-color-overlay);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 8px;
     padding: 20px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+    box-shadow: var(--el-box-shadow-light);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: var(--el-box-shadow);
 }
 
 /* 前后台通用菜单栏样式） */
