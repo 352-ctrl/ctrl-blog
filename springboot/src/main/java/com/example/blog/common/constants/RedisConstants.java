@@ -43,9 +43,14 @@ public final class RedisConstants {
     public static final long EXPIRE_USER_TOKEN = 1L;
 
     /**
-     * 邮箱验证码 Key
+     * 注册邮箱验证码 Key
      */
-    public static final String REDIS_EMAIL_CODE_KEY = "email:code:";
+    public static final String REDIS_EMAIL_REGISTER_CODE_KEY = "email:code:register:";
+
+    /**
+     * 重置密码邮箱验证码 Key
+     */
+    public static final String REDIS_EMAIL_RESET_CODE_KEY = "email:code:reset:";
     /**
      * 邮箱验证码过期时间 (5分钟)
      */

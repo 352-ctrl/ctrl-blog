@@ -5,12 +5,14 @@ import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.ResultCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Objects;
 
@@ -25,6 +27,19 @@ public class GlobalExceptionHandler {
      * 日志记录器
      */
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * 处理 404 异常 (Spring Boot 3.x 特性)
+     * 避免 404 错误被当成系统异常打印长串堆栈
+     *
+     * @param e 404异常对象
+     * @return 统一错误响应 (404)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Result<Void> handleNoResourceFoundException(NoResourceFoundException e) {
+        log.warn("404 接口不存在: {}", e.getResourcePath());
+        return Result.error(ResultCode.NOT_FOUND, MessageConstants.MSG_RESOURCE_NOT_FOUND);
+    }
 
     /**
      * 处理参数校验异常 (Spring Validation)
@@ -45,8 +60,20 @@ public class GlobalExceptionHandler {
         }
 
         log.warn("参数校验失败：{}", errorMsg);
-        // 使用枚举 + 自定义消息
         return Result.error(ResultCode.PARAM_ERROR, errorMsg);
+    }
+
+    /**
+     * 处理 HTTP 消息不可读异常 (JSON 反序列化异常)
+     * 例如：前端传了不存在的枚举值，或者 JSON 格式完全错误
+     *
+     * @param e 异常对象
+     * @return 统一错误响应 (400)
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.warn("参数解析失败 (JSON反序列化异常): {}", e.getMessage());
+        return Result.error(ResultCode.PARAM_ERROR, MessageConstants.MSG_PARAM_FORMAT_ERROR);
     }
 
     /**
@@ -62,7 +89,7 @@ public class GlobalExceptionHandler {
         String invalidValue = Objects.toString(e.getValue(), "");
         String requiredType = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "Unknown";
 
-        String errorMsg = String.format("参数[%s]格式错误，期望类型为[%s]，实际传入[%s]",
+        String errorMsg = String.format(MessageConstants.MSG_PARAM_TYPE_MISMATCH,
                 paramName, requiredType, invalidValue);
 
         log.warn("参数类型转换失败：{}", errorMsg);
@@ -94,5 +121,4 @@ public class GlobalExceptionHandler {
         log.error("系统异常", e);
         return Result.error(ResultCode.INTERNAL_SERVER_ERROR, MessageConstants.MSG_SYSTEM_ERROR);
     }
-
 }

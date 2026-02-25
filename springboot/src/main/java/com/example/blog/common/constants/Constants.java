@@ -47,12 +47,6 @@ public final class Constants {
      */
     public static final String DEFAULT_NICKNAME_PREFIX = "用户_";
 
-    /**
-     * 默认用户头像
-     */
-    public static final String DEFAULT_AVATAR = "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png";
-
-
     /* ---------- 分页通用配置 ---------- */
     /**
      * 默认页码
@@ -63,16 +57,6 @@ public final class Constants {
      * 默认每页条数
      */
     public static final Integer PAGE_SIZE_DEFAULT = 10;
-
-    /**
-     * 每页条数最小值 (用于校验)
-     */
-    public static final int PAGE_SIZE_MIN = 10;
-
-    /**
-     * 每页条数最大值 (用于校验)
-     */
-    public static final int PAGE_SIZE_MAX = 100;
 
     /**
      * 顶级评论的父ID (根节点)

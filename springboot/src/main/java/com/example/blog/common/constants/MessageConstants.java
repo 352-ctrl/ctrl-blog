@@ -33,6 +33,18 @@ public final class MessageConstants {
      */
     public static final String MSG_PARAM_ERROR = "参数错误";
     /**
+     * 通用：参数格式或类型错误 (反序列化失败)
+     */
+    public static final String MSG_PARAM_FORMAT_ERROR = "请求参数格式或类型错误，请检查传入的值";
+    /**
+     * 通用：参数类型转换失败模板 (供 String.format 使用)
+     */
+    public static final String MSG_PARAM_TYPE_MISMATCH = "参数[%s]格式错误，期望类型为[%s]，实际传入[%s]";
+    /**
+     * 通用：接口或资源不存在 (404)
+     */
+    public static final String MSG_RESOURCE_NOT_FOUND = "请求的接口或资源不存在";
+    /**
      * 通用：系统内部异常
      */
     public static final String MSG_SYSTEM_ERROR = "系统异常，请联系管理员";
@@ -87,9 +99,9 @@ public final class MessageConstants {
      */
     public static final String MSG_CAPTCHA_VERIFY_FAILED = "安全验证失败，请重新滑动拼图";
     /**
-     * 认证失败：Token 无效或由过滤器拦截
+     * 核心：新增会话失效常量
      */
-    public static final String MSG_AUTH_FAILED = "认证失败，请重新登录";
+    public static final String MSG_SESSION_INVALID = "会话已失效，请重新登录";
     /**
      * Token 解析失败或过期
      */
@@ -106,6 +118,10 @@ public final class MessageConstants {
      * 注册邮件标题
      */
     public static final String MSG_EMAIL_SUBJECT_REGISTER = "【您的博客】注册验证码";
+    /**
+     * 忘记密码邮件标题
+     */
+    public static final String MSG_EMAIL_SUBJECT_RESET = "找回密码验证码";
     /**
      * 验证码已过期
      */
@@ -271,4 +287,17 @@ public final class MessageConstants {
     public static final String LOG_LOGIN_BANNED = "账号已被封禁";
     /** 日志：注册并自动登录成功 */
     public static final String LOG_REGISTER_AND_LOGIN_SUCCESS = "注册并自动登录成功";
+
+    /* ============================== 8. 防越权专属提示消息 ============================== */
+
+    /** 越权：禁止操作超级管理员 */
+    public static final String MSG_CANNOT_OPERATE_SUPER_ADMIN = "越权操作：禁止修改或删除超级管理员";
+    /** 越权：禁止操作其他管理员 */
+    public static final String MSG_CANNOT_OPERATE_OTHER_ADMIN = "越权操作：禁止修改或删除其他管理员";
+    /** 越权：禁止分配超级管理员权限 */
+    public static final String MSG_CANNOT_GRANT_SUPER_ADMIN = "系统安全限制：任何人禁止通过接口分配超级管理员权限";
+    /** 越权：普通管理员只能分配普通用户权限 */
+    public static final String MSG_ADMIN_CANNOT_GRANT_ADMIN = "越权操作：普通管理员只能分配普通用户角色";
+    /** 越权：禁止修改自己的角色权限 */
+    public static final String MSG_CANNOT_CHANGE_OWN_ROLE = "安全限制：禁止修改自身的角色权限";
 }

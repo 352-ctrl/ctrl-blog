@@ -2,6 +2,7 @@ package com.example.blog.utils;
 
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -13,8 +14,48 @@ public class RedisUtil {
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    // ============================
+    // StringRedisTemplate 专用方法 (处理纯字符串/计数器，防止反序列化报错)
+    // ============================
+
     /**
-     * 设置缓存
+     * 设置纯字符串缓存
+     */
+    public void setStr(String key, String value) {
+        stringRedisTemplate.opsForValue().set(key, value);
+    }
+
+    /**
+     * 设置纯字符串缓存并指定过期时间
+     */
+    public void setStr(String key, String value, long timeout, TimeUnit unit) {
+        stringRedisTemplate.opsForValue().set(key, value, timeout, unit);
+    }
+
+    /**
+     * 获取纯字符串缓存
+     */
+    public String getStr(String key) {
+        return stringRedisTemplate.opsForValue().get(key);
+    }
+
+    /**
+     * 字符串/数字 递增 (解决对象反序列化报错的利器)
+     */
+    public Long incrementStr(String key, long delta) {
+        return stringRedisTemplate.opsForValue().increment(key, delta);
+    }
+
+
+    // ============================
+    // 通用及对象操作方法
+    // ============================
+
+    /**
+     * 设置缓存 (存入的是经过 JSON 序列化的对象)
      */
     public void set(String key, Object value) {
         redisTemplate.opsForValue().set(key, value);
@@ -77,7 +118,7 @@ public class RedisUtil {
     }
 
     /**
-     * 递增
+     * 递增 (注意：如果是被 Spring 序列化过的复杂对象，调用此方法会报错，计数请用 incrementStr)
      */
     public Long increment(String key, long delta) {
         return redisTemplate.opsForValue().increment(key, delta);
