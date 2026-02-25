@@ -204,21 +204,30 @@ const columns = reactive([
 .expand-form {
   margin-left: 20px;
 }
-.expand-form .el-form-item {
+
+/* 强制覆盖 el-form-item 的默认 margin，并让其独占一行 */
+.expand-form :deep(.el-form-item) {
   margin-bottom: 8px;
-  width: 100%; /* 让每个 item 独占一行 */
+  margin-right: 0;
+  width: 100%;
+  display: flex; /* 使用 flex 保证 label 和内容对齐 */
 }
-/* 给长文本加换行，并使用等宽字体显示代码/JSON更美观 */
+
+/* 展开内容的文字样式适配黑暗模式 */
 .expand-value {
   word-break: break-all;
   white-space: pre-wrap;
-  color: #606266;
   font-family: Consolas, Monaco, monospace;
-  background-color: #f8f8f8;
-  padding: 4px 8px;
-  border-radius: 4px;
   display: inline-block;
   min-width: 300px;
   max-width: 800px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  line-height: 1.5;
+
+  /* --- 核心：使用 Element Plus 的 CSS 变量实现亮/暗色自适应 --- */
+  color: var(--el-text-color-regular); /* 替代原先写死的 #606266 */
+  background-color: var(--el-fill-color-light); /* 替代原先写死的 #f8f8f8 */
+  border: 1px solid var(--el-border-color-lighter); /* 增加浅边框提升层级边界感 */
 }
 </style>
