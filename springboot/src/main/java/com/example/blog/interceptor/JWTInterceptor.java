@@ -5,12 +5,15 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.blog.annotation.AuthCheck;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
+import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.exception.CustomerException;
+import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.TokenUtils;
 import com.example.blog.utils.UserContext;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
  */
 @Component
 public class JWTInterceptor implements HandlerInterceptor {
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
      * 前置处理方法，验证JWT令牌
@@ -85,14 +91,36 @@ public class JWTInterceptor implements HandlerInterceptor {
                 throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_ROLE_INVALID);
             }
 
+            // 检查 Redis 中该用户的在线 Token 记录是否存在
+            String redisTokenKey = RedisConstants.REDIS_USER_TOKEN_KEY + userId;
+            Object storedTokenObj = redisUtil.get(redisTokenKey);
+
+            // 检查当前 Token 是否在黑名单中 (处理重置密码/退出登录的黑名单逻辑)
+            String blacklistKey = RedisConstants.REDIS_TOKEN_BLACKLIST_PREFIX + token;
+            boolean isBlacklisted = redisUtil.hasKey(blacklistKey);
+
+            // 如果满足以下任意条件，判定为失效：
+            // - 情况A: Redis 在线记录已消失 (可能被重置密码删除了)
+            // - 情况B: 当前 Token 在黑名单中 (可能用户已点退出或已被踢出)
+            if (storedTokenObj == null || isBlacklisted) {
+                if (isAuthRequired) {
+                    throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_SESSION_INVALID);
+                }
+                // 如果不是必须登录的接口，清空 context 走游客模式
+                UserContext.remove();
+                return true;
+            }
+
             // 将当前用户ID和权限放入 ThreadLocal
             UserContext.set(new UserPayloadDTO(userId, roleEnum, nickname));
+        } catch (CustomerException ce) {
+            // 1. 如果主动抛出的业务异常（比如角色无效），直接原样往外抛
+            throw ce;
         } catch (Exception e) {
-            // 验证失败进入这里
+            // 2. 如果是 JWT 库抛出的解析异常（伪造、过期等），才统一报 Token 无效
             if (isAuthRequired) {
                 throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_TOKEN_INVALID);
             }
-            // 非必须登录接口，忽略异常，直接放行（游客模式）
         }
 
         return true;
