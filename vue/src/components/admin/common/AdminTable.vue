@@ -87,8 +87,8 @@
           :align="column.align || 'center'"
       >
         <template #default="scope">
-          <el-tag :type="column.statusMap[scope.row[column.prop]].type">
-            {{ column.statusMap[scope.row[column.prop]].text }}
+          <el-tag :type="column.statusMap[scope.row[column.prop]]?.type || 'info'">
+            {{ column.statusMap[scope.row[column.prop]]?.text || scope.row[column.prop] || '未知' }}
           </el-tag>
         </template>
       </el-table-column>
@@ -183,26 +183,28 @@
     <el-table-column
         v-if="realShowAction"
         label="操作"
-        :width="actionColumnWidth"
-        fixed="right"
+        :width="actionWidth || actionColumnWidth" fixed="right"
         align="center"
     >
       <template #default="scope">
-        <el-button
-            v-if="editable"
-            type="primary"
-            icon="Edit"
-            circle
-            @click="handleEditClick(scope.row)"
-            :class="{ 'action-btn-mr': deletable }"
-        />
-        <el-button
-            v-if="deletable"
-            type="danger"
-            icon="Delete"
-            circle
-            @click="handleDeleteClick(scope.row.id)"
-        />
+        <div class="table-actions">
+          <slot name="custom-actions" :row="scope.row"></slot>
+
+          <el-button
+              v-if="editable"
+              type="primary"
+              icon="Edit"
+              circle
+              @click="handleEditClick(scope.row)"
+          />
+          <el-button
+              v-if="deletable"
+              type="danger"
+              icon="Delete"
+              circle
+              @click="handleDeleteClick(scope.row.id)"
+          />
+        </div>
       </template>
     </el-table-column>
   </el-table>
@@ -224,7 +226,8 @@ const props = defineProps({
   deleteApi: { type: Function, required: true },
   deleteTip: { type: String, default: '确定删除该数据吗？' },
   deleteTitle: { type: String, default: '提示' },
-  expandable: { type: Boolean, default: false }
+  expandable: { type: Boolean, default: false },
+  actionWidth: { type: Number }
 })
 
 const emit = defineEmits([
@@ -321,7 +324,16 @@ const handleSwitchChange = (row) => {
   margin-left: 5px;
 }
 
-.action-btn-mr {
-  margin-right: 8px;
+.table-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px; /* 统一控制所有按钮之间的间距 */
+}
+
+/* 重置 Element Plus 默认的兄弟按钮左边距，把间距控制权完全交给上一层的 gap */
+.table-actions :deep(.el-button) {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 </style>

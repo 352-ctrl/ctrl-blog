@@ -30,9 +30,22 @@
           v-model:selectedIds="data.selectedIds"
           :delete-api="deleteUserApi"
           delete-tip="确定删除该用户吗？"
+          :action-width="190"
           @edit="handleEdit"
           @delete-success="loadPage"
-      />
+      >
+        <template #custom-actions="{ row }">
+          <el-tooltip content="重置密码" placement="top">
+            <el-button
+                type="warning"
+                icon="Key"
+                circle
+                class="action-btn-mr"
+                @click="handleResetPwd(row)"
+            />
+          </el-tooltip>
+        </template>
+      </AdminTable>
 
       <AdminPagination
           v-model:current-page="data.pageNum"
@@ -45,7 +58,7 @@
     <el-dialog v-model="data.formVisible" :title="data.form.id ? '编辑用户' : '新增用户'" class="dialog-md-down" width="500px">
       <el-form ref="formRef" :model="data.form" :rules="data.rules" label-width="80px">
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="data.form.email" :disabled="!!data.form.id" autocomplete="off" placeholder="请输入用户名" />
+          <el-input v-model="data.form.email" :disabled="!!data.form.id" autocomplete="off" placeholder="请输入邮箱" />
         </el-form-item>
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="data.form.nickname" autocomplete="off" placeholder="请输入昵称" />
@@ -55,6 +68,8 @@
         </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select v-model="data.form.role" placeholder="请选择角色">
+            <el-option label="超级管理员" value="SUPER_ADMIN" disabled />
+
             <el-option label="管理员" value="ADMIN" />
             <el-option label="普通用户" value="USER" />
           </el-select>
@@ -81,20 +96,29 @@
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
-import {ElMessage, ElMessageBox} from "element-plus";
+import { onMounted, reactive, ref } from "vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 // 引入 API 模块
-import {addUser, deleteUser, deleteUsers, getUserById, getUserPage, updateUser} from "@/api/admin/user.js";
-import {validateEmail, validateNickname, validatePasswordComplexity} from "@/utils/validate.js";
-import {useUserStore} from "@/store/user.js";
+import {
+  addUser,
+  deleteUser,
+  deleteUsers,
+  getUserById,
+  getUserPage,
+  resetPassword,
+  updateUser
+} from "@/api/admin/user.js";
+import {
+  validateEmail,
+  validateNickname,
+  validatePasswordComplexity,
+  regPasswordStrength
+} from "@/utils/validate.js";
+import { useUserStore } from "@/store/user.js";
 
 const BASE_API = 'http://localhost:9999'
-
-// 定义上传接口地址
 const uploadFileUrl = `${BASE_API}/api/files/upload`;
-
 const userStore = useUserStore()
-
 const formRef = ref(null);
 
 const data = reactive({
@@ -112,14 +136,11 @@ const data = reactive({
         required: true,
         message: '请输入邮箱',
         trigger: 'blur',
-        // 新增：编辑状态（有form.id）时跳过必填校验
         validator: (rule, value, callback) => {
-          // 编辑状态且输入框disabled，直接通过校验
           if (data.form.id) {
             callback();
             return;
           }
-          // 新增状态：执行原有邮箱校验
           validateEmail(rule, value, callback);
         }
       }
@@ -136,7 +157,6 @@ const data = reactive({
   }
 });
 
-// 初始化加载
 onMounted(() => {
   loadPage();
 });
@@ -189,7 +209,7 @@ const handleEdit = async (row) => {
     console.error('获取详情异常:', error);
     ElMessage.error('网络异常，无法获取数据');
   }
-};
+}
 
 // 提交表单 (新增或修改)
 const submitForm = () => {
@@ -219,6 +239,24 @@ const batchDeleteUserApi = async (selectedIds) => {
   return deleteUsers(selectedIds);
 };
 
+// 补充重置密码的具体业务逻辑
+const handleResetPwd = (row) => {
+  ElMessageBox.prompt(`正在为用户【${row.nickname}】重置密码，请输入新密码：`, '强制重置密码', {
+    confirmButtonText: '确定重置',
+    cancelButtonText: '取消',
+    inputType: 'password',
+    inputPattern: regPasswordStrength,
+    inputErrorMessage: '密码需8-20位，必须包含字母和数字'
+  }).then(({ value }) => {
+    resetPassword({ id: row.id, newPassword: value }).then(() => {
+      ElMessage.success('重置成功！该用户已被强制下线。');
+    });
+  }).catch(() => {
+    // 捕获取消输入的异常，避免控制台报 Uncaught (in promise) cancel
+  });
+};
+
+// 头像上传成功回调
 const handleFileSuccess = (res) => {
   if (res.code === 200) {
     data.form.avatar = res.data; // 绑定封面URL到表单
@@ -228,6 +266,7 @@ const handleFileSuccess = (res) => {
   }
 }
 
+// 头像上传前的校验
 const beforeUpload = (file) => {
   const isImage = file.type.startsWith('image/'); // 校验是否为图片格式
   if (!isImage) {
@@ -249,6 +288,7 @@ const userColumns = reactive([
   { prop: 'email', label: '邮箱' },
   { type: 'status', prop: 'role', label: '权限',
     statusMap: {
+      "SUPER_ADMIN": { text: '超级管理员', type: 'warning' },
       "ADMIN": { text: '管理员', type: 'danger' },
       "USER": { text: '用户', type: 'success' }
     }

@@ -5,6 +5,7 @@ import com.example.blog.annotation.AuthCheck;
 import com.example.blog.annotation.Log;
 import com.example.blog.common.Result;
 import com.example.blog.common.enums.BizStatus;
+import com.example.blog.dto.user.AdminResetPwdDTO;
 import com.example.blog.dto.user.UserAddDTO;
 import com.example.blog.dto.user.UserQueryDTO;
 import com.example.blog.dto.user.UserUpdateDTO;
@@ -55,6 +56,17 @@ public class AdminUserController {
     @Operation(summary = "更新用户")
     public Result<Void> updateUser(@Valid @RequestBody UserUpdateDTO updateDTO) {
         userService.updateUser(updateDTO);
+        return Result.success();
+    }
+
+    /**
+     * 管理员重置用户密码
+     */
+    @PutMapping("/password")
+    @Log(module = "用户管理", type = "重置密码", desc = "管理员重置了用户密码")
+    @Operation(summary = "重置用户密码", description = "管理员强制重置指定用户的密码。具有防越权校验。")
+    public Result<Void> resetPassword(@Valid @RequestBody AdminResetPwdDTO resetPwdDTO) {
+        userService.resetPasswordByAdmin(resetPwdDTO);
         return Result.success();
     }
 

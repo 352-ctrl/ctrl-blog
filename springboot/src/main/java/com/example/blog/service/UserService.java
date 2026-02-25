@@ -2,9 +2,7 @@ package com.example.blog.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.example.blog.dto.user.UserAddDTO;
-import com.example.blog.dto.user.UserQueryDTO;
-import com.example.blog.dto.user.UserUpdateDTO;
+import com.example.blog.dto.user.*;
 import com.example.blog.entity.User;
 import com.example.blog.vo.UserVO;
 
@@ -15,6 +13,13 @@ import java.util.List;
  * 定义用户相关的业务操作方法
  */
 public interface UserService extends IService<User> {
+
+    /**
+     * 后台管理员：强制重置用户密码
+     * @param adminResetPwdDTO 重置参数
+     */
+    void resetPasswordByAdmin(AdminResetPwdDTO adminResetPwdDTO);
+
 
     /**
      * 获取单条用户详情

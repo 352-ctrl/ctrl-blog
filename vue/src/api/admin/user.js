@@ -54,3 +54,12 @@ export function deleteUsers(selectedIds) {
         data: selectedIds
     })
 }
+
+// 7. 管理员重置用户密码
+export function resetPassword(data) {
+    return request({
+        url: `${BASE_URL}/password`,
+        method: 'put',
+        data: data
+    })
+}
