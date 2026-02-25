@@ -2,7 +2,6 @@ package com.example.blog.aspect;
 
 import cn.hutool.core.util.StrUtil;
 import com.example.blog.annotation.AuthCheck;
-import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
@@ -27,40 +26,57 @@ public class AuthAspect {
     @Around("@annotation(com.example.blog.annotation.AuthCheck) || @within(com.example.blog.annotation.AuthCheck)")
     public Object doAround(ProceedingJoinPoint joinPoint) throws Throwable {
 
-        // 1. 获取权限注解（优先取方法上的，如果方法上没有，就取类上的）
+        // 1. 获取权限注解（方法级别优先于类级别）
         AuthCheck authCheck = getAuthCheckAnnotation(joinPoint);
-        // 如果没有注解，直接放行
         if (authCheck == null) {
-            return joinPoint.proceed();
+            return joinPoint.proceed(); // 无注解直接放行（理论上不会走到这里，作为安全兜底）
         }
 
-        // 2. 获取当前登录用户
+        // 2. 校验用户是否已登录
         UserPayloadDTO currentUser = UserContext.get();
         if (currentUser == null) {
             throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
         }
 
-        // 3. 校验角色
+        // 3. 获取接口要求的角色
         String mustRole = authCheck.role();
 
-        // 情况 A：注解没有指定角色（默认为空），说明只要求登录 -> 直接放行
+        // 4. 若注解未指定具体角色，说明仅需登录即可访问，直接放行
         if (StrUtil.isBlank(mustRole)) {
             return joinPoint.proceed();
         }
 
-        // 情况 B：当前用户是 ADMIN -> 超级管理员，无视角色限制，直接放行
-        if (currentUser.getRole() == BizStatus.Role.ADMIN) {
+        // 5. 获取当前用户的角色信息
+        BizStatus.Role currentRole = currentUser.getRole();
+        if (currentRole == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, "用户角色状态异常，请重新登录");
+        }
+
+        // ================= 层级权限校验核心逻辑 =================
+
+        // 级别 1：当前用户是【超级管理员】，拥有最高特权，无视任何限制直接放行
+        if (currentRole == BizStatus.Role.SUPER_ADMIN) {
             return joinPoint.proceed();
         }
 
-        // 获取枚举里的值 (例如 "ADMIN")
-        String currentRoleCode = currentUser.getRole().getValue();
+        // 级别 2：当前用户是【普通管理员】
+        if (currentRole == BizStatus.Role.ADMIN) {
+            // 禁止越权：管理员不能访问超级管理员专属接口
+            if (BizStatus.ROLE_SUPER_ADMIN.equals(mustRole)) {
+                throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_NO_PERMISSION);
+            }
+            // 向下兼容：访问管理员或普通用户的接口，予以放行
+            return joinPoint.proceed();
+        }
 
-        // 情况 C：当前用户不是 ADMIN且注解要求了ADMIN
+        // 级别 3：当前用户是【普通用户】
+        // 必须严格匹配接口要求的角色 (即只能访问未指定role或明确标为USER的接口)
+        String currentRoleCode = currentRole.getValue();
         if (!mustRole.equals(currentRoleCode)) {
             throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_NO_PERMISSION);
         }
 
+        // 校验通过，放行目标方法
         return joinPoint.proceed();
     }
 

@@ -64,10 +64,16 @@ router.beforeEach((to, from, next) => {
 
   // 有 Token，校验角色
   const role = getUserRole();
-  if (to.meta.role && to.meta.role !== role) {
-    ElMessage.error('无权访问该页面');
-    next('/');
-    return;
+  if (to.meta.role) {
+    // 兼容 meta.role 可能是字符串或数组
+    const allowedRoles = Array.isArray(to.meta.role) ? to.meta.role : [to.meta.role];
+
+    // 核心修改：如果当前角色不在允许列表中，且当前角色也不是 SUPER_ADMIN，才拦截
+    if (!allowedRoles.includes(role) && role !== 'SUPER_ADMIN') {
+      ElMessage.error('无权访问该页面');
+      next('/');
+      return;
+    }
   }
 
   // 全部通过

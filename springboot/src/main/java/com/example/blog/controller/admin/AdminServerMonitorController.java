@@ -21,7 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/monitor/server")
-@AuthCheck(role = BizStatus.ROLE_ADMIN)
+@AuthCheck(role = BizStatus.ROLE_SUPER_ADMIN)
 @Tag(name = "后台服务监控")
 public class AdminServerMonitorController {
 

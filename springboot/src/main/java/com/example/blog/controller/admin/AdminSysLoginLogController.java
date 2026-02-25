@@ -22,7 +22,7 @@ import java.util.List;
 @Validated
 @RestController
 @RequestMapping("/api/admin/monitor/login-log")
-@AuthCheck(role = BizStatus.ROLE_ADMIN)
+@AuthCheck(role = BizStatus.ROLE_SUPER_ADMIN)
 @Tag(name = "后台登录日志管理")
 public class AdminSysLoginLogController {
 

@@ -45,16 +45,22 @@ public final class BizStatus {
      * 角色标识：管理员
      */
     public static final String ROLE_ADMIN = "ADMIN";
+    /**
+     * 角色标识：超级管理员
+     */
+    public static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
 
     @Getter
     @AllArgsConstructor
     public enum Role implements BaseEnum<String> {
         USER(BizStatus.ROLE_USER, "普通用户"),
-        ADMIN(BizStatus.ROLE_ADMIN, "管理员");
+        ADMIN(BizStatus.ROLE_ADMIN, "管理员"),
+        SUPER_ADMIN(BizStatus.ROLE_SUPER_ADMIN, "超级管理员");
 
         @EnumValue
-        private final String code;
         @JsonValue
+        private final String code;
+
         private final String desc;
 
         @Override

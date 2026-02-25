@@ -22,7 +22,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/admin/monitor/redis")
-@AuthCheck(role = BizStatus.ROLE_ADMIN)
+@AuthCheck(role = BizStatus.ROLE_SUPER_ADMIN)
 @Tag(name = "后台缓存监控")
 public class AdminRedisMonitorController {
 
