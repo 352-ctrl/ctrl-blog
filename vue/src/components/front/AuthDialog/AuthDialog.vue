@@ -8,7 +8,7 @@
       :show-close="true"
   >
     <template #header>
-      <div class="auth-header-nav">
+      <div class="auth-header-nav" v-if="mode === 'login' || mode === 'register'">
         <span
             :class="['nav-item', { active: mode === 'login' }]"
             @click="mode = 'login'"
@@ -29,8 +29,14 @@
         />
 
         <RegisterForm
-            v-else
+            v-else-if="mode === 'register'"
             @success="closeDialog"
+        />
+
+        <ForgotPwdForm
+            v-else-if="mode === 'forgotPwd'"
+            @success="mode = 'login'"
+            @switch-mode="(m) => mode = m"
         />
       </transition>
     </div>
@@ -42,6 +48,7 @@ import { computed } from 'vue';
 import { useUserStore } from '@/store/user.js';
 import LoginForm from './LoginForm.vue';
 import RegisterForm from './RegisterForm.vue';
+import ForgotPwdForm from './ForgotPwdForm.vue'; // 引入找回密码组件
 
 const userStore = useUserStore();
 
@@ -61,6 +68,7 @@ const closeDialog = () => {
 </script>
 
 <style scoped>
+/* 原有的 scoped 样式保持不变 */
 .auth-header-nav {
   display: flex;
   justify-content: center;
@@ -71,7 +79,7 @@ const closeDialog = () => {
 
 .nav-item {
   font-size: 18px;
-  color: var(--el-text-color-secondary); /* 使用文字次要颜色，自适应暗黑模式 */
+  color: var(--el-text-color-secondary);
   cursor: pointer;
   transition: all 0.3s ease;
   user-select: none;
@@ -84,7 +92,7 @@ const closeDialog = () => {
 }
 
 .nav-item.active {
-  color: var(--el-color-primary); /* 使用主题色 */
+  color: var(--el-color-primary);
   font-weight: 600;
   font-size: 20px;
 }
@@ -97,14 +105,14 @@ const closeDialog = () => {
   transform: translateX(-50%);
   width: 16px;
   height: 3px;
-  background-color: var(--el-color-primary); /* 使用主题色 */
+  background-color: var(--el-color-primary);
   border-radius: 2px;
 }
 
 .nav-divider {
   width: 1px;
   height: 16px;
-  background-color: var(--el-border-color-lighter); /* 使用边框颜色 */
+  background-color: var(--el-border-color-lighter);
   border-radius: 1px;
 }
 
@@ -130,11 +138,10 @@ const closeDialog = () => {
 </style>
 
 <style>
-/* 针对弹窗顶层类名进行样式覆盖 (不加 scoped) */
+/* 原有的全局覆盖样式保持不变 */
 .auth-dialog-custom {
   border-radius: 12px;
   overflow: hidden;
-  /* 阴影使用 Element Plus 变量适配暗黑模式 */
   box-shadow: var(--el-box-shadow-dark);
 }
 
@@ -154,7 +161,6 @@ const closeDialog = () => {
 }
 
 .auth-dialog-custom .el-input__wrapper {
-  /* 使用 Element 的填充背景色变量，亮色下是浅灰，暗色下是深灰 */
   background-color: var(--el-fill-color-light);
   box-shadow: none;
   border-radius: 8px;
@@ -163,7 +169,6 @@ const closeDialog = () => {
 }
 
 .auth-dialog-custom .el-input__wrapper.is-focus {
-  /* 聚焦时使用纯背景色 */
   background-color: var(--el-bg-color);
   box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
 }
@@ -175,7 +180,6 @@ const closeDialog = () => {
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 4px;
-  /* 按钮阴影使用含透明度的主题色 */
   box-shadow: 0 4px 12px var(--el-color-primary-light-5);
   transition: all 0.3s ease;
 }

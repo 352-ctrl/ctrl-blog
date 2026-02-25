@@ -1,6 +1,7 @@
 package com.example.blog.service;
 
 import com.example.blog.dto.EmailRequestDTO;
+import com.example.blog.dto.user.UserForgotPwdDTO;
 import com.example.blog.dto.user.UserLoginDTO;
 import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.vo.UserLoginVO;
@@ -11,12 +12,26 @@ import com.example.blog.vo.UserLoginVO;
 public interface AuthService {
 
     /**
-     * 发送邮箱验证码
+     * 发送邮箱注册验证码
      * <p>包含防刷校验（1分钟内只能发一次）和邮箱查重逻辑</p>
      *
      * @param emailRequestDTO 邮箱请求DTO
      */
-    void sendEmailCode(EmailRequestDTO emailRequestDTO);
+    void sendRegisterEmailCode(EmailRequestDTO emailRequestDTO);
+
+    /**
+     * 发送邮箱忘记密码验证码
+     * <p>包含防刷校验（1分钟内只能发一次）和邮箱查重逻辑</p>
+     *
+     * @param emailRequestDTO 邮箱请求DTO
+     */
+    void sendForgotPwdEmailCode(EmailRequestDTO emailRequestDTO);
+
+    /**
+     * 前台用户：通过邮箱验证码重置密码
+     * @param forgotPwdDTO 忘记密码参数
+     */
+    void resetPasswordByEmail(UserForgotPwdDTO forgotPwdDTO);
 
     /**
      * 用户登录

@@ -92,7 +92,7 @@ const onVerifySuccess = async (params) => {
 };
 
 const handleForgotPwd = () => {
-  ElMessage.info("找回密码功能开发中...");
+  userStore.authDialogMode = 'forgotPwd';
 };
 </script>
 

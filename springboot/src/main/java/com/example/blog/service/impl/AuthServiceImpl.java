@@ -16,7 +16,9 @@ import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.UserConvert;
 import com.example.blog.dto.EmailRequestDTO;
+import com.example.blog.dto.user.UserForgotPwdDTO;
 import com.example.blog.dto.user.UserLoginDTO;
+import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.entity.User;
 import com.example.blog.exception.CustomerException;
@@ -29,7 +31,6 @@ import com.example.blog.vo.UserVO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -61,9 +62,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Resource
     private RedisUtil redisUtil;
-
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
 
     @Resource
     private CaptchaService captchaService;
@@ -126,54 +124,86 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 记录登录失败次数
      */
-    private void recordLoginFailed(String key) {
-        // 如果 key 不存在，redisUtil.increment 会自动创建并设为1
-        long count = redisUtil.increment(key, 1);
+    private long recordLoginFailed(String key) {
+        Long countObj = redisUtil.incrementStr(key, 1);
+        long count = countObj != null ? countObj : 1L;
+
         if (count == 1) {
-            // 第一次失败，设置过期时间 30 分钟
             redisUtil.expire(key, RedisConstants.EXPIRE_LOGIN_FAIL_WINDOW, TimeUnit.MINUTES);
-        }
-        // 如果达到了锁定阈值，强制设置一个锁定时间
-        if (count >= 5) {
-            // 覆盖过期时间，强制锁定 30 分钟
+        } else if (count == 5) {
+            // == 5 时才设置锁定时间，防止恶意用户不断重置锁定倒计时
             redisUtil.expire(key, RedisConstants.LOGIN_LOCKED_TIME, TimeUnit.MINUTES);
         }
+        return count;
+    }
+
+    /**
+     * 统一处理验证码的防刷、生成、Redis缓存和邮件发送
+     */
+    private void doSendEmailCode(String captchaVerification, String email, String redisKeyPrefix, String subject) {
+        // 1. 滑动验证码二次校验
+        verifyCaptcha(captchaVerification);
+
+        // 2. 防刷校验
+        String redisKey = redisKeyPrefix + email;
+        long expire = java.util.Optional.ofNullable(redisUtil.getExpire(redisKey, TimeUnit.SECONDS)).orElse(-2L);
+
+        // 当Key不存在时，expire 返回 -2。如果 > 240 说明刚发过不到1分钟
+        if (expire > 240) {
+            throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
+        }
+
+        // 3. 生成 6 位数字验证码
+        String code = RandomUtil.randomNumbers(6);
+
+        // 4. 存入 Redis，有效期 5 分钟
+        redisUtil.setStr(redisKey, code, RedisConstants.EXPIRE_EMAIL_CODE, TimeUnit.MINUTES);
+
+        // 5. 封装参数并异步发送邮件
+        Map<String, Object> model = new HashMap<>();
+        model.put("code", code);
+        model.put("title", subject);
+        mailService.sendHtmlMail(email, subject, model);
     }
 
     @Override
-    public void sendEmailCode(EmailRequestDTO emailRequestDTO) {
+    public void sendRegisterEmailCode(EmailRequestDTO emailRequestDTO) {
         Assert.notNull(emailRequestDTO, "邮箱请求参数不能为空");
-
-        // 滑动验证码二次校验
-        verifyCaptcha(emailRequestDTO.getCaptchaVerification());
-
         String email = emailRequestDTO.getEmail();
-        // 1. 校验邮箱是否已注册
+
+        // 1. 业务校验：注册时邮箱不能已存在
         long count = userService.count(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
         if (count > 0) {
             throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_EMAIL_EXIST);
         }
 
-        // 2. 防刷校验：检查Redis里是否还有未过期的验证码，防止频繁发送
-        String redisKey = RedisConstants.REDIS_EMAIL_CODE_KEY + email;
-        Long expire = stringRedisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
-        // 如果有效期还剩超过4分钟 (说明刚发过不到1分钟)，拦截
-        if (expire > 240) {
-            throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
+        // 2. 调用公共私有方法发送邮件，传入明确的 Key 和 标题
+        doSendEmailCode(
+                emailRequestDTO.getCaptchaVerification(),
+                email,
+                RedisConstants.REDIS_EMAIL_REGISTER_CODE_KEY,
+                MessageConstants.MSG_EMAIL_SUBJECT_REGISTER
+        );
+    }
+
+    @Override
+    public void sendForgotPwdEmailCode(EmailRequestDTO emailRequestDTO) {
+        Assert.notNull(emailRequestDTO, "邮箱请求参数不能为空");
+        String email = emailRequestDTO.getEmail();
+
+        // 1. 业务校验：找回密码时邮箱必须存在
+        long count = userService.count(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
+        if (count == 0) {
+            throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_USER_NOT_EXIST);
         }
 
-        // 3. 生成 6 位数字验证码 (使用 Hutool 工具)
-        String code = RandomUtil.randomNumbers(6);
-
-        // 4. 存入 Redis，有效期 5 分钟
-        stringRedisTemplate.opsForValue().set(redisKey, code, RedisConstants.EXPIRE_EMAIL_CODE, TimeUnit.MINUTES);
-
-        // 5. 封装 FreeMarker 模板所需的参数
-        Map<String, Object> model = new HashMap<>();
-        model.put("code", code); // 对应模板中的 ${code}
-
-        // 6. 调用异步 HTML 邮件发送方法
-        mailService.sendHtmlMail(email, MessageConstants.MSG_EMAIL_SUBJECT_REGISTER, model);
+        // 2. 调用公共私有方法发送邮件，传入明确的 Key 和 标题
+        doSendEmailCode(
+                emailRequestDTO.getCaptchaVerification(),
+                email,
+                RedisConstants.REDIS_EMAIL_RESET_CODE_KEY,
+                MessageConstants.MSG_EMAIL_SUBJECT_RESET
+        );
     }
 
     @Override
@@ -183,17 +213,19 @@ public class AuthServiceImpl implements AuthService {
         // 滑动验证码二次校验
         verifyCaptcha(loginDTO.getCaptchaVerification());
 
-        String email = loginDTO.getEmail();
+        String email = loginDTO.getEmail().toLowerCase().trim();
         // 检查是否被锁定
         String failKey = RedisConstants.REDIS_LOGIN_FAIL_KEY + email;
 
-        if (redisUtil.hasKey(failKey)) {
-            int failCount = Convert.toInt(redisUtil.get(failKey), 0);
+        if (Boolean.TRUE.equals(redisUtil.hasKey(failKey))) {
+            String countStr = redisUtil.getStr(failKey);
+            int failCount = Convert.toInt(countStr, 0);
+
             if (failCount >= 5) {
                 // 获取剩余锁定时间，给前端展示“请xx分钟后再试”
-                Long expire = redisUtil.getExpire(failKey, TimeUnit.MINUTES);
-                // 防御性处理：万一获取失败或者刚好过期，给个默认值 1
-                long displayTime = (expire != null && expire > 0) ? (expire + 1) : 1;
+                long expire = java.util.Optional.ofNullable(redisUtil.getExpire(failKey, TimeUnit.MINUTES)).orElse(-2L);
+                // 防御性处理：万一刚好过期，给个默认值 1
+                long displayTime = expire > 0 ? (expire + 1) : 1;
                 // 格式化字符串
                 String msg = String.format(MessageConstants.MSG_LOGIN_LOCKED, displayTime);
                 // 记录因为锁定导致的登录失败
@@ -211,10 +243,18 @@ public class AuthServiceImpl implements AuthService {
 
         // 验证密码
         if (!PasswordEncoderUtil.matches(loginDTO.getPassword(), dbUser.getPassword())) {
-            // 记录失败次数
-            recordLoginFailed(failKey);
-            recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_PWD_ERROR);
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
+            // 记录并获取最新的失败次数
+            long currentFailCount = recordLoginFailed(failKey);
+            if (currentFailCount >= 5) {
+                // 如果正好达到 5 次，直接抛出锁定异常
+                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_LOCKED);
+                // 锁定 30 分钟
+                throw new CustomerException(ResultCode.FORBIDDEN, String.format(MessageConstants.MSG_LOGIN_LOCKED, RedisConstants.LOGIN_LOCKED_TIME));
+            } else {
+                // 还没到 5 次，抛出普通的密码错误
+                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_PWD_ERROR);
+                throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
+            }
         }
 
         if (dbUser.getStatus() == BizStatus.User.DISABLE) {
@@ -255,9 +295,9 @@ public class AuthServiceImpl implements AuthService {
         // 验证码校验
         String email = registerDTO.getEmail();
         String code = registerDTO.getCode();
-        String redisKey = RedisConstants.REDIS_EMAIL_CODE_KEY + email;
+        String redisKey = RedisConstants.REDIS_EMAIL_REGISTER_CODE_KEY + email;
         // 从 Redis 获取验证码
-        String cacheCode = stringRedisTemplate.opsForValue().get(redisKey);
+        String cacheCode = redisUtil.getStr(redisKey);
         // 校验验证码
         if (cacheCode == null) {
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CODE_EXPIRED);
@@ -275,8 +315,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userConvert.registerDtoToEntity(registerDTO);
 
         // 设置默认头像
-        String avatarUrl = GravatarUtils.getRetroAvatar(registerDTO.getEmail());
-        user.setAvatar(avatarUrl);
+        user.setAvatar(GravatarUtils.getRetroAvatar(registerDTO.getEmail()));
         // 设置默认角色
         user.setRole(BizStatus.Role.USER);
         // 设置默认状态
@@ -297,10 +336,69 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 注册成功后，删除 Redis 中的验证码
-        stringRedisTemplate.delete(redisKey);
+        redisUtil.delete(redisKey);
 
         // 调用私有方法统一构建返回值
         return buildLoginResult(user, false, MessageConstants.LOG_REGISTER_AND_LOGIN_SUCCESS);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetPasswordByEmail(UserForgotPwdDTO forgotPwdDTO) {
+        Assert.notNull(forgotPwdDTO, "重置密码参数不能为空");
+
+        String email = forgotPwdDTO.getEmail();
+
+        // 1. 获取并校验验证码
+        String redisKey = RedisConstants.REDIS_EMAIL_RESET_CODE_KEY + email;
+        String cacheCode = redisUtil.getStr(redisKey);
+
+        if (cacheCode == null) {
+            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CODE_EXPIRED);
+        }
+        if (!cacheCode.equals(forgotPwdDTO.getCode())) {
+            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CODE_ERROR);
+        }
+
+        // 2. 查询用户
+        User user = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
+        if (user == null) {
+            throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_USER_NOT_EXIST);
+        }
+
+        // 3. 更新密码并加密
+        user.setPassword(PasswordEncoderUtil.encode(forgotPwdDTO.getNewPassword()));
+        userService.updateById(user);
+
+        // 4. 删除验证码缓存
+        redisUtil.delete(redisKey);
+
+        // 5. 踢出该用户，强制重新登录 (核心：Token 失效逻辑)
+        // 5.1 清除用户的基本信息缓存
+        redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + user.getId());
+
+        // 5.2 获取该用户当前关联的 Token，并将其拉入黑名单
+        String tokenKey = RedisConstants.REDIS_USER_TOKEN_KEY + user.getId();
+        Object oldTokenObj = redisUtil.get(tokenKey);
+
+        if (oldTokenObj != null) {
+            String oldToken = oldTokenObj.toString();
+            try {
+                // 解析旧 Token 的过期时间
+                DecodedJWT jwt = JWT.decode(oldToken);
+                long remainingTime = jwt.getExpiresAt().getTime() - System.currentTimeMillis();
+
+                // 如果旧 Token 尚未过期，将其加入黑名单
+                if (remainingTime > 0) {
+                    String blacklistKey = RedisConstants.REDIS_TOKEN_BLACKLIST_PREFIX + oldToken;
+                    redisUtil.set(blacklistKey, RedisConstants.REDIS_TOKEN_BLACKLIST_VALUE, remainingTime, TimeUnit.MILLISECONDS);
+                }
+            } catch (Exception e) {
+                // Token 解析失败说明格式不合法或已损坏，忽略即可
+            }
+            // 5.3 从 Redis 中彻底移除该用户的在线 Token 记录
+            redisUtil.delete(tokenKey);
+        }
     }
 
     @Override
@@ -321,7 +419,6 @@ public class AuthServiceImpl implements AuthService {
 
             // 4. 如果 Token 尚未过期，则将其拉入黑名单
             if (remainingTime > 0) {
-                // Key 示例: token:blacklist:ey... (完整的token字符串)
                 String blacklistKey = RedisConstants.REDIS_TOKEN_BLACKLIST_PREFIX + token;
 
                 // 将 Token 存入 Redis，过期时间设为 Token 的剩余寿命
@@ -330,9 +427,13 @@ public class AuthServiceImpl implements AuthService {
             }
 
             // 5. 清理该用户的基本信息缓存 (如果有的话)
-            Long userId = UserContext.get().getId();
-            if (userId != null) {
+            UserPayloadDTO currentUser = UserContext.get();
+            if (currentUser != null && currentUser.getId() != null) {
+                Long userId = currentUser.getId();
+                // 5.1 清理用户信息缓存
                 redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + userId);
+                // 5.2 清理该用户的在线 Token 记录，保持 Redis 干净
+                redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + userId);
             }
 
         } catch (Exception e) {

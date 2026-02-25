@@ -5,6 +5,7 @@ import com.example.blog.annotation.RateLimit;
 import com.example.blog.common.Result;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.dto.EmailRequestDTO;
+import com.example.blog.dto.user.UserForgotPwdDTO;
 import com.example.blog.dto.user.UserLoginDTO;
 import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.service.AuthService;
@@ -54,14 +55,36 @@ public class AuthController {
     }
 
     /**
-     * 发送邮箱验证码
+     * 发送注册邮箱验证码
      * 安全提示：此接口极易被恶意刷量，RateLimit 必须严格
      */
-    @PostMapping("/email/code")
+    @PostMapping("/email/code/register")
     @RateLimit(key = "ip", time = 60, count = 1)
-    @Operation(summary = "发送邮箱验证码", description = "用于注册或找回密码。验证码有效期通常为 5-10 分钟。")
-    public Result<Void> sendEmailCode(@Valid @RequestBody EmailRequestDTO emailDTO) {
-        authService.sendEmailCode(emailDTO);
+    @Operation(summary = "发送注册邮箱验证码", description = "用于新用户注册。验证码有效期为 5 分钟，1分钟内防刷限制。")
+    public Result<Void> sendRegisterEmailCode(@Valid @RequestBody EmailRequestDTO emailDTO) {
+        authService.sendRegisterEmailCode(emailDTO);
+        return Result.success();
+    }
+
+    /**
+     * 发送找回密码邮箱验证码
+     */
+    @PostMapping("/email/code/forgot")
+    @RateLimit(key = "ip", time = 60, count = 1)
+    @Operation(summary = "发送找回密码邮箱验证码", description = "用于前台用户忘记密码时找回。验证码有效期为 5 分钟，1分钟内防刷限制。")
+    public Result<Void> sendForgotPwdEmailCode(@Valid @RequestBody EmailRequestDTO emailDTO) {
+        authService.sendForgotPwdEmailCode(emailDTO);
+        return Result.success();
+    }
+
+    /**
+     * 通过邮箱验证码重置密码
+     */
+    @PostMapping("/password/reset")
+    @RateLimit(key = "ip", time = 60, count = 5)
+    @Operation(summary = "通过邮箱验证码重置密码", description = "前台用户忘记密码后，凭借邮箱验证码设置新密码。")
+    public Result<Void> resetPasswordByEmail(@Valid @RequestBody UserForgotPwdDTO forgotPwdDTO) {
+        authService.resetPasswordByEmail(forgotPwdDTO);
         return Result.success();
     }
 

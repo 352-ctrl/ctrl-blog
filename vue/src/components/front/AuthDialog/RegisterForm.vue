@@ -41,7 +41,7 @@
 
 <script setup>
 import { reactive, ref, onMounted, onUnmounted } from "vue";
-import { register, sendEmailCode } from "@/api/auth.js";
+import { register, sendRegisterEmailCode } from "@/api/auth.js";
 import { useUserStore } from "@/store/user.js";
 import { ElMessage } from "element-plus";
 import { validateEmail, validatePasswordComplexity } from "@/utils/validate.js";
@@ -95,7 +95,7 @@ const onVerifySuccess = (params) => {
 
   const requestData = { email: data.form.email, captchaVerification: params.captchaVerification };
 
-  sendEmailCode(requestData).then(res => {
+  sendRegisterEmailCode(requestData).then(res => {
     if (res.code === 200) {
       ElMessage.success("验证码已发送，请查收邮件");
       let count = 60;
