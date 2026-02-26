@@ -117,7 +117,7 @@ const initTagCloud = () => {
     tagEl.style.top = '50%';
     tagEl.style.whiteSpace = 'nowrap';
     tagEl.style.fontWeight = 'bold';
-    tagEl.style.fontFamily = 'sans-serif';
+    tagEl.style.fontFamily = "'SmileySans', sans-serif";
     tagEl.style.cursor = 'pointer';
     tagEl.style.color = getRandomColor();
     tagEl.style.transition = 'none';
@@ -310,6 +310,7 @@ const getRandomColor = () => {
     align-items: center;
 
     .header-title {
+      font-family: 'SmileySans', sans-serif;
       display: flex;
       align-items: center;
       font-size: 16px;

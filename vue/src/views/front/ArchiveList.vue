@@ -143,6 +143,7 @@ onMounted(() => {
 }
 
 .header-title {
+  font-family: 'SmileySans', sans-serif;
   font-size: 24px;
   font-weight: 600;
   color: var(--el-text-color-primary);
@@ -171,6 +172,7 @@ onMounted(() => {
 }
 
 .year-header {
+  font-family: 'SmileySans', sans-serif;
   display: flex;
   align-items: center;
   cursor: pointer;

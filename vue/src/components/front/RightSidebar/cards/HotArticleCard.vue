@@ -117,6 +117,7 @@ const goToArticle = (id) => {
     align-items: center;
 
     .header-title {
+      font-family: 'SmileySans', sans-serif;
       display: flex;
       align-items: center;
       font-size: 16px;
@@ -212,6 +213,7 @@ const goToArticle = (id) => {
 
     /* 排名徽章设计 */
     .rank-badge {
+      font-family: 'SmileySans', sans-serif;
       width: 24px;
       height: 24px;
       line-height: 24px;

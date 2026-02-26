@@ -7,7 +7,7 @@ body {
     padding: 0;
     color: #333;
     font-size: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'NotoSansCJK', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 a {
@@ -19,4 +19,20 @@ a {
 .el-form-item__label {
     font-weight: bold !important;
     color: #333;
+}
+
+/* 导入思源黑体 (Noto Sans CJK) 作为基础正文 */
+@font-face {
+    font-family: 'NotoSansCJK';
+    src: url('@/assets/fonts/SiYuanHeiTiGoogleBan/NotoSansCJK-Regular-1.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 导入得意黑 (Smiley Sans) 作为标题或装饰字体 */
+@font-face {
+    font-family: 'SmileySans'; /* 定义字体别名 */
+    src: url('@/assets/fonts/DeYiHei/SmileySans-Oblique-3.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
 }

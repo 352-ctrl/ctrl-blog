@@ -69,6 +69,7 @@ const loadNotice = () => {
     align-items: center;
 
     .header-title {
+      font-family: 'SmileySans', sans-serif;
       display: flex;
       align-items: center;
       font-size: 16px;

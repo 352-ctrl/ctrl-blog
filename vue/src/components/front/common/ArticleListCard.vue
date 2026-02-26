@@ -172,6 +172,7 @@ const formatTimeAgo = (timeStr) => {
 }
 
 .title-text {
+  font-family: 'SmileySans', sans-serif;
   color: var(--el-text-color-primary); /* 替换为 CSS 变量 */
   font-weight: 600;
   font-size: 18px;
@@ -252,10 +253,6 @@ const formatTimeAgo = (timeStr) => {
 
 .meta-icon {
   font-size: 15px;
-}
-
-.meta-text {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .category-tag {

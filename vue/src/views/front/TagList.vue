@@ -167,6 +167,7 @@ const handleTagClick = (tagKey) => {
 }
 
 .tag-header {
+  font-family: 'SmileySans', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center; /* 标题居中 */

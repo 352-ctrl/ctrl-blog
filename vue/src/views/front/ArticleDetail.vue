@@ -194,8 +194,9 @@ const handleCommentSuccess = () => {
 }
 
 .article-title {
+  font-family: 'SmileySans', sans-serif;
   font-weight: bold;
-  font-size: 32px;
+  font-size: 40px;
   text-align: center;
   padding-bottom: 20px;
   color: var(--el-text-color-primary); /* 适配暗黑标题 */
@@ -268,7 +269,7 @@ const handleCommentSuccess = () => {
 
 /* AI 摘要样式 */
 .ai-summary {
-  /* 使用 el-color-primary-light-9，它在明亮模式是浅蓝，在暗黑模式会自动变成深色适配蓝 */
+  font-family: 'SmileySans', sans-serif;
   background-color: var(--el-color-primary-light-9);
   border: 1px solid var(--el-color-primary-light-7);
   border-radius: 8px;
