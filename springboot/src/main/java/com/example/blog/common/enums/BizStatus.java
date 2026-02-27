@@ -257,4 +257,64 @@ public final class BizStatus {
         @Override
         public Integer getValue() { return code; }
     }
+
+    /* ============================== 7. 消息业务 ============================== */
+
+    /**
+     * 消息大类
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum MessageType implements BaseEnum<String> {
+        SYSTEM("SYSTEM", "系统通知"),
+        LIKE("LIKE", "点赞"),
+        COMMENT("COMMENT", "评论/回复");
+
+        @EnumValue
+        @JsonValue
+        private final String code;
+
+        private final String desc;
+
+        @Override
+        public String getValue() { return code; }
+    }
+
+    /**
+     * 消息关联的业务类型
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum MessageBizType implements BaseEnum<String> {
+        ARTICLE("ARTICLE", "文章"),
+        COMMENT("COMMENT", "评论"),
+        FEEDBACK("FEEDBACK", "反馈");
+
+        @EnumValue
+        @JsonValue
+        private final String code;
+
+        private final String desc;
+
+        @Override
+        public String getValue() { return code; }
+    }
+
+    /**
+     * 消息阅读状态
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum ReadStatus implements BaseEnum<Integer> {
+        UNREAD(0, "未读"),
+        READ(1, "已读");
+
+        @EnumValue
+        @JsonValue
+        private final Integer code;
+        private final String desc;
+
+        @Override
+        public Integer getValue() { return code; }
+    }
 }

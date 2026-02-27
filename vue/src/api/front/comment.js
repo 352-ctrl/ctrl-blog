@@ -28,3 +28,12 @@ export function deleteComment(id) {
         method: 'delete'
     })
 }
+
+// 4. 获取评论所在的页码 (新增)
+export function getCommentLocatorPage(id, pageSize = 10) {
+    return request({
+        url: `${BASE_URL}/${id}/locator`,
+        method: 'get',
+        params: { pageSize }
+    })
+}

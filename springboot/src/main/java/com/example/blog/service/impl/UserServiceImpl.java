@@ -11,10 +11,12 @@ import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.UserConvert;
+import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.*;
 import com.example.blog.entity.User;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.UserMapper;
+import com.example.blog.service.SysMessageService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.GravatarUtils;
 import com.example.blog.utils.PasswordEncoderUtil;
@@ -38,6 +40,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private UserConvert userConvert;
+
+    @Resource
+    private SysMessageService sysMessageService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -110,6 +115,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + targetUser.getId());
         redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + targetUser.getId());
+
+        // 发送密码重置系统通知
+        sysMessageService.sendSystemNotice(
+                MessageSendDTO.builder()
+                        .toUserId(targetUser.getId())
+                        .title(MessageConstants.TITLE_PWD_RESET)
+                        .content(MessageConstants.CONTENT_PWD_RESET)
+                        .build()
+        );
     }
 
     @Override
@@ -184,6 +198,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 如果角色变更，强制下线
         if (updateDTO.getRole() != null && updateDTO.getRole() != oldRole) {
             redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + updateDTO.getId());
+
+            // 发送角色变更系统通知
+            sysMessageService.sendSystemNotice(
+                    MessageSendDTO.builder()
+                            .toUserId(updateDTO.getId())
+                            .title(MessageConstants.TITLE_ROLE_CHANGE)
+                            .content(String.format(MessageConstants.CONTENT_ROLE_CHANGE, updateDTO.getRole().getDesc()))
+                            .build()
+            );
         }
     }
 

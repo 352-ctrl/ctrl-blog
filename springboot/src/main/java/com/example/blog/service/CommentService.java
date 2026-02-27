@@ -54,4 +54,12 @@ public interface CommentService extends IService<Comment> {
      */
     void batchDeleteComments(List<Long> ids);
 
+    /**
+     * 计算某条评论在文章中的所在页码，用于精准跳转
+     *
+     * @param commentId 目标评论ID
+     * @param pageSize  当前前端评论列表的每页条数
+     * @return 该评论所在的页码 (默认返回 1)
+     */
+    Integer getCommentLocatorPage(Long commentId, Integer pageSize);
 }

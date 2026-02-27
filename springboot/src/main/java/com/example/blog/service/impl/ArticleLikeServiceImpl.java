@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
+import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
+import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.Article;
 import com.example.blog.entity.ArticleLike;
@@ -12,6 +14,7 @@ import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.ArticleLikeMapper;
 import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.service.ArticleLikeService;
+import com.example.blog.service.SysMessageService;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.UserContext;
 import jakarta.annotation.Resource;
@@ -33,6 +36,9 @@ public class ArticleLikeServiceImpl extends ServiceImpl<ArticleLikeMapper, Artic
 
     @Resource
     private ArticleMapper articleMapper;
+
+    @Resource
+    private SysMessageService sysMessageService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -76,6 +82,21 @@ public class ArticleLikeServiceImpl extends ServiceImpl<ArticleLikeMapper, Artic
 
         String cacheKey = RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + articleId;
         redisUtil.delete(cacheKey);
+
+        Article article = articleMapper.selectById(articleId);
+        if (article != null) {
+            sysMessageService.sendInteractiveMessage(
+                    MessageSendDTO.builder()
+                            .toUserId(article.getUserId()) // 接收方：文章作者
+                            .fromUserId(userId)            // 发送方：点赞人
+                            .type(BizStatus.MessageType.LIKE)
+                            .bizId(articleId)              // 跳转到文章详情页
+                            .bizType(BizStatus.MessageBizType.ARTICLE)
+                            .targetId(null)                // 点赞文章不需要锚点定位，跳到文章顶部即可
+                            .content(null)                 // 点赞文章没有具体文字内容摘要
+                            .build()
+            );
+        }
 
         return Optional.ofNullable(articleMapper.selectOne(new LambdaQueryWrapper<Article>()
                         .select(Article::getLikeCount)

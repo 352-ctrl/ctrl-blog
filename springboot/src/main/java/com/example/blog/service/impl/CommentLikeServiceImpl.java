@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
+import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
+import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.Comment;
 import com.example.blog.entity.CommentLike;
@@ -13,6 +15,7 @@ import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.CommentLikeMapper;
 import com.example.blog.mapper.CommentMapper;
 import com.example.blog.service.CommentLikeService;
+import com.example.blog.service.SysMessageService;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.UserContext;
 import jakarta.annotation.Resource;
@@ -37,6 +40,9 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
 
     @Resource
     private CommentMapper commentMapper;
+
+    @Resource
+    private SysMessageService sysMessageService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -77,6 +83,21 @@ public class CommentLikeServiceImpl extends ServiceImpl<CommentLikeMapper, Comme
 
         // 点赞
         commentMapper.incrLikeCount(commentId);
+
+        Comment comment = commentMapper.selectById(commentId);
+        if (comment != null) {
+            sysMessageService.sendInteractiveMessage(
+                    MessageSendDTO.builder()
+                            .toUserId(comment.getUserId())  // 接收方：被点赞的评论作者
+                            .fromUserId(userId)             // 发送方：点赞人
+                            .type(BizStatus.MessageType.LIKE)
+                            .bizId(comment.getArticleId())  // 点击消息依然跳转到对应的文章
+                            .bizType(BizStatus.MessageBizType.COMMENT)
+                            .targetId(commentId)            // 注入评论ID，用于前端精准滚动与高亮
+                            .content(comment.getContent())  // 附带被点赞的评论内容摘要
+                            .build()
+            );
+        }
 
         return Optional.ofNullable(commentMapper.selectOne(new LambdaQueryWrapper<Comment>()
                         .select(Comment::getLikeCount)

@@ -300,4 +300,35 @@ public final class MessageConstants {
     public static final String MSG_ADMIN_CANNOT_GRANT_ADMIN = "越权操作：普通管理员只能分配普通用户角色";
     /** 越权：禁止修改自己的角色权限 */
     public static final String MSG_CANNOT_CHANGE_OWN_ROLE = "安全限制：禁止修改自身的角色权限";
+
+    /* ============================== 9. 消息中心提示消息 ============================== */
+
+    /**
+     * 消息不存在或无权操作
+     */
+    public static final String MSG_MESSAGE_NOT_FOUND = "消息不存在或无权操作";
+    /**
+     * 消息标题：新点赞 (带占位符)
+     */
+    public static final String TITLE_NEW_LIKE = "%s 点赞了你";
+    /**
+     * 消息标题：新评论回复 (带占位符)
+     */
+    public static final String TITLE_NEW_COMMENT = "%s 回复了你";
+
+    /** 消息：系统欢迎语 */
+    public static final String TITLE_WELCOME = "欢迎加入";
+    public static final String CONTENT_WELCOME = "欢迎注册本站！快去完善你的个人资料，或者发布你的第一篇文章吧。";
+
+    /** 消息：密码重置 */
+    public static final String TITLE_PWD_RESET = "密码重置通知";
+    public static final String CONTENT_PWD_RESET = "您的密码已被系统管理员强制重置，为保障账号安全，请您尽快修改密码。";
+
+    /** 消息：权限变更 (带占位符) */
+    public static final String TITLE_ROLE_CHANGE = "账号权限变更通知";
+    public static final String CONTENT_ROLE_CHANGE = "您的账号角色已被管理员修改为：【%s】，请重新登录以获取最新权限。";
+
+    /** 消息：文章下架 (带占位符) */
+    public static final String TITLE_ARTICLE_DELETE = "文章下架通知";
+    public static final String CONTENT_ARTICLE_DELETE = "您发布的文章《%s》因违反社区规定或管理员操作已被删除。";
 }

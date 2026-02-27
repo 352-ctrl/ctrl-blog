@@ -1,5 +1,5 @@
 <template>
-  <div class="comment-item" :class="{ 'is-sub-item': isSub }">
+  <div :id="`comment-node-${data.id}`" class="comment-item" :class="{ 'is-sub-item': isSub }">
     <div class="comment-item-inner">
       <el-avatar
           :size="isSub ? 24 : 34"
@@ -35,7 +35,6 @@
               @click="toggleReplyBox"
           >
             <el-icon size="16" class="reply-icon"><ChatDotRound /></el-icon>
-
             <span>
               {{ (isSub || !data.replyCount) ? '回复' : data.replyCount }}
             </span>
@@ -53,7 +52,6 @@
         </div>
 
         <div v-if="data.children && data.children.length > 0" class="sub-comment-wrapper">
-
           <CommentItem
               v-for="child in displayedChildren"
               :key="child.id"
@@ -77,7 +75,6 @@
               </span>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -85,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, watch } from 'vue';
 import CommentBox from './CommentBox.vue';
 import CommentLikeButton from './CommentLikeButton.vue';
 import { addComment } from "@/api/front/comment.js";
@@ -104,12 +101,23 @@ const props = defineProps({
 const emit = defineEmits(['reply-success']);
 const userStore = useUserStore();
 
-const { activeReplyId, setActiveReplyId } = inject('commentState');
+// 接收祖先组件传递下来的定位状态
+const { activeReplyId, setActiveReplyId, targetCommentIdRef } = inject('commentState');
 
 const isReplying = computed(() => activeReplyId.value === props.data.id);
 
 const FOLD_THRESHOLD = 3;
 const isExpanded = ref(false);
+
+// 核心：智能展开。如果跳转的目标 ID 藏在这个父评论的子评论列表里，强制展开折叠面板
+watch(() => targetCommentIdRef?.value, (newTargetId) => {
+  if (newTargetId && props.data.children && props.data.children.length > 0) {
+    const hasTarget = props.data.children.some(child => String(child.id) === String(newTargetId));
+    if (hasTarget) {
+      isExpanded.value = true;
+    }
+  }
+}, { immediate: true });
 
 const displayedChildren = computed(() => {
   const children = props.data.children || [];
@@ -143,6 +151,9 @@ const handleSubmitReply = async (content) => {
     if (res.code === 200) {
       ElMessage.success('回复成功');
       setActiveReplyId(null);
+      if (props.data.replyCount >= FOLD_THRESHOLD) {
+        isExpanded.value = true;
+      }
       emit('reply-success');
     } else {
       ElMessage.error(res.msg);
@@ -154,127 +165,59 @@ const handleSubmitReply = async (content) => {
 </script>
 
 <style scoped>
-/* ====== 布局提取 ====== */
+/* 保持原有 scoped 样式不变... */
 .comment-item {
   transition: background-color 0.2s;
+  border-radius: 6px; /* 增加圆角让高亮更美观 */
 }
-
 .comment-item-inner {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 0;
+  padding: 10px 10px; /* 两侧增加一点 padding，防止高亮背景贴边 */
+}
+.user-avatar { flex-shrink: 0; }
+.comment-main-content { flex: 1; min-width: 0; }
+.reply-icon { margin-right: 2px; }
+.expand-text { display: flex; align-items: center; gap: 4px; }
+.is-sub-item .comment-item-inner { padding-top: 5px; padding-bottom: 5px; }
+.info-row { display: flex; align-items: center; margin-bottom: 2px; }
+.nickname { font-size: 14px; font-weight: bold; color: var(--el-text-color-secondary); }
+.sub-nickname { font-size: 13px; color: var(--el-text-color-secondary); }
+.comment-content { color: var(--el-text-color-primary); font-size: 15px; line-height: 1.6; margin-bottom: 4px; word-break: break-all; }
+.sub-content { font-size: 14px; line-height: 1.5; }
+.reply-target { color: var(--el-color-primary); margin-right: 4px; font-weight: 500; font-size: 14px; }
+.meta-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--el-text-color-placeholder); }
+.reply-btn { padding: 0; height: auto; font-size: 12px; color: var(--el-text-color-placeholder); display: flex; align-items: center; }
+.reply-btn:hover { color: var(--el-color-primary); background: transparent; }
+.reply-box-wrapper { margin-top: 10px; }
+.sub-comment-wrapper { margin-top: 10px; border-radius: 4px; padding: 10px 0; }
+.expand-control { margin-top: 8px; font-size: 12px; color: var(--el-text-color-placeholder); }
+.expand-btn { cursor: pointer; display: inline-block; padding: 2px 0; transition: all 0.2s; }
+.expand-btn:hover { color: var(--el-color-primary); }
+</style>
+
+<style>
+/* ==========================================
+ * 全局样式：高亮动画 (由于作用于 JS 动态添加的类，不能放在 scoped 里面)
+ * ========================================== */
+.highlight-flash {
+  animation: comment-flash 3s ease-out forwards;
 }
 
-.user-avatar {
-  flex-shrink: 0;
+@keyframes comment-flash {
+  0% { background-color: var(--el-color-primary-light-8); }
+  20% { background-color: var(--el-color-primary-light-8); }
+  100% { background-color: transparent; }
 }
 
-.comment-main-content {
-  flex: 1;
-  min-width: 0;
+html.dark .highlight-flash {
+  animation: comment-flash-dark 3s ease-out forwards;
 }
 
-.reply-icon {
-  margin-right: 2px;
-}
-
-.expand-text {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 子评论项的样式调整 */
-.is-sub-item .comment-item-inner {
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-
-/* === 1. 昵称行 === */
-.info-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 2px;
-}
-.nickname {
-  font-size: 14px;
-  font-weight: bold;
-  color: var(--el-text-color-secondary); /* 替换 #61666d */
-}
-.sub-nickname {
-  font-size: 13px;
-  color: var(--el-text-color-secondary); /* 替换 #61666d */
-}
-
-/* === 2. 内容行 === */
-.comment-content {
-  color: var(--el-text-color-primary); /* 替换 #18191c */
-  font-size: 15px;
-  line-height: 1.6;
-  margin-bottom: 4px;
-  word-break: break-all;
-}
-.sub-content {
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.reply-target {
-  color: var(--el-color-primary); /* 替换 #409EFF */
-  margin-right: 4px;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-/* === 3. 底部信息行 (时间+操作) === */
-.meta-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--el-text-color-placeholder); /* 替换 #9499a0 */
-}
-.reply-btn {
-  padding: 0;
-  height: auto;
-  font-size: 12px;
-  color: var(--el-text-color-placeholder); /* 替换 #9499a0 */
-  display: flex;
-  align-items: center;
-}
-.reply-btn:hover {
-  color: var(--el-color-primary); /* 替换 #409EFF */
-  background: transparent;
-}
-
-/* 回复框容器 */
-.reply-box-wrapper {
-  margin-top: 10px;
-}
-
-/* === 子评论容器 === */
-.sub-comment-wrapper {
-  margin-top: 10px;
-  border-radius: 4px;
-  padding: 10px 0;
-}
-
-/* 展开控制条样式 */
-.expand-control {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--el-text-color-placeholder); /* 替换 #9499a0 */
-}
-
-.expand-btn {
-  cursor: pointer;
-  display: inline-block;
-  padding: 2px 0;
-  transition: all 0.2s;
-}
-
-.expand-btn:hover {
-  color: var(--el-color-primary); /* 替换 #409EFF */
+@keyframes comment-flash-dark {
+  0% { background-color: rgba(64, 158, 255, 0.2); }
+  20% { background-color: rgba(64, 158, 255, 0.15); }
+  100% { background-color: transparent; }
 }
 </style>

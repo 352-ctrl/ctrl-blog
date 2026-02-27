@@ -16,6 +16,7 @@ import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.UserConvert;
 import com.example.blog.dto.EmailRequestDTO;
+import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserForgotPwdDTO;
 import com.example.blog.dto.user.UserLoginDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
@@ -24,6 +25,7 @@ import com.example.blog.entity.User;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.service.AuthService;
 import com.example.blog.service.SysLoginLogService;
+import com.example.blog.service.SysMessageService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.*;
 import com.example.blog.vo.UserLoginVO;
@@ -59,6 +61,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Resource
     private SysLoginLogService sysLoginLogService;
+
+    @Resource
+    private SysMessageService sysMessageService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -243,7 +248,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 验证密码
         if (!PasswordEncoderUtil.matches(loginDTO.getPassword(), dbUser.getPassword())) {
-            // 记录并获取最新的失败次数
+            // 记录并获取最新失败次数
             long currentFailCount = recordLoginFailed(failKey);
             if (currentFailCount >= 5) {
                 // 如果正好达到 5 次，直接抛出锁定异常
@@ -338,6 +343,14 @@ public class AuthServiceImpl implements AuthService {
         // 注册成功后，删除 Redis 中的验证码
         redisUtil.delete(redisKey);
 
+        // 发送欢迎系统通知
+        sysMessageService.sendSystemNotice(
+                MessageSendDTO.builder()
+                        .toUserId(user.getId())
+                        .title(MessageConstants.TITLE_WELCOME)
+                        .content(MessageConstants.CONTENT_WELCOME)
+                        .build()
+        );
         // 调用私有方法统一构建返回值
         return buildLoginResult(user, false, MessageConstants.LOG_REGISTER_AND_LOGIN_SUCCESS);
     }

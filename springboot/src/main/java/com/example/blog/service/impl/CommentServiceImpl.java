@@ -15,16 +15,14 @@ import com.example.blog.convert.CommentConvert;
 import com.example.blog.dto.comment.AdminCommentQueryDTO;
 import com.example.blog.dto.comment.CommentAddDTO;
 import com.example.blog.dto.comment.CommentQueryDTO;
+import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.Article;
 import com.example.blog.entity.Comment;
 import com.example.blog.entity.User;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.CommentMapper;
-import com.example.blog.service.ArticleService;
-import com.example.blog.service.CommentLikeService;
-import com.example.blog.service.CommentService;
-import com.example.blog.service.UserService;
+import com.example.blog.service.*;
 import com.example.blog.utils.CommentAssembler;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.SensitiveWordManager;
@@ -57,6 +55,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     @Resource
     private CommentLikeService commentLikeService;
+
+    @Resource
+    private SysMessageService sysMessageService;
 
     @Resource
     private CommentAssembler commentAssembler;
@@ -347,8 +348,43 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
         this.save(comment);
 
+        // 刷新缓存
         String articleCacheKey = RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + comment.getArticleId();
         redisUtil.delete(articleCacheKey);
+
+        // 发送评论互动消息
+        if (Constants.COMMENT_ROOT_PARENT_ID.equals(parentId)) {
+            // 场景 A：这是一级评论（直接评论文章） -> 发给文章作者
+            Article article = articleService.getById(comment.getArticleId());
+            if (article != null) {
+                sysMessageService.sendInteractiveMessage(
+                        MessageSendDTO.builder()
+                                .toUserId(article.getUserId())
+                                .fromUserId(currentUser.getId())
+                                .type(BizStatus.MessageType.COMMENT)
+                                .bizId(comment.getArticleId())
+                                .bizType(BizStatus.MessageBizType.ARTICLE)
+                                .targetId(comment.getId()) // 精准跳到这条新评论
+                                .content(comment.getContent())
+                                .build()
+                );
+            }
+        } else {
+            // 场景 B：这是回复别人的评论 -> 发给被回复的那个用户
+            if (comment.getReplyUserId() != null) {
+                sysMessageService.sendInteractiveMessage(
+                        MessageSendDTO.builder()
+                                .toUserId(comment.getReplyUserId())
+                                .fromUserId(currentUser.getId())
+                                .type(BizStatus.MessageType.COMMENT)
+                                .bizId(comment.getArticleId())
+                                .bizType(BizStatus.MessageBizType.COMMENT)
+                                .targetId(comment.getId()) // 同样，跳到这条新回复
+                                .content(comment.getContent())
+                                .build()
+                );
+            }
+        }
     }
 
     @Override
@@ -399,6 +435,45 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             throw new CustomerException(MessageConstants.MSG_BATCH_DELETE_FAILED);
         }
     }
+
+    /**
+     * 计算某条评论在文章中的所在页码，用于精准跳转
+     */
+    @Override
+    public Integer getCommentLocatorPage(Long commentId, Integer pageSize) {
+        if (commentId == null || pageSize == null || pageSize <= 0) {
+            return 1;
+        }
+
+        Comment comment = this.getById(commentId);
+        if (comment == null) {
+            return 1;
+        }
+
+        // 1. 找到该评论所属的顶级评论ID
+        Long rootId = comment.getParentId().equals(Constants.COMMENT_ROOT_PARENT_ID)
+                ? comment.getId()
+                : comment.getParentId();
+
+        Comment rootComment = this.getById(rootId);
+        if (rootComment == null) {
+            return 1;
+        }
+
+        // 2. 计算在当前文章中，排在这个 rootComment 前面的顶级评论有多少条
+        // 注意：这里的排序规则必须与 pageComments 接口默认的排序规则保持完全一致！
+        // 假设当前采用的是最新排序 (CreateTime Desc)
+        LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Comment::getArticleId, rootComment.getArticleId())
+                .eq(Comment::getParentId, Constants.COMMENT_ROOT_PARENT_ID)
+                .gt(Comment::getCreateTime, rootComment.getCreateTime()); // 大于它的时间，说明排在它前面
+
+        long countAhead = this.count(queryWrapper);
+
+        // 3. 计算页码 (前面的条数 / 每页条数 + 1)
+        return (int) (countAhead / pageSize) + 1;
+    }
+
 
     /**
      * 封装级联删除子评论的逻辑

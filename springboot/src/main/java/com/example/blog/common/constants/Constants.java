@@ -47,6 +47,11 @@ public final class Constants {
      */
     public static final String DEFAULT_NICKNAME_PREFIX = "用户_";
 
+    /**
+     * 未知/已注销用户的默认占位昵称
+     */
+    public static final String DEFAULT_UNKNOWN_NICKNAME = "账号已注销";
+
     /* ---------- 分页通用配置 ---------- */
     /**
      * 默认页码

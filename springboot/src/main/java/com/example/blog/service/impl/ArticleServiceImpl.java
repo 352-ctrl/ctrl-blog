@@ -15,14 +15,12 @@ import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.ArticleConvert;
 import com.example.blog.dto.article.*;
+import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.*;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.*;
-import com.example.blog.service.ArticleFavoriteService;
-import com.example.blog.service.ArticleLikeService;
-import com.example.blog.service.ArticleService;
-import com.example.blog.service.ArticleTagService;
+import com.example.blog.service.*;
 import com.example.blog.utils.ArticleAssembler;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.SensitiveWordManager;
@@ -73,6 +71,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Resource
     private CommentMapper commentMapper;
+
+    @Resource
+    private SysMessageService sysMessageService;
 
     @Resource
     private ArticleAssembler articleAssembler;
@@ -614,6 +615,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             redisUtil.setRemove(RedisConstants.REDIS_VIEW_DIRTY_SET, id);
             // 删除列表和归档
             clearListCache();
+
+            // 通知作者
+            Article article = this.getById(id);
+            if (article != null) {
+                sysMessageService.sendSystemNotice(
+                        MessageSendDTO.builder()
+                                .toUserId(article.getUserId())
+                                .title(MessageConstants.TITLE_ARTICLE_DELETE)
+                                .content(String.format(MessageConstants.CONTENT_ARTICLE_DELETE, article.getTitle()))
+                                .build()
+                );
+            }
         }
 
     }
@@ -664,6 +677,28 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
             // 删除列表和归档
             clearListCache();
+
+            // 通知作者
+            List<Article> deletedArticles = this.listByIds(ids);
+
+            // 构建消息实体列表
+            List<SysMessage> messageList = new ArrayList<>();
+            for (Article article : deletedArticles) {
+                SysMessage msg = SysMessage.builder()
+                        .toUserId(article.getUserId())
+                        .fromUserId(null)
+                        .type(BizStatus.MessageType.SYSTEM)
+                        .title(MessageConstants.TITLE_ARTICLE_DELETE)
+                        .content(String.format(MessageConstants.CONTENT_ARTICLE_DELETE, article.getTitle()))
+                        .isRead(BizStatus.ReadStatus.UNREAD)
+                        .build();
+                messageList.add(msg);
+            }
+
+            // 批量插入数据库 (一条 SQL 语句搞定)
+            if (CollUtil.isNotEmpty(messageList)) {
+                sysMessageService.saveBatch(messageList);
+            }
         }
     }
 

@@ -64,4 +64,14 @@ public class CommentController {
         IPage<CommentVO> pageResult = commentService.pageComments(queryDTO);
         return Result.success(pageResult);
     }
+
+    /**
+     * 获取指定评论所在的分页页码 (用于消息中心跳转定位)
+     */
+    @GetMapping("/{id}/locator")
+    @Operation(summary = "获取评论所在页码", description = "用于消息中心精准跳转时，计算评论在第几页")
+    public Result<Integer> getCommentLocatorPage(@PathVariable Long id, @RequestParam(defaultValue = "10") Integer pageSize) {
+        Integer pageNum = commentService.getCommentLocatorPage(id, pageSize);
+        return Result.success(pageNum);
+    }
 }
