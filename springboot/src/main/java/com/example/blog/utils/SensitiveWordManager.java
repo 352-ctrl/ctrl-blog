@@ -1,18 +1,22 @@
 package com.example.blog.utils;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.dfa.WordTree;
 import com.example.blog.entity.SysSensitiveWord;
 import com.example.blog.mapper.SysSensitiveWordMapper;
+import com.github.houbb.sensitive.word.api.IWordDeny;
+import com.github.houbb.sensitive.word.bs.SensitiveWordBs;
+import com.github.houbb.sensitive.word.support.allow.WordAllows;
+import com.github.houbb.sensitive.word.support.deny.WordDenys;
+import com.github.houbb.sensitive.word.support.ignore.SensitiveWordCharIgnores;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * 敏感词管理组件 (基于 Hutool DFA 算法)
+ * 敏感词管理组件 (基于 houbb/sensitive-word)
  */
 @Slf4j
 @Component
@@ -21,30 +25,40 @@ public class SensitiveWordManager {
     @Resource
     private SysSensitiveWordMapper sysSensitiveWordMapper;
 
-    // Hutool 提供的字典树，查询极快
-    private volatile WordTree wordTree = new WordTree();
+    // 核心过滤器实例
+    private SensitiveWordBs sensitiveWordBs;
 
     /**
-     * 项目启动时自动执行，或者在后台添加/删除敏感词后手动调用刷新
+     * 项目启动时自动初始化
      */
     @PostConstruct
-    public void initWordTree() {
+    public void init() {
         log.info("开始初始化敏感词库...");
-        // 1. 从数据库查出所有敏感词
-        // 注意：如果你用了 MyBatis-Plus，可以直接用 BaseMapper 的 selectList
-        List<SysSensitiveWord> wordList = sysSensitiveWordMapper.selectList(null);
 
-        // 2. 构建新的字典树
-        WordTree newTree = new WordTree();
-        for (SysSensitiveWord word : wordList) {
-            if (word != null && StrUtil.isNotBlank(word.getWord())) {
-                newTree.addWord(word.getWord().trim());
-            }
-        }
+        // 1. 定义动态的数据库词库加载器
+        IWordDeny databaseWordDeny = () -> {
+            List<SysSensitiveWord> wordList = sysSensitiveWordMapper.selectList(null);
+            return wordList.stream()
+                    .map(SysSensitiveWord::getWord)
+                    .collect(Collectors.toList());
+        };
 
-        // 3. 替换旧树 (保证线程安全)
-        this.wordTree = newTree;
-        log.info("敏感词库初始化完成，共加载 {} 个词汇", wordList.size());
+        // 2. 初始化 SensitiveWordBs
+        this.sensitiveWordBs = SensitiveWordBs.newInstance()
+                // 将框架自带词库与数据库自定义词库合并
+                .wordDeny(WordDenys.chains(WordDenys.defaults(), databaseWordDeny))
+                // 使用默认白名单
+                .wordAllow(WordAllows.defaults())
+                // 开启各种防绕过特性（默认其实都是 true，这里显式列出方便了解）
+                .ignoreCase(true)             // 忽略大小写
+                .ignoreWidth(true)            // 忽略全角半角
+                .ignoreChineseStyle(true)     // 忽略繁简互换
+                .ignoreRepeat(true)           // 忽略重复词，如 "傻傻傻冒"
+                // 忽略特殊字符干扰，如 "傻@冒"
+                .charIgnore(SensitiveWordCharIgnores.specialChars())
+                .init();
+
+        log.info("敏感词库初始化完成！");
     }
 
     /**
@@ -54,7 +68,7 @@ public class SensitiveWordManager {
         if (text == null || text.trim().isEmpty()) {
             return false;
         }
-        return wordTree.isMatch(text);
+        return sensitiveWordBs.contains(text);
     }
 
     /**
@@ -65,24 +79,43 @@ public class SensitiveWordManager {
             return text;
         }
 
-        // 1. 使用 WordTree 找出文本中包含的所有敏感词 (-1表示匹配所有, true表示开启密集匹配和贪婪匹配)
-        List<String> matchWords = wordTree.matchAll(text, -1, true, true);
+        // 1. 使用 houbb 框架极其强大的识别能力，找出所有命中的敏感词
+        List<String> matchWords = sensitiveWordBs.findAll(text);
+
         if (matchWords == null || matchWords.isEmpty()) {
             return text; // 没有敏感词，直接返回原文本
         }
 
-        // 2. 按字符串长度降序排序。优先替换较长的敏感词，防止嵌套词被破坏
-        // 例如同时包含 "坏蛋" 和 "大坏蛋"，优先把 "大坏蛋" 替换为 "***"
-        matchWords.sort((a, b) -> b.length() - a.length());
+        // 2. 去重并按字符串长度降序排序。优先替换较长的敏感词，防止嵌套词被破坏
+        List<String> distinctWords = matchWords.stream()
+                .distinct()
+                .sorted((a, b) -> b.length() - a.length())
+                .toList();
 
-        for (String word : matchWords) {
-            // 使用 Hutool 的 StrUtil.repeat 快速生成替代符
-            String replacement = StrUtil.repeat(replaceChar, word.length());
-            // 使用 Hutool 的忽略大小写替换，防止英文大小写绕过
-            text = StrUtil.replaceIgnoreCase(text, word, replacement);
+        // 3. 使用 Hutool 快速生成指定字符并替换（完美保留了你原来的动态字符逻辑）
+        for (String word : distinctWords) {
+            String replacement = cn.hutool.core.util.StrUtil.repeat(replaceChar, word.length());
+            text = cn.hutool.core.util.StrUtil.replaceIgnoreCase(text, word, replacement);
         }
 
         return text;
     }
 
+    // ==========================================
+    // 动态更新接口：后台增删敏感词时，不再需要全量加载数据库了！
+    // ==========================================
+
+    /**
+     * 动态添加敏感词 (后台调用)
+     */
+    public void addWord(String word) {
+        sensitiveWordBs.addWord(word);
+    }
+
+    /**
+     * 动态删除敏感词 (后台调用)
+     */
+    public void removeWord(String word) {
+        sensitiveWordBs.removeWord(word);
+    }
 }

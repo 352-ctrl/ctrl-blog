@@ -193,6 +193,13 @@
             <artifactId>captcha-spring-boot-starter</artifactId>
             <version>1.4.0</version>
         </dependency>
+
+        <!-- 敏感词过滤库，用于检测和替换文本中的敏感词汇，支持DFA算法 -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>sensitive-word</artifactId>
+            <version>0.29.4</version>
+        </dependency>
     </dependencies>
 
     <build>

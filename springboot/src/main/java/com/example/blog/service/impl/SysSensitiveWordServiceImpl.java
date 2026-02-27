@@ -71,8 +71,8 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
         SysSensitiveWord sysSensitiveWord = sysSensitiveWordConvert.addDtoToEntity(addDTO);
         try {
             if (this.save(sysSensitiveWord)) {
-                // 变更后同步刷新内存词库
-                sensitiveWordManager.initWordTree();
+                // 变更后，仅将这一个新词加入内存，极速生效！不再需要全量刷新
+                sensitiveWordManager.addWord(sysSensitiveWord.getWord());
             }
         } catch (DuplicateKeyException e) {
             throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_WORD_EXIST);
@@ -83,6 +83,12 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
     public void updateSensitiveWord(SysSensitiveWordUpdateDTO updateDTO) {
         Assert.notNull(updateDTO, "更新敏感词参数不能为空");
         Assert.notNull(updateDTO.getId(), "敏感词ID不能为空");
+
+        // 1. 必须先查出旧的敏感词内容，以便后面从内存中精准移除
+        SysSensitiveWord oldWordData = this.getById(updateDTO.getId());
+        if (oldWordData == null) {
+            throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_WORD_NOT_EXIST);
+        }
 
         LambdaQueryWrapper<SysSensitiveWord> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysSensitiveWord::getWord, updateDTO.getWord())
@@ -97,10 +103,9 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
                 .eq(SysSensitiveWord::getId, updateDTO.getId());
 
         if (this.update(null, updateWrapper)) {
-            // 更新成功后刷新
-            sensitiveWordManager.initWordTree();
-        } else {
-            throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_WORD_NOT_EXIST);
+            // 2. 更新成功后：先从内存移除旧词，再将新词加入内存
+            sensitiveWordManager.removeWord(oldWordData.getWord());
+            sensitiveWordManager.addWord(updateDTO.getWord());
         }
     }
 
@@ -108,9 +113,12 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
     public void deleteSensitiveWordById(Long id) {
         Assert.notNull(id, "敏感词ID不能为空");
 
-        if (this.removeById(id)) {
-            // 删除后刷新
-            sensitiveWordManager.initWordTree();
+        // 1. 先查出这个词的具体内容
+        SysSensitiveWord wordData = this.getById(id);
+
+        // 2. 数据库删除成功后，将该词从内存中剔除
+        if (wordData != null && this.removeById(id)) {
+            sensitiveWordManager.removeWord(wordData.getWord());
         }
     }
 
@@ -122,9 +130,16 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
             return;
         }
 
-        if (this.removeByIds(ids)) {
-            // 批量删除后刷新
-            sensitiveWordManager.initWordTree();
+        // 1. 先把准备删除的记录批量查出来，提取具体词汇内容
+        List<SysSensitiveWord> wordList = this.listByIds(ids);
+
+        // 2. 数据库批量删除成功后，循环从内存中剔除这些词汇
+        if (!CollectionUtils.isEmpty(wordList) && this.removeByIds(ids)) {
+            for (SysSensitiveWord word : wordList) {
+                if (StrUtil.isNotBlank(word.getWord())) {
+                    sensitiveWordManager.removeWord(word.getWord());
+                }
+            }
         }
     }
 }
