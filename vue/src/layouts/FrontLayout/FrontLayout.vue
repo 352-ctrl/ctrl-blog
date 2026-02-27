@@ -70,6 +70,7 @@
 
       <div class="header-right-tools">
         <SearchModal />
+        <MessageBadge />
         <UserDropdown />
       </div>
     </el-header>
@@ -131,6 +132,7 @@
 
       <div class="header-right-tools">
         <SearchModal />
+        <MessageBadge />
         <UserDropdown />
       </div>
     </el-header>

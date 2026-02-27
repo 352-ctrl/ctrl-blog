@@ -11,7 +11,8 @@
             <img class="card-avatar" :src="userStore.avatar" alt="avatar">
             <div class="card-info">
               <span class="nickname">{{ userStore.nickname }}</span>
-              <span class="role-tag admin-tag" v-if="userStore.isAdmin">管理员</span>
+              <span class="role-tag super-admin-tag" v-if="userStore.userInfo?.role === 'SUPER_ADMIN'">超级管理员</span>
+              <span class="role-tag admin-tag" v-else-if="userStore.userInfo?.role === 'ADMIN'">管理员</span>
               <span class="role-tag user-tag" v-else>Lv1 普通用户</span>
             </div>
           </el-dropdown-item>
@@ -167,6 +168,11 @@ const router = useRouter();
   border-radius: 4px;
   line-height: 1.2;
   font-weight: 500;
+}
+
+.super-admin-tag {
+  color: var(--el-color-danger);
+  background: var(--el-color-danger-light-9);
 }
 
 .admin-tag {

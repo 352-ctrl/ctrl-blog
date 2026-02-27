@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { getUserProfile } from '@/api/userInfo.js'
 import { login as loginApi, logout as logoutApi } from '@/api/auth.js'
+import { getUnreadCount } from '@/api/front/message.js'
 import router from "@/router/index.js";
 
 export const useUserStore = defineStore('user', () => {
@@ -11,6 +12,11 @@ export const useUserStore = defineStore('user', () => {
     const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || '{}'))
     const isLoading = ref(false)
 
+    // 全局未读消息数与定时器
+    const unreadCount = ref(0)
+
+    let unreadTimer = null
+    let isFetching = false
     // 全局 AuthDialog 弹窗状态
     const showAuthDialog = ref(false)
     const authDialogMode = ref('login')
@@ -38,6 +44,41 @@ export const useUserStore = defineStore('user', () => {
         showAuthDialog.value = true
     }
 
+    // 获取未读消息数
+    const fetchUnreadCount = async () => {
+        // 如果未登录，或正在请求中，则拦截（完美解决请求发两次的问题）
+        if (!token.value || isFetching) return
+        isFetching = true
+        try {
+            const res = await getUnreadCount()
+            if (res.code === 200) {
+                unreadCount.value = res.data
+            }
+        } catch (error) {
+            console.error('获取未读消息失败', error)
+        } finally {
+            isFetching = false
+        }
+    }
+
+    // 启动未读消息轮询
+    const startUnreadPolling = () => {
+        if (!token.value) return
+        fetchUnreadCount() // 立即查一次
+        // 如果还没有定时器，则开启 3 分钟轮询
+        if (!unreadTimer) {
+            unreadTimer = setInterval(fetchUnreadCount, 3 * 60 * 1000)
+        }
+    }
+
+    // 停止未读消息轮询
+    const stopUnreadPolling = () => {
+        if (unreadTimer) {
+            clearInterval(unreadTimer)
+            unreadTimer = null
+        }
+    }
+
     // 登录动作
     const login = async (loginForm) => {
         isLoading.value = true
@@ -52,6 +93,9 @@ export const useUserStore = defineStore('user', () => {
                     userInfo.value = res.data.userInfo
                     localStorage.setItem('userInfo', JSON.stringify(res.data.userInfo))
                 }
+
+                // 登录成功后启动未读消息轮询
+                startUnreadPolling()
 
                 return {
                     success: true,
@@ -118,6 +162,10 @@ export const useUserStore = defineStore('user', () => {
     const clearUserData = () => {
         token.value = ''
         userInfo.value = {}
+
+        unreadCount.value = 0
+        stopUnreadPolling()
+
         localStorage.removeItem('token')
         localStorage.removeItem('userInfo')
     }
@@ -129,6 +177,7 @@ export const useUserStore = defineStore('user', () => {
         isLoading,
         showAuthDialog,
         authDialogMode,
+        unreadCount,
 
         // Getters
         isLoggedIn,
@@ -146,6 +195,9 @@ export const useUserStore = defineStore('user', () => {
         login,
         fetchUserInfo,
         logout,
-        clearUserData
+        clearUserData,
+        fetchUnreadCount,
+        startUnreadPolling,
+        stopUnreadPolling
     }
 })

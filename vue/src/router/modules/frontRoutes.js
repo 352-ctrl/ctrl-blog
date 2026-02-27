@@ -41,5 +41,11 @@ export const frontRoutes = {
             component: () => import('@/views/profile/Profile.vue'),
             meta: { hideSidebar: true, title: '个人中心', requiresAuth: true }
         },
+        {
+            path: 'user/message',
+            name: 'FrontUserMessage',
+            component: () => import('@/views/front/Message.vue'),
+            meta: { hideSidebar: true, title: '消息中心', requiresAuth: true }
+        },
     ]
 }
