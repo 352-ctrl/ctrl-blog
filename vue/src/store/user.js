@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { getUserProfile } from '@/api/userInfo.js'
+import { getUserProfile } from '@/api/front/userInfo.js'
 import { login as loginApi, logout as logoutApi } from '@/api/auth.js'
 import { getUnreadCount } from '@/api/front/message.js'
 import router from "@/router/index.js";

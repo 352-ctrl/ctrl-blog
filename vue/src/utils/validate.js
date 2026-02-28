@@ -7,6 +7,8 @@ export const regEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 export const regPasswordStrength = /^(?=.*[a-zA-Z])(?=.*\d)[\x21-\x7E]{8,20}$/;
 // 调用目标字符串：Bean名.方法名(参数)
 export const regInvokeTarget = /^[A-Za-z0-9_]+\.[A-Za-z0-9_]+\(.*?\)$/;
+// 验证码：6位纯数字
+export const regVerifyCode = /^\d{6}$/;
 
 /**
  * 验证昵称
@@ -65,6 +67,20 @@ export const validateInvokeTarget = (rule, value, callback) => {
     // 长度验证交给rules里的max处理，或者在这里写也行，但分开更清晰
     if (!regInvokeTarget.test(value)) {
         return callback(new Error("调用目标格式错误，示例：beanName.methodName()"));
+    }
+    callback();
+};
+
+/**
+ * 验证邮箱验证码
+ */
+export const validateVerifyCode = (rule, value, callback) => {
+    if (!value) {
+        return callback(new Error("请输入验证码"));
+    }
+    const code = value.trim();
+    if (!regVerifyCode.test(code)) {
+        return callback(new Error("验证码必须为6位数字"));
     }
     callback();
 };

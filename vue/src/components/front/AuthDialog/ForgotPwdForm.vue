@@ -50,7 +50,7 @@
 import { reactive, ref, onMounted, onUnmounted } from "vue";
 import { sendForgotPwdEmailCode, resetPasswordByEmail } from "@/api/auth.js";
 import { ElMessage } from "element-plus";
-import { validateEmail, validatePasswordComplexity } from "@/utils/validate.js";
+import {validateEmail, validatePasswordComplexity, validateVerifyCode} from "@/utils/validate.js";
 import Verify from "@/components/verifition/Verify.vue";
 
 const emit = defineEmits(['success', 'switch-mode']);
@@ -70,10 +70,7 @@ const data = reactive({
   sendBtnDisabled: false,
   rules: {
     email: [{ required: true, validator: validateEmail, trigger: 'blur' }],
-    code: [
-      { required: true, message: '请输入验证码', trigger: 'blur' },
-      { min: 6, max: 6, message: '验证码为6位数字', trigger: 'blur' }
-    ],
+    code: [{ required: true, validator: validateVerifyCode, trigger: 'blur' }],
     newPassword: [{ validator: validatePasswordComplexity, trigger: 'blur' }],
     confirmPassword: [{ required: true, validator: validateConfirmPassword, trigger: 'blur' }]
   }

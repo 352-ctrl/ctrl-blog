@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/user'
+const BASE_URL = '/api/front/user'
 
 // 1. 获取当前用户信息
 export function getUserProfile() {

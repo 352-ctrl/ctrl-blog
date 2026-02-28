@@ -22,20 +22,26 @@ export function register(data) {
 }
 
 // 3. 发送注册邮箱验证码
-export function sendRegisterEmailCode(data) {
+export function sendRegisterEmailCode(email, captchaToken) {
     return request({
         url: `${BASE_URL}/email/code/register`,
         method: 'post',
-        data: data
+        data: { email: email },
+        headers: {
+            'captchaVerification': captchaToken
+        }
     })
 }
 
 // 4. 发送找回密码邮箱验证码
-export function sendForgotPwdEmailCode(data) {
+export function sendForgotPwdEmailCode(email, captchaToken) {
     return request({
         url: `${BASE_URL}/email/code/forgot`,
         method: 'post',
-        data: data
+        data: { email: email },
+        headers: {
+            'captchaVerification': captchaToken
+        }
     })
 }
 
