@@ -127,8 +127,8 @@ export const adminRoutes = {
         {
             path: 'profile',
             name: 'AdminProfile',
-            component: () => import('@/views/profile/Profile.vue'),
-            meta: { title: '个人中心', hideSidebar: true, icon: 'UserFilled' }
+            component: () => import('@/views/admin/profile/AdminProfile.vue'),
+            meta: { title: '个人中心', hideSidebar: true }
         },
     ]
 }

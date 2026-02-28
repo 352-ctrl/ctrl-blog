@@ -1,15 +1,104 @@
-<script lang="ts">
-import {defineComponent} from 'vue'
+<template>
+  <el-card class="user-page-card" shadow="never">
+    <template #header>
+      <div class="page-header">
+        <el-icon class="header-icon color-danger"><SuccessFilled /></el-icon>
+        <span class="header-title">我的点赞</span>
+      </div>
+    </template>
 
-export default defineComponent({
-name: "Likes"
+    <div class="page-content" v-loading="loading">
+      <div v-if="articleList.length > 0">
+        <SimpleArticleCard
+            :articles="articleList"
+            @click="navToArticle"
+        />
+
+        <FrontPagination
+            v-model:current-page="queryParams.pageNum"
+            :page-size="queryParams.pageSize"
+            :total="total"
+            @change="loadData"
+        />
+      </div>
+
+      <el-empty v-else description="还没有点赞过文章哦" :image-size="100" />
+    </div>
+  </el-card>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { getUserLikes } from '@/api/front/userInfo.js'
+
+const router = useRouter()
+const loading = ref(false)
+const articleList = ref([])
+const total = ref(0)
+
+const queryParams = ref({
+  pageNum: 1,
+  pageSize: 10
+})
+
+const loadData = async () => {
+  loading.value = true
+  try {
+    const res = await getUserLikes(queryParams.value)
+    if (res.code === 200) {
+      articleList.value = res.data.records || []
+      total.value = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取点赞列表失败', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const navToArticle = (id) => {
+  router.push(`/post/${id}`)
+}
+
+onMounted(() => {
+  loadData()
 })
 </script>
 
-<template>
-  $END$
-</template>
-
 <style scoped>
+.user-page-card {
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 12px;
+  background-color: var(--el-bg-color-overlay);
+}
 
+:deep(.user-page-card .el-card__header) {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  font-size: 20px;
+}
+
+.header-title {
+  font-family: 'SmileySans', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  letter-spacing: 1px;
+}
+
+.color-danger { color: #f56c6c; }
+
+.page-content {
+  padding: 10px 0;
+}
 </style>

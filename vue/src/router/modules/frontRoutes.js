@@ -36,10 +36,17 @@ export const frontRoutes = {
             meta: { title: '文章详情' }
         },
         {
-            path: 'user/profile',
-            name: 'FrontUserProfile',
-            component: () => import('@/views/profile/Profile.vue'),
-            meta: { hideSidebar: true, title: '个人中心', requiresAuth: true }
+            path: 'user',
+            component: () => import('@/layouts/UserLayout/UserLayout.vue'),
+            redirect: '/user/dashboard',
+            meta: { requiresAuth: true, hideSidebar: true },
+            children: [
+                { path: 'dashboard', component: () => import('@/views/front/user/UserDashboard.vue') },
+                { path: 'collections', component: () => import('@/views/front/user/Collections.vue') },
+                { path: 'likes', component: () => import('@/views/front/user/Likes.vue') },
+                { path: 'comments', component: () => import('@/views/front/user/Comments.vue') },
+                { path: 'settings', component: () => import('@/views/front/user/Settings.vue') },
+            ]
         },
         {
             path: 'user/message',

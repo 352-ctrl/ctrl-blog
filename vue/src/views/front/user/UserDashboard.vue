@@ -43,7 +43,7 @@
                 @click="navToArticle"
             />
           </div>
-          <el-empty v-else description="暂无收藏" :image-size="80" />
+          <el-empty v-else description="暂无收藏" :image-size="70" />
         </el-card>
       </el-col>
 
@@ -68,7 +68,7 @@
                 @click="navToArticle"
             />
           </div>
-          <el-empty v-else description="暂无点赞" :image-size="80" />
+          <el-empty v-else description="暂无点赞" :image-size="70" />
         </el-card>
       </el-col>
     </el-row>
@@ -83,7 +83,7 @@ import {
   Star, Pointer, ChatDotRound, ArrowRight,
   StarFilled, SuccessFilled
 } from '@element-plus/icons-vue';
-import { getUserDashboardData } from "@/api/userInfo.js";
+import { getUserDashboardData } from "@/api/front/userInfo.js";
 
 const router = useRouter();
 const userStore = useUserStore();

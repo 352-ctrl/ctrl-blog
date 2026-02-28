@@ -13,7 +13,7 @@ const router = createRouter({
     // 2. 前台路由 (匹配 / 下的路径)
     frontRoutes,
 
-    // 4. 错误页处理
+    // 3. 错误页处理
     {
       path: '/notFound',
       name: 'NotFound',
