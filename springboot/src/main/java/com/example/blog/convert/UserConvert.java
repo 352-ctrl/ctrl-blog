@@ -5,7 +5,7 @@ import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.dto.user.UserUpdateDTO;
 import com.example.blog.entity.User;
 import com.example.blog.utils.PasswordEncoderUtil;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 import org.mapstruct.*;
 
 /**

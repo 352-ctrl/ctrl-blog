@@ -1,4 +1,4 @@
-package com.example.blog.vo;
+package com.example.blog.vo.user;
 
 import com.example.blog.annotation.CheckSensitive;
 import com.example.blog.common.jackson.EmailDesensitizeSerializer;

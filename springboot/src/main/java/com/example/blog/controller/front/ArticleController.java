@@ -87,8 +87,8 @@ public class ArticleController {
      */
     @GetMapping("/hot")
     @Operation(summary = "获取热门文章", description = "按浏览量倒序返回前5篇热门文章，专用于侧边栏展示。")
-    public Result<List<ArticleHotVO>> listHotArticles() {
-        List<ArticleHotVO> hotArticles = articleService.listHotArticles();
+    public Result<List<ArticleSimpleVO>> listHotArticles() {
+        List<ArticleSimpleVO> hotArticles = articleService.listHotArticles();
         return Result.success(hotArticles);
     }
 

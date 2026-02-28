@@ -9,7 +9,7 @@ import com.example.blog.entity.User;
 import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.mapper.CommentMapper;
 import com.example.blog.mapper.UserMapper;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 

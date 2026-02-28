@@ -31,6 +31,11 @@ public class UserProfileUpdateDTO {
     @CheckSensitive(message = "用户昵称包含违规词汇，请修改")
     private String nickname;
 
+    @Schema(description = "个人简介", example = "热爱技术，热爱生活")
+    @Size(max = 200, message = "个人简介不能超过200个字符")
+    @CheckSensitive(message = "个人简介包含违规词汇，请修改")
+    private String bio;
+
     @Schema(description = "头像URL", example = "https://example.com/new-avatar.jpg")
     @URL(message = "头像URL格式不合法")
     @Size(max = 500, message = "头像URL长度不能超过500个字符")

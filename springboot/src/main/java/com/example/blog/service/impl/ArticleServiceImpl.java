@@ -156,14 +156,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<ArticleHotVO> listHotArticles() {
+    public List<ArticleSimpleVO> listHotArticles() {
         // 1. 定义 Redis Key
         String cacheKey = RedisConstants.REDIS_ARTICLE_HOT_KEY;
 
         // 2. 尝试从 Redis 获取缓存
         Object cacheValue = redisUtil.get(cacheKey);
         if (cacheValue != null) {
-            return (List<ArticleHotVO>) cacheValue;
+            return (List<ArticleSimpleVO>) cacheValue;
         }
 
         // 3. 缓存未命中，查询数据库
@@ -184,7 +184,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         syncViewCount(articles, Article::getId, Article::setViewCount);
 
         // 5. 实体类转 VO
-        List<ArticleHotVO> voList = articleConvert.entitiesToHotVos(articles);
+        List<ArticleSimpleVO> voList = articleConvert.entitiesToSimpleVos(articles);
 
         // 6. 写入 Redis
         redisUtil.set(cacheKey, voList, RedisConstants.EXPIRE_ARTICLE_HOT, TimeUnit.HOURS);
@@ -427,12 +427,31 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return voList;
     }
 
-    /**
-     * 前台列表分页查询文章
-     *
-     * @param queryDTO 查询条件DTO
-     * @return 分页结果
-     */
+    @Override
+    public List<ArticleSimpleVO> listArticleCardsByIds(List<Long> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+
+        // 1. 批量查询数据库
+        List<Article> articles = this.listByIds(ids);
+        if (CollUtil.isEmpty(articles)) {
+            return Collections.emptyList();
+        }
+
+        // 2. 按传入的 ids 顺序进行内存重排序！
+        Map<Long, Article> articleMap = articles.stream()
+                .collect(Collectors.toMap(Article::getId, a -> a));
+
+        List<Article> sortedArticles = ids.stream()
+                .map(articleMap::get)
+                .filter(Objects::nonNull) // 过滤掉可能已经被物理删除的文章
+                .toList();
+
+        // 3. 转换并返回
+        return articleConvert.entitiesToSimpleVos(sortedArticles);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public IPage<ArticleCardVO> pageArticles(ArticleQueryDTO queryDTO) {
@@ -812,7 +831,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         // 2. 从 Redis Hash 中批量获取这些 ID 对应的最新阅读量
-        List<Object> idList = new ArrayList<>(dirtyIds);
+        List<Object> idList = dirtyIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.toList());
         // hMultiGet 对应 Redis: HMGET key field1 field2 ...
         // 注意：hMultiGet 返回值的顺序和传入 ID 的顺序是一致的
         List<Object> viewCounts = redisUtil.hMultiGet(RedisConstants.REDIS_VIEW_HASH_KEY, idList);

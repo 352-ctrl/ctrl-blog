@@ -12,7 +12,7 @@ import com.example.blog.mapper.CategoryMapper;
 import com.example.blog.mapper.TagMapper;
 import com.example.blog.mapper.UserMapper;
 import com.example.blog.vo.TagVO;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 

@@ -10,7 +10,7 @@ import com.example.blog.dto.user.UserAddDTO;
 import com.example.blog.dto.user.UserQueryDTO;
 import com.example.blog.dto.user.UserUpdateDTO;
 import com.example.blog.service.UserService;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;

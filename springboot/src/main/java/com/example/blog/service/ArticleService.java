@@ -19,7 +19,7 @@ public interface ArticleService extends IService<Article> {
      *
      * @return 热门文章列表
      */
-    List<ArticleHotVO> listHotArticles();
+    List<ArticleSimpleVO> listHotArticles();
 
     /**
      * 获取全站搜索索引数据
@@ -41,6 +41,14 @@ public interface ArticleService extends IService<Article> {
      * @return 轮播图文章列表
      */
     List<ArticleCarouselVO> listCarousel();
+
+    /**
+     * 根据 ID 列表批量获取文章卡片列表（并保持传入 ID 的顺序）
+     *
+     * @param ids 文章ID列表
+     * @return 组装好的文章卡片列表
+     */
+    List<ArticleSimpleVO> listArticleCardsByIds(List<Long> ids);
 
     /**
      * 前台列表分页查询文章

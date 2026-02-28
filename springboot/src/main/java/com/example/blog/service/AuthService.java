@@ -4,7 +4,7 @@ import com.example.blog.dto.EmailRequestDTO;
 import com.example.blog.dto.user.UserForgotPwdDTO;
 import com.example.blog.dto.user.UserLoginDTO;
 import com.example.blog.dto.user.UserRegisterDTO;
-import com.example.blog.vo.UserLoginVO;
+import com.example.blog.vo.user.UserLoginVO;
 
 /**
  * 认证服务接口

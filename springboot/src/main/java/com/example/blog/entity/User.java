@@ -35,6 +35,11 @@ public class User extends BaseLogicEntity {
     private String nickname;
 
     /**
+     * 个人简介/个性签名
+     */
+    private String bio;
+
+    /**
      * 头像
      */
     private String avatar;

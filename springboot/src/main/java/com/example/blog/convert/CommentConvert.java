@@ -2,7 +2,7 @@ package com.example.blog.convert;
 
 import com.example.blog.dto.comment.CommentAddDTO;
 import com.example.blog.entity.Comment;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 import com.example.blog.vo.comment.AdminCommentVO;
 import com.example.blog.vo.comment.CommentVO;
 import org.mapstruct.*;

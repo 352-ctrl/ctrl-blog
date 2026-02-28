@@ -35,6 +35,11 @@ public class UserAddDTO {
     @CheckSensitive(message = "用户昵称包含违规词汇，请修改")
     private String nickname;
 
+    @Schema(description = "个人简介", example = "热爱技术，热爱生活")
+    @Size(max = 200, message = "个人简介不能超过200个字符")
+    @CheckSensitive(message = "个人简介包含违规词汇，请修改")
+    private String bio;
+
     /**
      * 密码校验
      */

@@ -5,7 +5,7 @@ import com.example.blog.dto.article.ArticleUpdateDTO;
 import com.example.blog.entity.Article;
 import com.example.blog.utils.MarkdownUtil;
 import com.example.blog.vo.TagVO;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 import com.example.blog.vo.article.*;
 import org.mapstruct.*;
 
@@ -181,7 +181,7 @@ public interface ArticleConvert extends BaseConvert<Article, ArticleAddDTO, Arti
      * @param article 实体
      * @return 热门文章 VO
      */
-    ArticleHotVO entityToHotVo(Article article);
+    ArticleSimpleVO entityToSimpleVo(Article article);
 
     /**
      * 将 Article 实体列表转换为热门文章 VO 列表
@@ -189,7 +189,7 @@ public interface ArticleConvert extends BaseConvert<Article, ArticleAddDTO, Arti
      * @param articles 实体列表
      * @return 热门文章 VO 列表
      */
-    List<ArticleHotVO> entitiesToHotVos(List<Article> articles);
+    List<ArticleSimpleVO> entitiesToSimpleVos(List<Article> articles);
 
     /**
      * 从附加信息Map中安全获取文章作者昵称

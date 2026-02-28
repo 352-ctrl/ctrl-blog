@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "前台文章列表展示对象 (VO)", title = "ArticleHotVO")
-public class ArticleHotVO {
+@Schema(description = "极简版文章列表展示对象 (VO)", title = "ArticleSimpleVO")
+public class ArticleSimpleVO {
 
     @Schema(description = "文章ID", example = "1623456789012345678")
     private Long id;
