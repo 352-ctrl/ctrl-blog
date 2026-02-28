@@ -1,8 +1,6 @@
 package com.example.blog.vo.article;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +17,6 @@ import java.time.LocalDateTime;
 public class ArticleHotVO {
 
     @Schema(description = "文章ID", example = "1623456789012345678")
-    @JsonSerialize(contentUsing = ToStringSerializer.class)
     private Long id;
 
     @Schema(description = "文章封面URL", example = "https://example.com/cover/1.jpg")

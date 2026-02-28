@@ -3,9 +3,6 @@ package com.example.blog.service.impl;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import com.anji.captcha.model.common.ResponseModel;
-import com.anji.captcha.model.vo.CaptchaVO;
-import com.anji.captcha.service.CaptchaService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -28,8 +25,8 @@ import com.example.blog.service.SysLoginLogService;
 import com.example.blog.service.SysMessageService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.*;
-import com.example.blog.vo.UserLoginVO;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserLoginVO;
+import com.example.blog.vo.user.UserVO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DuplicateKeyException;
@@ -67,27 +64,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Resource
     private RedisUtil redisUtil;
-
-    @Resource
-    private CaptchaService captchaService;
-
-    /**
-     * 校验滑动验证码二次凭证
-     * @param captchaVerification 前端传入的加密凭证
-     */
-    private void verifyCaptcha(String captchaVerification) {
-        if (StrUtil.isBlank(captchaVerification)) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CAPTCHA_REQUIRE);
-        }
-
-        CaptchaVO captchaVO = new CaptchaVO();
-        captchaVO.setCaptchaVerification(captchaVerification);
-        ResponseModel response = captchaService.verification(captchaVO);
-
-        if (!response.isSuccess()) {
-            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CAPTCHA_VERIFY_FAILED);
-        }
-    }
 
     /**
      * 统一获取网络信息并记录认证日志
@@ -145,11 +121,8 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 统一处理验证码的防刷、生成、Redis缓存和邮件发送
      */
-    private void doSendEmailCode(String captchaVerification, String email, String redisKeyPrefix, String subject) {
-        // 1. 滑动验证码二次校验
-        verifyCaptcha(captchaVerification);
-
-        // 2. 防刷校验
+    private void doSendEmailCode(String email, String redisKeyPrefix, String subject) {
+        // 1. 防刷校验
         String redisKey = redisKeyPrefix + email;
         long expire = java.util.Optional.ofNullable(redisUtil.getExpire(redisKey, TimeUnit.SECONDS)).orElse(-2L);
 
@@ -158,13 +131,13 @@ public class AuthServiceImpl implements AuthService {
             throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
         }
 
-        // 3. 生成 6 位数字验证码
+        // 2. 生成 6 位数字验证码
         String code = RandomUtil.randomNumbers(6);
 
-        // 4. 存入 Redis，有效期 5 分钟
+        // 3. 存入 Redis，有效期 5 分钟
         redisUtil.setStr(redisKey, code, RedisConstants.EXPIRE_EMAIL_CODE, TimeUnit.MINUTES);
 
-        // 5. 封装参数并异步发送邮件
+        // 4. 封装参数并异步发送邮件
         Map<String, Object> model = new HashMap<>();
         model.put("code", code);
         model.put("title", subject);
@@ -184,7 +157,6 @@ public class AuthServiceImpl implements AuthService {
 
         // 2. 调用公共私有方法发送邮件，传入明确的 Key 和 标题
         doSendEmailCode(
-                emailRequestDTO.getCaptchaVerification(),
                 email,
                 RedisConstants.REDIS_EMAIL_REGISTER_CODE_KEY,
                 MessageConstants.MSG_EMAIL_SUBJECT_REGISTER
@@ -204,7 +176,6 @@ public class AuthServiceImpl implements AuthService {
 
         // 2. 调用公共私有方法发送邮件，传入明确的 Key 和 标题
         doSendEmailCode(
-                emailRequestDTO.getCaptchaVerification(),
                 email,
                 RedisConstants.REDIS_EMAIL_RESET_CODE_KEY,
                 MessageConstants.MSG_EMAIL_SUBJECT_RESET
@@ -214,9 +185,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserLoginVO login(UserLoginDTO loginDTO) {
         Assert.notNull(loginDTO, "登录参数不能为空");
-
-        // 滑动验证码二次校验
-        verifyCaptcha(loginDTO.getCaptchaVerification());
 
         String email = loginDTO.getEmail().toLowerCase().trim();
         // 检查是否被锁定

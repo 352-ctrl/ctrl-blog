@@ -1,9 +1,11 @@
 package com.example.blog.vo;
 
+import com.example.blog.annotation.CheckSensitive;
 import com.example.blog.common.jackson.EmailDesensitizeSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +28,11 @@ public class UserVO {
 
     @Schema(description = "用户昵称", example = "张三")
     private String nickname;
+
+    @Schema(description = "个人简介", example = "热爱技术，热爱生活")
+    @Size(max = 200, message = "个人简介不能超过200个字符")
+    @CheckSensitive(message = "个人简介包含违规词汇，请修改")
+    private String bio;
 
     @Schema(description = "用户头像URL", example = "https://example.com/default-avatar.png")
     private String avatar;

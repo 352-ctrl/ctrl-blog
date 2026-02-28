@@ -3,12 +3,16 @@ package com.example.blog.controller;
 import com.example.blog.annotation.AuthCheck;
 import com.example.blog.annotation.Log;
 import com.example.blog.annotation.RateLimit;
+import com.example.blog.annotation.VerifyCaptcha;
 import com.example.blog.common.Result;
 import com.example.blog.common.constants.Constants;
+import com.example.blog.dto.EmailRequestDTO;
+import com.example.blog.dto.user.UserChangeEmailDTO;
 import com.example.blog.dto.user.UserChangePwdDTO;
 import com.example.blog.dto.user.UserProfileUpdateDTO;
 import com.example.blog.service.UserProfileService;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.UserDashboardVO;
+import com.example.blog.vo.user.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -40,6 +44,16 @@ public class UserProfileController {
     }
 
     /**
+     * 获取个人中心总览数据
+     */
+    @GetMapping("/dashboard")
+    @Operation(summary = "获取个人中心看板数据", description = "返回用户的点赞/收藏统计及最近互动文章列表。")
+    public Result<UserDashboardVO> getUserDashboardData() {
+        UserDashboardVO dashboardVO = userProfileService.getUserDashboardData();
+        return Result.success(dashboardVO);
+    }
+
+    /**
      * 修改个人信息
      */
     @PutMapping
@@ -65,4 +79,26 @@ public class UserProfileController {
         return Result.success();
     }
 
+    @PostMapping("/email/code")
+    @VerifyCaptcha
+    @RateLimit(key = "ip", time = 60, count = 1)
+    @Operation(summary = "发送换绑邮箱验证码", description = "向新邮箱发送验证码，需通过行为验证码校验。")
+    public Result<Void> sendBindEmailCode(@Valid @RequestBody EmailRequestDTO emailRequestDTO) {
+        userProfileService.sendBindEmailCode(emailRequestDTO);
+        return Result.success();
+    }
+
+    /**
+     * 确认更换邮箱
+     */
+    @PutMapping("/email")
+    @RateLimit(key = "ip", time = 60, count = 3)
+    @Log(module = "个人中心", type = "安全", desc = "用户执行了换绑邮箱操作")
+    @Operation(summary = "更换绑定邮箱", description = "校验验证码并换绑。换绑成功后当前账号会被强制下线。")
+    public Result<Void> changeEmail(@Valid @RequestBody UserChangeEmailDTO changeEmailDTO, HttpServletRequest request) {
+        // 从 Header 获取 Token，用于强制下线
+        String token = request.getHeader(Constants.HEADER_TOKEN);
+        userProfileService.changeEmail(changeEmailDTO, token);
+        return Result.success();
+    }
 }
