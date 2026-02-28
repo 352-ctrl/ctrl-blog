@@ -13,16 +13,18 @@ import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.UserConvert;
 import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.*;
+import com.example.blog.entity.Article;
 import com.example.blog.entity.User;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.UserMapper;
+import com.example.blog.service.ArticleService;
 import com.example.blog.service.SysMessageService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.GravatarUtils;
 import com.example.blog.utils.PasswordEncoderUtil;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.UserContext;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 import jakarta.annotation.Resource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -40,6 +42,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private UserConvert userConvert;
+
+    @Resource
+    private ArticleService articleService;
 
     @Resource
     private SysMessageService sysMessageService;
@@ -207,6 +212,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                             .content(String.format(MessageConstants.CONTENT_ROLE_CHANGE, updateDTO.getRole().getDesc()))
                             .build()
             );
+        }
+
+        // 只有管理员和超级管理员修改资料，才有可能影响文章展示，才去清理文章缓存
+        boolean isAdminOrSuperAdmin = BizStatus.Role.ADMIN.equals(currentUser.getRole()) ||
+                BizStatus.Role.SUPER_ADMIN.equals(currentUser.getRole());
+
+        // 如果修改了昵称或头像，清除关联的文章缓存
+        if (isAdminOrSuperAdmin && (StrUtil.isNotBlank(updateDTO.getNickname()) || StrUtil.isNotBlank(updateDTO.getAvatar()))) {
+
+            // 清除公共文章列表缓存
+            redisUtil.delete(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
+            redisUtil.delete(RedisConstants.REDIS_ARTICLE_HOT_KEY);
+            redisUtil.delete(RedisConstants.REDIS_ARTICLE_CAROUSEL_KEY);
+
+            // 清除该用户的文章详情缓存
+            List<Article> userArticles = articleService.list(
+                    new LambdaQueryWrapper<Article>()
+                            .select(Article::getId)
+                            .eq(Article::getUserId, updateDTO.getId())
+            );
+
+            if (userArticles != null && !userArticles.isEmpty()) {
+                List<String> articleCacheKeys = userArticles.stream()
+                        .map(article -> RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + article.getId())
+                        .collect(Collectors.toList());
+                redisUtil.delete(articleCacheKeys);
+            }
         }
     }
 

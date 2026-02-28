@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.blog.dto.user.*;
 import com.example.blog.entity.User;
-import com.example.blog.vo.UserVO;
+import com.example.blog.vo.user.UserVO;
 
 import java.util.List;
 

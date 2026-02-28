@@ -51,6 +51,12 @@ public final class RedisConstants {
      * 重置密码邮箱验证码 Key
      */
     public static final String REDIS_EMAIL_RESET_CODE_KEY = "email:code:reset:";
+
+    /**
+     * 换绑邮箱验证码 Key
+     */
+    public static final String REDIS_EMAIL_BIND_CODE_KEY = "email:code:bind:";
+
     /**
      * 邮箱验证码过期时间 (5分钟)
      */

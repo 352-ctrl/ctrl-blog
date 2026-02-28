@@ -23,7 +23,4 @@ public class EmailRequestDTO {
     @Email(message = "邮箱格式不正确")
     private String email;
 
-    @NotBlank(message = "请先完成安全验证")
-    private String captchaVerification;
-
 }

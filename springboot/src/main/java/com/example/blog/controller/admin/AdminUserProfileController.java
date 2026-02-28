@@ -1,4 +1,4 @@
-package com.example.blog.controller.front;
+package com.example.blog.controller.admin;
 
 import com.example.blog.annotation.AuthCheck;
 import com.example.blog.annotation.Log;
@@ -6,12 +6,12 @@ import com.example.blog.annotation.RateLimit;
 import com.example.blog.annotation.VerifyCaptcha;
 import com.example.blog.common.Result;
 import com.example.blog.common.constants.Constants;
+import com.example.blog.common.enums.BizStatus;
 import com.example.blog.dto.EmailRequestDTO;
 import com.example.blog.dto.user.UserChangeEmailDTO;
 import com.example.blog.dto.user.UserChangePwdDTO;
 import com.example.blog.dto.user.UserProfileUpdateDTO;
 import com.example.blog.service.UserProfileService;
-import com.example.blog.vo.UserDashboardVO;
 import com.example.blog.vo.user.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,14 +21,14 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 个人中心控制器
+ * 后台后台个人中心控制器
  * 处理当前登录用户的个人信息查询、修改及安全设置
  */
 @RestController
-@RequestMapping("/api/user")
-@AuthCheck
-@Tag(name = "个人中心")
-public class UserProfileController {
+@RequestMapping("/api/admin/user")
+@AuthCheck(role = BizStatus.ROLE_ADMIN)
+@Tag(name = "后台个人中心")
+public class AdminUserProfileController {
 
     @Resource
     private UserProfileService userProfileService;
@@ -41,16 +41,6 @@ public class UserProfileController {
     public Result<UserVO> getProfile() {
         UserVO userVO = userProfileService.getProfile();
         return Result.success(userVO);
-    }
-
-    /**
-     * 获取个人中心总览数据
-     */
-    @GetMapping("/dashboard")
-    @Operation(summary = "获取个人中心看板数据", description = "返回用户的点赞/收藏统计及最近互动文章列表。")
-    public Result<UserDashboardVO> getUserDashboardData() {
-        UserDashboardVO dashboardVO = userProfileService.getUserDashboardData();
-        return Result.success(dashboardVO);
     }
 
     /**

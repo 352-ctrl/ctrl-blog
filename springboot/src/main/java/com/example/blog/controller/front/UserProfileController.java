@@ -1,5 +1,6 @@
-package com.example.blog.controller;
+package com.example.blog.controller.front;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.example.blog.annotation.AuthCheck;
 import com.example.blog.annotation.Log;
 import com.example.blog.annotation.RateLimit;
@@ -7,11 +8,14 @@ import com.example.blog.annotation.VerifyCaptcha;
 import com.example.blog.common.Result;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.dto.EmailRequestDTO;
+import com.example.blog.dto.PageQueryDTO;
 import com.example.blog.dto.user.UserChangeEmailDTO;
 import com.example.blog.dto.user.UserChangePwdDTO;
 import com.example.blog.dto.user.UserProfileUpdateDTO;
 import com.example.blog.service.UserProfileService;
 import com.example.blog.vo.UserDashboardVO;
+import com.example.blog.vo.article.ArticleSimpleVO;
+import com.example.blog.vo.comment.UserCommentVO;
 import com.example.blog.vo.user.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,13 +25,13 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 个人中心控制器
+ * 前台个人中心控制器
  * 处理当前登录用户的个人信息查询、修改及安全设置
  */
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/front/user")
 @AuthCheck
-@Tag(name = "个人中心")
+@Tag(name = "前台个人中心")
 public class UserProfileController {
 
     @Resource
@@ -100,5 +104,32 @@ public class UserProfileController {
         String token = request.getHeader(Constants.HEADER_TOKEN);
         userProfileService.changeEmail(changeEmailDTO, token);
         return Result.success();
+    }
+
+    /**
+     * 获取我的收藏列表
+     */
+    @GetMapping("/favorites")
+    @Operation(summary = "我的收藏", description = "分页获取当前用户收藏的文章列表")
+    public Result<IPage<ArticleSimpleVO>> pageMyFavorites(@Valid @ModelAttribute PageQueryDTO queryDTO) {
+        return Result.success(userProfileService.pageMyFavorites(queryDTO));
+    }
+
+    /**
+     * 获取我的点赞列表
+     */
+    @GetMapping("/likes")
+    @Operation(summary = "我的点赞", description = "分页获取当前用户点赞的文章列表")
+    public Result<IPage<ArticleSimpleVO>> pageMyLikes(@Valid @ModelAttribute PageQueryDTO queryDTO) {
+        return Result.success(userProfileService.pageMyLikes(queryDTO));
+    }
+
+    /**
+     * 获取我的评论列表
+     */
+    @GetMapping("/comments")
+    @Operation(summary = "我的评论", description = "分页获取当前用户发布的评论列表")
+    public Result<IPage<UserCommentVO>> pageMyComments(@Valid @ModelAttribute PageQueryDTO queryDTO) {
+        return Result.success(userProfileService.pageMyComments(queryDTO));
     }
 }

@@ -123,6 +123,14 @@ public final class MessageConstants {
      */
     public static final String MSG_EMAIL_SUBJECT_RESET = "找回密码验证码";
     /**
+     * 换绑邮箱邮件标题 (新增)
+     */
+    public static final String MSG_EMAIL_SUBJECT_BIND = "【您的博客】换绑邮箱验证码";
+    /**
+     * 换绑邮箱正文小标题 (新增)
+     */
+    public static final String TITLE_EMAIL_BIND = "换绑邮箱验证码";
+    /**
      * 验证码已过期
      */
     public static final String MSG_CODE_EXPIRED = "验证码已过期，请重新获取";
