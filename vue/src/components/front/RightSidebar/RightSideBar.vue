@@ -38,12 +38,13 @@ const route = useRoute();
 /* 核心：粘性定位容器 */
 .sidebar-sticky-content {
   position: sticky;
-  top: 20px;
+  top: 30px;
+  padding-bottom: 50px;
   width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  max-height: calc(100vh - 80px);
+  gap: 30px;
+  max-height: calc(100vh - 90px);
 
   overflow-y: scroll;
   overflow-x: hidden;

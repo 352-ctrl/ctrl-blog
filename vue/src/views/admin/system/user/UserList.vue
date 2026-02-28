@@ -55,7 +55,7 @@
       />
     </div>
 
-    <el-dialog v-model="data.formVisible" :title="data.form.id ? '编辑用户' : '新增用户'" class="dialog-md-down" width="500px">
+    <el-dialog v-model="data.formVisible" :title="data.form.id ? '编辑用户' : '新增用户'" class="dialog-md-down" width="550px">
       <el-form ref="formRef" :model="data.form" :rules="data.rules" label-width="80px">
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="data.form.email" :disabled="!!data.form.id" autocomplete="off" placeholder="请输入邮箱" />
@@ -67,18 +67,27 @@
           <el-input v-model="data.form.password" type="password" show-password autocomplete="off" placeholder="请输入密码" />
         </el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-select v-model="data.form.role" placeholder="请选择角色">
+          <el-select v-model="data.form.role" placeholder="请选择角色" style="width: 100%">
             <el-option label="超级管理员" value="SUPER_ADMIN" disabled />
-
             <el-option label="管理员" value="ADMIN" />
             <el-option label="普通用户" value="USER" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="个人简介" prop="bio">
+          <el-input
+              v-model="data.form.bio"
+              type="textarea"
+              :rows="3"
+              maxlength="200"
+              show-word-limit
+              placeholder="请输入个人简介"
+          />
         </el-form-item>
         <el-form-item label="头像">
           <el-upload
               :action="uploadFileUrl"
               :on-success="handleFileSuccess"
-              :headers="{ token:userStore.token }"
+              :headers="{ token: userStore.token }"
               :before-upload="beforeUpload"
               @delete-success="loadPage"
               list-type="picture"
@@ -199,8 +208,6 @@ const handleEdit = async (row) => {
     if (res.code === 200) {
       // 将数据库返回的完整详情赋值给表单
       data.form = res.data;
-
-      // 数据获取成功后，再显示弹窗
       data.formVisible = true;
     } else {
       ElMessage.error(res.msg || '获取详情失败');
@@ -251,9 +258,7 @@ const handleResetPwd = (row) => {
     resetPassword({ id: row.id, newPassword: value }).then(() => {
       ElMessage.success('重置成功！该用户已被强制下线。');
     });
-  }).catch(() => {
-    // 捕获取消输入的异常，避免控制台报 Uncaught (in promise) cancel
-  });
+  }).catch(() => {});
 };
 
 // 头像上传成功回调
@@ -275,7 +280,7 @@ const beforeUpload = (file) => {
   }
   const isLt10M = file.size / 1024 / 1024 < 10; // 校验图片大小不超过10MB
   if (!isLt10M) {
-    ElMessage.error('图片大小不能超过2MB！');
+    ElMessage.error('图片大小不能超过10MB！');
     return false; // 终止上传
   }
   return true; // 校验通过，允许上传
@@ -296,7 +301,3 @@ const userColumns = reactive([
   { prop: 'createTime', label: '创建时间' }
 ])
 </script>
-
-<style scoped>
-
-</style>

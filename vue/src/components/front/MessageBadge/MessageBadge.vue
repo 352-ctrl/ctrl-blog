@@ -1,15 +1,14 @@
 <template>
-  <div class="message-badge-wrapper" @click="goToMessage">
-    <el-badge
-        :value="userStore.unreadCount"
-        :hidden="userStore.unreadCount <= 0"
-        :show-zero="false"
-        :max="99"
-        class="custom-badge"
-    >
-      <el-icon class="bell-icon"><Bell /></el-icon>
-    </el-badge>
-  </div>
+  <el-badge
+      :value="userStore.unreadCount"
+      :hidden="userStore.unreadCount <= 0"
+      :show-zero="false"
+      :max="99"
+      class="custom-badge"
+      @click="goToMessage"
+  >
+    <el-icon class="bell-icon"><Bell /></el-icon>
+  </el-badge>
 </template>
 
 <script setup>
@@ -38,31 +37,17 @@ onUnmounted(() => {
 
 <style scoped>
 /* ====================================
-   外层包裹容器优化
+   徽标容器
    ==================================== */
-.message-badge-wrapper {
-  position: relative;
+.custom-badge {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.message-badge-wrapper:hover {
-  background-color: var(--el-fill-color-light);
-  transform: translateY(-2px);
-}
-
-.message-badge-wrapper:active {
-  transform: scale(0.92);
 }
 
 /* ====================================
-   图标样式
+   图标基础样式
    ==================================== */
 .bell-icon {
   font-size: 24px;
@@ -70,16 +55,17 @@ onUnmounted(() => {
   transition: color 0.3s ease;
 }
 
-.message-badge-wrapper:hover .bell-icon {
+/* ✨ 鼠标悬浮在组件上时，图标变色 */
+.custom-badge:hover .bell-icon {
   color: var(--el-color-primary);
 }
 
 /* ====================================
-   小红点精确微调
+   小红点精确微调 (相对于图标自身)
    ==================================== */
-:deep(.custom-badge .el-badge__content.is-fixed) {
-  top: 6px;
-  right: 8px;
+:deep(.el-badge__content.is-fixed) {
+  top: 2px;
+  right: 4px;
   transform: translateY(-50%) translateX(50%) scale(0.85);
   border: none;
   box-shadow: 0 2px 4px var(--el-color-danger-light-5);

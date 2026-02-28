@@ -54,11 +54,6 @@
 
     </template>
 
-    <el-menu-item index="/">
-      <el-icon><Guide /></el-icon>
-      <span>官网</span>
-    </el-menu-item>
-
   </el-menu>
 </template>
 

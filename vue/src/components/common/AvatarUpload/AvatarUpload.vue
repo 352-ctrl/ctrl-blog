@@ -186,11 +186,14 @@ const uploadImg = () => {
     formData.append("file", data, "avatar.png");
     try {
       const res = await uploadFile(formData);
-      const result = res.data;
+      const result = res.code !== undefined ? res : res.data;
       if (result.code === 200) {
         ElMessage.success('头像修改成功');
-        emit('update:modelValue', result.data.url || result.data.avatar); // 兼容不同后端字段
-        emit('upload-success', result.data.url || result.data.avatar);
+        const avatarUrl = typeof result.data === 'string'
+            ? result.data
+            : (result.data?.url || result.data?.avatar);
+        emit('update:modelValue', avatarUrl);
+        emit('upload-success', avatarUrl);
         closeDialog();
       } else {
         ElMessage.error(result.msg || '上传失败');

@@ -10,14 +10,38 @@
           <el-dropdown-item disabled class="header-card">
             <img class="card-avatar" :src="userStore.avatar" alt="avatar">
             <div class="card-info">
-              <span class="nickname">{{ userStore.nickname }}</span>
+              <el-tooltip
+                  :content="userStore.nickname"
+                  placement="top"
+                  effect="dark"
+                  :show-after="300"
+                  :disabled="(userStore.nickname || '').length <= 8"
+              >
+                <span class="nickname">{{ userStore.nickname }}</span>
+              </el-tooltip>
               <span class="role-tag super-admin-tag" v-if="userStore.userInfo?.role === 'SUPER_ADMIN'">超级管理员</span>
               <span class="role-tag admin-tag" v-else-if="userStore.userInfo?.role === 'ADMIN'">管理员</span>
-              <span class="role-tag user-tag" v-else>Lv1 普通用户</span>
+              <span class="role-tag user-tag" v-else>普通用户</span>
             </div>
           </el-dropdown-item>
 
-          <el-dropdown-item divided @click="router.push('/user/profile')">
+          <el-dropdown-item
+              divided
+              v-if="userStore.isAdmin && !isAdminRoute"
+              @click="router.push('/admin')"
+          >
+            <el-icon><Monitor /></el-icon>管理后台
+          </el-dropdown-item>
+
+          <el-dropdown-item
+              divided
+              v-if="userStore.isAdmin && isAdminRoute"
+              @click="router.push('/')"
+          >
+            <el-icon><House /></el-icon>博客首页
+          </el-dropdown-item>
+
+          <el-dropdown-item divided @click="goToProfile">
             <el-icon><User /></el-icon>个人中心
           </el-dropdown-item>
           <el-dropdown-item @click="userStore.logout()">
@@ -40,12 +64,24 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { useUserStore } from '@/store/user.js';
-import { useRouter } from 'vue-router';
-import { User, SwitchButton } from '@element-plus/icons-vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const userStore = useUserStore();
 const router = useRouter();
+const route = useRoute();
+
+const isAdminRoute = computed(() => route.path.startsWith('/admin'));
+
+const goToProfile = () => {
+  // 判断当前页面是否在后台环境
+  if (isAdminRoute.value || route.path.startsWith('/profile')) {
+    router.push({ name: 'AdminProfile' }); // 进入后台个人中心
+  } else {
+    router.push('/user'); // 进入前台个人中心
+  }
+};
 </script>
 
 <style scoped>
@@ -125,7 +161,11 @@ const router = useRouter();
   font-size: 16px;
 }
 
-/* ================= 掘金风格：已登录卡片 ================= */
+:deep(.el-dropdown-menu__item.is-disabled.header-card) {
+  cursor: default !important;
+}
+
+/* ================= 已登录卡片 ================= */
 .header-card {
   cursor: default !important;
   background-color: transparent !important;

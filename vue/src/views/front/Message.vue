@@ -173,9 +173,6 @@ const handleMessageClick = async (msg) => {
 
   if (!msg.bizId) return
 
-  // ----------------------------------------------------
-  // 核心修改：利用后端新增的 targetId 进行精准跳转传参
-  // ----------------------------------------------------
   if (msg.targetId) {
     // 存在目标ID (比如点赞了某条评论、回复了某条评论)，以 Query 传参跳转
     router.push({
@@ -204,7 +201,7 @@ const handleMarkAllRead = async () => {
 </script>
 
 <style scoped>
-/* 样式保持不变... */
+/* 头部及通用样式保持不变... */
 .message-page-container {
   max-width: 800px;
   margin: 0 auto;
@@ -234,55 +231,58 @@ const handleMarkAllRead = async () => {
   font-size: 24px;
   color: var(--el-color-primary);
 }
-.custom-front-tabs {
-  margin-top: 10px;
-}
-:deep(.custom-front-tabs .el-tabs__nav-wrap::after) {
-  display: none;
-}
-:deep(.custom-front-tabs .el-tabs__item) {
-  font-size: 15px;
-  color: var(--el-text-color-regular);
-}
-:deep(.custom-front-tabs .el-tabs__item.is-active) {
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-:deep(.custom-front-tabs .el-tabs__active-bar) {
-  background-color: var(--el-color-primary);
-  height: 3px;
-  border-radius: 2px;
-}
+.custom-front-tabs { margin-top: 10px; }
+:deep(.custom-front-tabs .el-tabs__nav-wrap::after) { display: none; }
+:deep(.custom-front-tabs .el-tabs__item) { font-size: 15px; color: var(--el-text-color-regular); }
+:deep(.custom-front-tabs .el-tabs__item.is-active) { font-weight: 600; color: var(--el-text-color-primary); }
+:deep(.custom-front-tabs .el-tabs__active-bar) { background-color: var(--el-color-primary); height: 3px; border-radius: 2px; }
 :deep(.tab-badge .el-badge__content.is-fixed) {
-  top: 10px;
-  right: -5px;
-  transform: translateY(-50%) translateX(100%) scale(0.85);
-  border: none;
+  top: 10px; right: -5px; transform: translateY(-50%) translateX(100%) scale(0.85); border: none;
 }
+
+/* ==================================
+   专属：消息列表样式 (改造为卡片悬浮)
+   ================================== */
 .message-list {
-  margin-top: 10px;
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
+
 .message-item {
   display: flex;
   align-items: flex-start;
-  padding: 20px 40px 20px 20px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  padding: 16px 20px;
+  background-color: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 8px; /* 添加圆角 */
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  /* 添加交互动画 */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
 }
+
+/* 悬浮与点击特效 */
 .message-item:hover {
-  background-color: var(--el-fill-color-light);
+  transform: translateY(-2px);
+  box-shadow: var(--el-box-shadow-light);
 }
-.message-item:last-child {
-  border-bottom: none;
+
+.message-item:active {
+  transform: scale(0.99);
+  transition: transform 0.1s ease;
 }
+
+/* 未读消息加上淡淡的主题色背景 */
 .message-item.is-unread {
   background-color: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary-light-5);
 }
 html.dark .message-item.is-unread {
   background-color: rgba(64, 158, 255, 0.08);
 }
+
 .avatar-box {
   margin-right: 15px;
   flex-shrink: 0;
@@ -329,7 +329,9 @@ html.dark .message-item.is-unread {
   overflow: hidden;
   margin-top: 4px;
 }
+
 .unread-dot {
+  position: absolute; /* 修复点可能飞出去的问题 */
   right: 16px;
   top: 24px;
   width: 8px;
@@ -338,9 +340,10 @@ html.dark .message-item.is-unread {
   background-color: var(--el-color-danger);
   box-shadow: 0 0 5px var(--el-color-danger-light-5);
 }
+
 @media screen and (max-width: 768px) {
   .message-item {
-    padding: 15px 32px 15px 12px;
+    padding: 15px;
   }
   .unread-dot {
     right: 12px;

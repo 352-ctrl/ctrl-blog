@@ -206,6 +206,7 @@ const jumpTo = (id) => {
 
 // === 快捷键支持 ===
 const onKeydown = (e) => {
+  if (e.defaultPrevented) return;
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
     e.preventDefault();
     openSearch();
@@ -233,19 +234,19 @@ onUnmounted(() => {
 .search-trigger {
   display: flex;
   align-items: center;
-  background: var(--el-fill-color-light); /* 替换 #f4f5f7 */
+  background: var(--el-fill-color-light);
   border: 1px solid transparent;
   border-radius: 20px;
   padding: 6px 12px 6px 16px;
   cursor: pointer;
-  color: var(--el-text-color-regular); /* 替换 #606266 */
+  color: var(--el-text-color-regular);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   height: 36px;
   box-sizing: border-box;
 }
 
 .search-trigger:hover {
-  background: var(--el-bg-color-overlay); /* 替换 #fff */
+  background: var(--el-bg-color-overlay);
   border-color: var(--el-color-primary-light-5);
   box-shadow: 0 2px 8px var(--el-color-primary-light-5);
   color: var(--el-color-primary);
@@ -257,12 +258,12 @@ onUnmounted(() => {
 }
 
 .key-badge {
-  background: var(--el-bg-color); /* 替换 #ffffff */
-  border: 1px solid var(--el-border-color-light); /* 替换 #e4e7ed */
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   padding: 2px 6px;
   font-size: 12px;
-  color: var(--el-text-color-secondary); /* 替换 #909399 */
+  color: var(--el-text-color-secondary);
   font-family: monospace;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
@@ -274,7 +275,7 @@ onUnmounted(() => {
 .search-box {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--el-border-color-lighter); /* 替换 #ebeef5 */
+  border-bottom: 1px solid var(--el-border-color-lighter);
   padding: 0 10px 18px 10px;
   margin-bottom: 15px;
 }
@@ -289,11 +290,11 @@ onUnmounted(() => {
   outline: none;
   font-size: 18px;
   margin-left: 12px;
-  color: var(--el-text-color-primary); /* 替换 #303133 */
+  color: var(--el-text-color-primary);
   background: transparent;
 }
 .custom-input::placeholder {
-  color: var(--el-text-color-placeholder); /* 替换 #a8abb2 */
+  color: var(--el-text-color-placeholder);
   font-size: 16px;
 }
 
@@ -304,16 +305,16 @@ onUnmounted(() => {
   justify-content: center;
   width: 28px;
   height: 28px;
-  color: var(--el-text-color-secondary); /* 替换 #909399 */
-  background: var(--el-fill-color-light); /* 替换 #f4f5f7 */
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 .close-btn:hover {
-  background: var(--el-color-danger-light-9); /* 替换 #fde2e2 */
-  color: var(--el-color-danger); /* 替换 #f56c6c */
-  transform: rotate(90deg); /* 增加一点灵动的交互效果 */
+  background: var(--el-color-danger-light-9);
+  color: var(--el-color-danger);
+  transform: rotate(90deg);
 }
 
 /* === 搜索结果列表 === */
@@ -328,11 +329,11 @@ onUnmounted(() => {
   width: 6px;
 }
 .search-results::-webkit-scrollbar-thumb {
-  background: var(--el-border-color); /* 替换 #dcdfe6 */
+  background: var(--el-border-color);
   border-radius: 4px;
 }
 .search-results::-webkit-scrollbar-thumb:hover {
-  background: var(--el-text-color-secondary); /* 替换 #c0c4cc */
+  background: var(--el-text-color-secondary);
 }
 
 .empty-tip {
@@ -340,7 +341,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: var(--el-text-color-secondary); /* 替换 #909399 */
+  color: var(--el-text-color-secondary);
   padding: 50px 0;
 }
 
@@ -361,28 +362,28 @@ onUnmounted(() => {
   border-radius: 10px;
   cursor: pointer;
   margin-bottom: 10px;
-  background: var(--el-bg-color-overlay); /* 替换 #ffffff */
+  background: var(--el-bg-color-overlay);
   border: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
 .result-item:hover {
-  background-color: var(--el-fill-color-light); /* 替换 #f6f8fa */
+  background-color: var(--el-fill-color-light);
   border-color: var(--el-color-primary-light-8);
-  box-shadow: var(--el-box-shadow-light); /* 替换 0 4px 12px rgba(0, 0, 0, 0.05) */
+  box-shadow: var(--el-box-shadow-light);
   transform: translateY(-1px);
 }
 
 .item-title {
   font-weight: 600;
-  color: var(--el-text-color-primary); /* 替换 #303133 */
+  color: var(--el-text-color-primary);
   font-size: 16px;
   margin-bottom: 8px;
   line-height: 1.4;
 }
 
 .item-summary {
-  color: var(--el-text-color-regular); /* 替换 #606266 */
+  color: var(--el-text-color-regular);
   font-size: 13px;
   line-height: 1.5;
   margin-bottom: 10px;
@@ -430,8 +431,8 @@ onUnmounted(() => {
 }
 
 .highlight-text {
-  background-color: var(--el-color-warning-light-9); /* 替换 #fdf6ec */
-  color: var(--el-color-warning);            /* 替换 #e6a23c */
+  background-color: var(--el-color-warning-light-9);
+  color: var(--el-color-warning);
   font-weight: bold;
   padding: 2px 4px;
   border-radius: 4px;

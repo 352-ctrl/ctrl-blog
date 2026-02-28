@@ -1,6 +1,6 @@
 <template>
   <el-container class="layout-container">
-    <el-header class="common-header show-md-down hide-md-up">
+    <el-header class="common-header show-md-down hide-md-up mobile-header">
       <div class="header-left-box">
         <el-button text @click="drawer = true" class="icon-btn">
           <IconHamburger size="24"/>
@@ -49,10 +49,6 @@
                   <el-icon><MoreFilled /></el-icon>
                   <span>更多</span>
                 </template>
-                <el-menu-item v-if="userStore.isAdmin" index="/admin/dashboard">
-                  <el-icon><Setting /></el-icon>
-                  <span>后台管理</span>
-                </el-menu-item>
                 <el-menu-item index="/about">
                   <el-icon><InfoFilled /></el-icon>
                   <span>关于本站</span>
@@ -68,7 +64,7 @@
         <span class="brand-text">个人网站</span>
       </div>
 
-      <div class="header-right-tools">
+      <div class="header-right-tools mobile-right-tools">
         <SearchModal />
         <MessageBadge />
         <UserDropdown />
@@ -118,10 +114,6 @@
               <el-icon><MoreFilled /></el-icon>
               <span>更多</span>
             </template>
-            <el-menu-item v-if="userStore.isAdmin" index="/admin/dashboard">
-              <el-icon><Setting /></el-icon>
-              <span>后台管理</span>
-            </el-menu-item>
             <el-menu-item index="/about">
               <el-icon><InfoFilled /></el-icon>
               <span>关于本站</span>
@@ -140,7 +132,7 @@
     <el-main class="page-scroll-view page-container-md-down">
       <div class="app-container">
         <div class="main-content-wrapper">
-          <RouterView :key="$route.fullPath"/>
+          <RouterView :key="route.fullPath"/>
         </div>
         <RightSideBar v-if="isShowSidebar" />
       </div>
@@ -216,6 +208,10 @@ const isShowSidebar = computed(() => !route.meta.hideSidebar);
   position: relative;
 }
 
+:deep(.mobile-header) {
+  padding: 0 14px !important;
+}
+
 /* 重置抽屉 Body 内边距 */
 :deep(.el-drawer__body) {
   padding: 0 !important;
@@ -234,22 +230,28 @@ const isShowSidebar = computed(() => !route.meta.hideSidebar);
    2. 菜单专属样式优化
    ==================================== */
 
-/* 桌面端水平菜单优化 */
-.top-menu {
-  border-bottom: none !important; /* 移除底部灰线 */
-  background-color: transparent !important; /* 确保背景透明，跟随 header */
-  height: 60px;
-}
-
-/* 修改桌面端菜单项间距、悬浮和激活态 */
-.top-menu :deep(.el-menu-item),
-.top-menu :deep(.el-sub-menu__title) {
+/* 1. 普通菜单项：保持你想要的紧凑间距 */
+.top-menu :deep(.el-menu-item) {
   font-weight: 500;
   font-size: 15px;
-  /* ✨ 核心修改：将默认的 20px 左右内边距缩小到 12px，让菜单更紧凑 */
   padding: 0 12px !important;
   background-color: transparent !important;
   transition: color 0.3s;
+}
+
+/* 2. 子菜单标题：左侧保持 12px(不改变整体间距)，右侧稍微加大一点给箭头腾出空间 */
+.top-menu :deep(.el-sub-menu__title) {
+  font-weight: 500;
+  font-size: 15px;
+  padding-left: 12px !important;
+  padding-right: 26px !important; /* 专为箭头预留的位置 */
+  background-color: transparent !important;
+  transition: color 0.3s;
+}
+
+/* 3. 把默认在 right: 20px 的箭头往右侧边缘移动 */
+.top-menu :deep(.el-sub-menu__icon-arrow) {
+  right: 8px !important;
 }
 
 .top-menu :deep(.el-menu-item:hover),
@@ -261,6 +263,12 @@ const isShowSidebar = computed(() => !route.meta.hideSidebar);
 .mobile-menu {
   border-right: none !important; /* 移除右侧灰线 */
   background-color: transparent !important;
+}
+
+.mobile-menu :deep(.el-menu-item .el-icon),
+.mobile-menu :deep(.el-sub-menu__title .el-icon) {
+  font-size: 16px !important;
+  margin-right: 8px !important;
 }
 
 .mobile-menu :deep(.el-menu-item),
@@ -342,7 +350,7 @@ html.dark .page-scroll-view {
 }
 
 /* ====================================
-   4. 组件样式
+   4. 组件组件与 Header 样式
    ==================================== */
 
 .icon-btn {
@@ -383,9 +391,20 @@ html.dark .page-scroll-view {
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
   pointer-events: none;
   z-index: 1;
+  white-space: nowrap;
+}
+
+.mobile-brand-center .brand-logo {
+  height: 28px;
+  width: 28px;
+  margin: 0;
+}
+
+.mobile-brand-center .brand-text {
+  font-size: 16px; /* 移动端字体稍微缩小 */
 }
 
 .header-right-tools {
@@ -395,16 +414,23 @@ html.dark .page-scroll-view {
   gap: 16px;
 }
 
+/* 移动端右侧工具栏优化 */
+.mobile-right-tools {
+  gap: 18px;
+  transform: scale(0.85);
+  transform-origin: right center;
+}
+
 .desktop-logo-wrapper {
   display: flex;
   align-items: center;
-  padding-right: 40px; /* 拉开 logo 和 菜单 的距离 */
+  padding-right: 40px;
 }
 
 .desktop-menu-wrapper {
   flex: 1;
   display: flex;
-  justify-content: flex-start; /* 菜单靠左对齐，如果想居中可以改成 center */
+  justify-content: flex-start;
 }
 
 /* ====================================
@@ -469,7 +495,6 @@ html.dark .page-scroll-view {
 /* 覆盖 el-menu 下拉框默认的 min-width: 200px */
 :global(.auto-width-popper .el-menu--popup) {
   min-width: max-content !important;
-  /* 可以稍微调整下拉框的上下内边距 */
   padding: 5px 0 !important;
 }
 
@@ -478,4 +503,5 @@ html.dark .page-scroll-view {
   min-width: max-content !important;
   padding: 0 20px !important;
 }
+
 </style>

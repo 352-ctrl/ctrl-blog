@@ -43,7 +43,7 @@
         </el-header>
 
         <el-main class="page-container">
-          <RouterView :key="$route.fullPath"/>
+          <RouterView :key="router.fullPath"/>
         </el-main>
 
       </el-container>
@@ -129,7 +129,6 @@ const logout = () => {
   transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; /* 让侧边栏收缩更丝滑 */
   overflow: hidden;
   height: 100vh;
-  /* ✨ 核心优化：使用 overlay 变量，暗黑模式下比主体背景稍亮（偏灰），白天是纯白 */
   background-color: var(--el-bg-color-overlay);
   border-right: 1px solid var(--el-border-color-lighter); /* 使用较淡的边框色 */
 }
@@ -169,7 +168,6 @@ const logout = () => {
   align-items: center;
   justify-content: space-between;
   height: 60px;
-  /* ✨ 核心优化：使用 overlay 变量，保证头部和侧边栏融为一体 */
   background-color: var(--el-bg-color-overlay);
   border-bottom: 1px solid var(--el-border-color-lighter); /* 较淡的底部分割线 */
   padding: 0 20px;
@@ -182,7 +180,9 @@ const logout = () => {
 }
 
 .breadcrumb-nav {
-  margin-left: 15px; /* 面包屑和折叠按钮拉开距离 */
+  margin-left: 15px;
+  display: flex;
+  align-items: center;
 }
 
 /* ====================================
@@ -190,7 +190,7 @@ const logout = () => {
    ==================================== */
 .action-btn {
   padding: 0;
-  font-size: 20px;
+  font-size: 24px;
   color: var(--el-text-color-regular); /* 使用较柔和的图标颜色 */
   transition: color 0.3s;
   background-color: transparent !important;

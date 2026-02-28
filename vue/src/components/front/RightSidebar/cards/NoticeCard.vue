@@ -54,6 +54,7 @@ const loadNotice = () => {
 /* 卡片整体样式 */
 .notice-card {
   border: 1px solid var(--el-border-color-light);
+  margin: 0;
   border-radius: 8px;
   background: var(--el-bg-color-overlay);
 

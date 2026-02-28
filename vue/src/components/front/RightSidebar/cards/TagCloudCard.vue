@@ -295,9 +295,9 @@ const getRandomColor = () => {
 <style scoped lang="scss">
 .tag-card {
   border: 1px solid var(--el-border-color-light);
+  margin: 0;
   border-radius: 8px;
   background: var(--el-bg-color-overlay);
-  margin-bottom: 20px;
 
   :deep(.el-card__header) {
     padding: 15px 20px;
