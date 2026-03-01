@@ -199,13 +199,18 @@ const isShowSidebar = computed(() => !route.meta.hideSidebar);
   flex-shrink: 0;
   z-index: 100;
   background-color: var(--el-bg-color);
-  box-shadow: var(--el-box-shadow-light);
-  transition: background-color 0.3s, box-shadow 0.3s;
+  box-shadow: none !important;
+  border-bottom: 1px solid var(--el-border-color-light);
 
+  transition: background-color 0.3s, border-color 0.3s;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
+}
+
+html.dark :deep(.common-header) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 :deep(.mobile-header) {
