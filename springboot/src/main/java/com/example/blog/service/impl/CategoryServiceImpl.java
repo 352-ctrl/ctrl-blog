@@ -14,10 +14,8 @@ import com.example.blog.convert.CategoryConvert;
 import com.example.blog.dto.category.CategoryAddDTO;
 import com.example.blog.dto.category.CategoryQueryDTO;
 import com.example.blog.dto.category.CategoryUpdateDTO;
-import com.example.blog.entity.Article;
 import com.example.blog.entity.Category;
 import com.example.blog.exception.CustomerException;
-import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.mapper.CategoryMapper;
 import com.example.blog.service.CategoryService;
 import com.example.blog.utils.RedisUtil;
@@ -30,11 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 文章分类业务服务实现类
@@ -46,9 +41,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     @Resource
     private CategoryConvert categoryConvert;
-
-    @Resource
-    private ArticleMapper articleMapper;
 
     @Resource
     private RedisUtil redisUtil;
@@ -81,31 +73,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             redisUtil.delete(RedisConstants.REDIS_CATEGORY_LIST_KEY);
         }
 
-        // 2. 调用 ArticleService 获取所有有文章的分类ID集合
-        List<Article> articles = articleMapper.selectList(
-                new LambdaQueryWrapper<Article>()
-                        .select(Article::getCategoryId)
-                        .eq(Article::getStatus, BizStatus.Article.PUBLISHED)
-        );
+        // 2. 获取所有有文章的分类ID集合
+        List<Category> categoryList = this.baseMapper.selectValidPortalCategories(BizStatus.Article.PUBLISHED.getValue());
+        List<CategoryVO> activeCategoryVOS = categoryConvert.entitiesToVos(categoryList);
 
-        if (CollectionUtils.isEmpty(articles)) {
-            return new ArrayList<>();
-        }
-
-        Set<Long> existingCategoryIds = articles.stream()
-                .map(Article::getCategoryId)
-                .collect(Collectors.toSet());
-
-        // 3. 调用 CategoryService 获取所有分类基础数据
-        List<Category> categoryList = this.list();
-        List<CategoryVO> categoryVOS = categoryConvert.entitiesToVos(categoryList);
-
-        // 4. 在内存中进行聚合/过滤 (核心业务逻辑)
-        List<CategoryVO> activeCategoryVOS = categoryVOS.stream()
-                .filter(vo -> existingCategoryIds.contains(vo.getId()))
-                .toList();
-
-        // 5. 写入 Redis
+        // 3. 写入 Redis
         redisUtil.set(RedisConstants.REDIS_CATEGORY_LIST_KEY, activeCategoryVOS, RedisConstants.EXPIRE_METADATA, TimeUnit.DAYS);
 
         return activeCategoryVOS;

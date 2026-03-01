@@ -39,6 +39,15 @@ public interface TagService extends IService<Tag> {
     List<TagVO> listAdminTags();
 
     /**
+     * 根据文章ID获取关联的标签列表
+     * (用于 ArticleService 的详情页等需要聚合标签数据的场景)
+     *
+     * @param articleId 文章ID
+     * @return 关联的标签VO列表
+     */
+    List<TagVO> listTagsByArticleId(Long articleId);
+
+    /**
      * 分页查询标签
      *
      * @param queryDTO 查询条件DTO

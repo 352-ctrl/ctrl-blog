@@ -1,6 +1,5 @@
 package com.example.blog.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -15,13 +14,9 @@ import com.example.blog.convert.TagConvert;
 import com.example.blog.dto.tag.TagAddDTO;
 import com.example.blog.dto.tag.TagQueryDTO;
 import com.example.blog.dto.tag.TagUpdateDTO;
-import com.example.blog.entity.Article;
-import com.example.blog.entity.ArticleTag;
 import com.example.blog.entity.Tag;
 import com.example.blog.exception.CustomerException;
-import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.mapper.TagMapper;
-import com.example.blog.service.ArticleTagService;
 import com.example.blog.service.TagService;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.vo.TagVO;
@@ -32,12 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 文章标签业务服务实现类
@@ -52,12 +43,6 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
 
     @Resource
     private RedisUtil redisUtil;
-
-    @Resource
-    private ArticleMapper articleMapper;
-
-    @Resource
-    private ArticleTagService articleTagService;
 
     @Override
     public TagVO getTagById(Long id) {
@@ -87,39 +72,22 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
             redisUtil.delete(RedisConstants.REDIS_TAG_LIST_KEY);
         }
 
-        List<Object> articleIds = articleMapper.selectObjs(
-                new LambdaQueryWrapper<Article>()
-                        .select(Article::getId)
-                        .eq(Article::getStatus, BizStatus.Article.PUBLISHED)
-        );
-
-        if (CollUtil.isEmpty(articleIds)) {
-            return Collections.emptyList();
-        }
-
-        List<ArticleTag> articleTags = articleTagService.list(
-                new LambdaQueryWrapper<ArticleTag>()
-                        .select(ArticleTag::getTagId)
-                        .in(ArticleTag::getArticleId, articleIds)
-                        .groupBy(ArticleTag::getTagId) // 数据库层去重
-        );
-        if (CollUtil.isEmpty(articleTags)) {
-            return new ArrayList<>();
-        }
-
-        Set<Long> validTagIds = articleTags.stream()
-                .map(ArticleTag::getTagId)
-                .collect(Collectors.toSet());
-
-        // 查询数据库
-        List<Tag> tagList = this.listByIds(validTagIds);
-
+        List<Tag> tagList = this.baseMapper.selectValidPortalTags(BizStatus.Article.PUBLISHED.getValue());
         List<TagVO> activeTagVOS = tagConvert.entitiesToVos(tagList);
 
-        // 写入 Redis (设置过期时间 1 天)
         redisUtil.set(RedisConstants.REDIS_TAG_LIST_KEY, activeTagVOS, RedisConstants.EXPIRE_METADATA, TimeUnit.DAYS);
 
         return activeTagVOS;
+    }
+
+    /**
+     * 提供给外部 Service (如 ArticleService) 调用的方法
+     */
+    @Override
+    public List<TagVO> listTagsByArticleId(Long articleId) {
+        if (articleId == null) return null;
+        List<Tag> tags = this.baseMapper.selectTagsByArticleId(articleId);
+        return tagConvert.entitiesToVos(tags);
     }
 
     /**
