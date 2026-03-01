@@ -5,30 +5,23 @@ import com.example.blog.entity.ArticleLike;
 
 /**
  * 文章点赞业务服务接口
- * 定义文章点赞相关的业务操作方法
+ * 纯粹的子实体服务，仅负责关联表和对应缓存的维护
  */
 public interface ArticleLikeService extends IService<ArticleLike> {
 
     /**
-     * 点赞文章
-     *
-     * @param articleId 文章ID
+     * 底层方法：保存点赞记录
      */
-    Long likeArticle(Long articleId);
+    void saveArticleLike(Long articleId, Long userId);
 
     /**
-     * 取消点赞文章
-     *
-     * @param articleId 文章ID
+     * 底层方法：移除点赞记录
      */
-    Long cancelLikeArticle(Long articleId);
+    void removeArticleLike(Long articleId, Long userId);
 
     /**
-     * 判断当前登录用户是否已点赞指定文章
-     *
-     * @param articleId 文章ID
-     * @return true-已点赞，false-未点赞或未登录
+     * 判断指定用户是否已点赞指定文章
      */
-    boolean isLikedArticle(Long articleId);
+    boolean isLikedArticle(Long articleId, Long userId);
 
 }

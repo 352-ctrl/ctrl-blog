@@ -9,11 +9,12 @@ import com.example.blog.entity.Comment;
 import com.example.blog.vo.comment.AdminCommentVO;
 import com.example.blog.vo.comment.CommentVO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * 评论业务服务接口
- * 定义评论相关的业务操作方法
+ * 定义评论相关的业务操作方法 (作为评论领域的聚合根统一对外暴露接口)
  */
 public interface CommentService extends IService<Comment> {
 
@@ -62,4 +63,36 @@ public interface CommentService extends IService<Comment> {
      * @return 该评论所在的页码 (默认返回 1)
      */
     Integer getCommentLocatorPage(Long commentId, Integer pageSize);
+
+    /**
+     * 清理回收站中过期的评论（包含级联清理关联数据）
+     * @param recycleLimitDate 过期时间阈值
+     * @return 删除的条数
+     */
+    int clearCommentTrash(LocalDateTime recycleLimitDate);
+
+    /**
+     * 根据文章 ID 列表，彻底清理相关的所有评论数据及附加属性 (如评论点赞等)
+     * 用于文章彻底删除时，级联清理评论领域的数据，保证单一职责原则。
+     *
+     * @param articleIds 被清理的文章ID列表
+     */
+    void clearCommentsByArticleIds(List<Integer> articleIds);
+
+    /**
+     * 评论点赞业务聚合操作 (调度子表记录、增加计数、发送消息)
+     *
+     * @param commentId 评论ID
+     * @return 最新的点赞数
+     */
+    Long likeComment(Long commentId);
+
+    /**
+     * 取消评论点赞业务聚合操作 (清理子表记录、减少计数)
+     *
+     * @param commentId 评论ID
+     * @return 最新的点赞数
+     */
+    Long cancelLikeComment(Long commentId);
+
 }

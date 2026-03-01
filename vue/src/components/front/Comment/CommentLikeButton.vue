@@ -21,7 +21,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useUserStore } from "@/store/user.js";
-import { likeComment, cancelLikeComment } from "@/api/front/commentLike.js";
+import { likeComment, cancelLikeComment } from "@/api/front/comment.js";
 import { ElMessage } from "element-plus";
 import IconThumbUpFill from '@/components/common/Icon/IconThumbUpFill.vue';
 import IconThumbUpLine from '@/components/common/Icon/IconThumbUpLine.vue';

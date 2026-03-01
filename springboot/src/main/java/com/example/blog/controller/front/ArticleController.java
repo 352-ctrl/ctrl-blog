@@ -1,6 +1,8 @@
 package com.example.blog.controller.front;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.example.blog.annotation.AuthCheck;
+import com.example.blog.annotation.RateLimit;
 import com.example.blog.common.Result;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.dto.article.ArticleQueryDTO;
@@ -21,7 +23,7 @@ import java.util.List;
 
 /**
  * 文章前台控制器
- * 提供文章的查询、归档、搜索等 RESTful API 接口
+ * 提供文章的查询、归档、搜索及点赞、收藏等互动 RESTful API 接口
  */
 @Validated
 @RestController
@@ -95,7 +97,7 @@ public class ArticleController {
     /**
      * 增加阅读量接口
      * 前端在文章加载完成后，单独调用此接口
-     * POST /article/{id}/view
+     * POST /api/front/articles/{id}/view
      */
     @PostMapping("/{id}/view")
     @Operation(summary = "增加阅读量", description = "防刷机制：同一IP+UA在60秒内只算一次")
@@ -124,5 +126,54 @@ public class ArticleController {
         articleService.incrementViewCount(visitorDTO);
 
         return Result.success();
+    }
+
+    /**
+     * 点赞文章
+     */
+    @PostMapping("/{id}/like")
+    @AuthCheck
+    @RateLimit(key = "ip", time = 10, count = 5)
+    @Operation(summary = "点赞文章", description = "登录用户对指定文章进行点赞。")
+    public Result<Long> likeArticle(@PathVariable("id") @Positive(message = "文章ID非法") Long id) {
+        // 直接调用聚合根 articleService
+        Long likeCount = articleService.likeArticle(id);
+        return Result.success(likeCount);
+    }
+
+    /**
+     * 取消点赞文章
+     */
+    @PostMapping("/{id}/cancel-like")
+    @AuthCheck
+    @RateLimit(key = "ip", time = 10, count = 5)
+    @Operation(summary = "取消点赞文章", description = "登录用户取消对指定文章的点赞。")
+    public Result<Long> cancelLikeArticle(@PathVariable("id") @Positive(message = "文章ID非法") Long id) {
+        Long likeCount = articleService.cancelLikeArticle(id);
+        return Result.success(likeCount);
+    }
+
+    /**
+     * 收藏文章
+     */
+    @PostMapping("/{id}/favorite")
+    @AuthCheck
+    @RateLimit(key = "ip", time = 10, count = 5)
+    @Operation(summary = "收藏文章", description = "登录用户对指定文章进行收藏。")
+    public Result<Long> favoriteArticle(@PathVariable("id") @Positive(message = "文章ID非法") Long id) {
+        Long favoriteCount = articleService.favoriteArticle(id);
+        return Result.success(favoriteCount);
+    }
+
+    /**
+     * 取消收藏文章
+     */
+    @PostMapping("/{id}/cancel-favorite")
+    @AuthCheck
+    @RateLimit(key = "ip", time = 10, count = 5)
+    @Operation(summary = "取消收藏文章", description = "登录用户取消对指定文章的收藏。")
+    public Result<Long> cancelFavoriteArticle(@PathVariable("id") @Positive(message = "文章ID非法") Long id) {
+        Long favoriteCount = articleService.cancelFavoriteArticle(id);
+        return Result.success(favoriteCount);
     }
 }

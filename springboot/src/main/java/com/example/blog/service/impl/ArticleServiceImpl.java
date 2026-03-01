@@ -1,12 +1,8 @@
 package com.example.blog.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
@@ -15,34 +11,37 @@ import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.ArticleConvert;
 import com.example.blog.dto.article.*;
-import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.*;
+import com.example.blog.event.ArticlesDeletedEvent;
+import com.example.blog.event.InteractiveMessageEvent;
 import com.example.blog.exception.CustomerException;
-import com.example.blog.mapper.*;
+import com.example.blog.manager.ArticleCacheManager;
+import com.example.blog.manager.ArticleQueryManager;
+import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.service.*;
-import com.example.blog.utils.ArticleAssembler;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.SensitiveWordManager;
 import com.example.blog.utils.UserContext;
-import com.example.blog.vo.TagVO;
 import com.example.blog.vo.article.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 文章业务服务实现类
- * 实现文章相关的具体业务逻辑
+ * 文章业务服务实现类 (文章领域聚合根 - Command侧)
+ * 专门负责核心写入逻辑、系统级协调、级联删除与事务控制
  */
 @Slf4j
 @Service
@@ -52,10 +51,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private ArticleConvert articleConvert;
 
     @Resource
-    private UserMapper userMapper;
+    private ArticleTagService articleTagService;
 
     @Resource
-    private CategoryMapper categoryMapper;
+    private CategoryService categoryService;
 
     @Resource
     private ArticleLikeService articleLikeService;
@@ -64,19 +63,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private ArticleFavoriteService articleFavoriteService;
 
     @Resource
-    private ArticleTagService articleTagService;
-
-    @Resource
-    private TagMapper tagMapper;
-
-    @Resource
-    private CommentMapper commentMapper;
-
-    @Resource
-    private SysMessageService sysMessageService;
-
-    @Resource
-    private ArticleAssembler articleAssembler;
+    private CommentService commentService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -84,472 +71,73 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Resource
     private SensitiveWordManager sensitiveWordManager;
 
-    /**
-     * 根据标签ID列表查询文章ID列表
-     * @param tagIds 标签ID列表
-     * @return 文章ID列表，如果标签为空或查询无结果返回空列表
-     */
-    private List<Long> getArticleIdsByTagIds(List<Long> tagIds) {
-        if (CollUtil.isEmpty(tagIds)) {
-            return Collections.emptyList();
-        }
-        // 确保标签ID去重
-        List<Long> distinctTagIds = tagIds.stream().distinct().toList();
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
-        List<Long> articleIds = articleTagService.listArticleIdsByTagIds(distinctTagIds);
+    @Resource
+    private ArticleCacheManager articleCacheManager;
 
-        if (CollUtil.isEmpty(articleIds)) {
-            return Collections.emptyList();
-        }
+    @Resource
+    private ArticleQueryManager articleQueryManager;
 
-        return articleIds;
-    }
-
-    /**
-     * 私有辅助方法：清理列表相关的缓存
-     * (包含：归档数据、首页第一页数据)
-     */
-    private void clearListCache() {
-        // 删除归档缓存
-        redisUtil.delete(RedisConstants.REDIS_ARTICLE_ARCHIVE_KEY);
-        // 删除首页第一页缓存
-        redisUtil.delete(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
-    }
-
-    /**
-     * 通用的浏览量同步方法 (利用 Java 8 函数式接口)
-     *
-     * @param list            需要同步的列表 (Entity 或各种 VO 均可)
-     * @param idExtractor     提取 ID 的方法引用 (例如：Article::getId)
-     * @param viewCountSetter 设置浏览量的方法引用 (例如：Article::setViewCount)
-     * @param <T>             对象的泛型类型
-     */
-    private <T> void syncViewCount(List<T> list, Function<T, Long> idExtractor, BiConsumer<T, Long> viewCountSetter) {
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-
-        // 1. 动态提取 ID 列表
-        List<Object> articleIds = list.stream()
-                .map(idExtractor)       // 动态调用 getId()
-                .map(String::valueOf)
-                .collect(Collectors.toList());
-
-        // 2. 从 Redis 批量获取实时阅读量
-        List<Object> viewCounts = redisUtil.hMultiGet(RedisConstants.REDIS_VIEW_HASH_KEY, articleIds);
-
-        // 3. 遍历覆盖旧值
-        for (int i = 0; i < list.size(); i++) {
-            Object countObj = viewCounts.get(i);
-            if (ObjectUtil.isNotNull(countObj)) {
-                try {
-                    Long realTimeCount = Long.valueOf(countObj.toString());
-                    // 动态调用 setViewCount()
-                    viewCountSetter.accept(list.get(i), realTimeCount);
-                } catch (NumberFormatException e) {
-                    // 忽略异常，保持原值
-                    log.warn("同步浏览量转换异常，保持原值: {}", countObj);
-                }
-            }
-        }
-    }
+    /* ================= 以下为读操作，统统委托给 QueryManager ================= */
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<ArticleSimpleVO> listHotArticles() {
-        // 1. 定义 Redis Key
-        String cacheKey = RedisConstants.REDIS_ARTICLE_HOT_KEY;
-
-        // 2. 尝试从 Redis 获取缓存
-        Object cacheValue = redisUtil.get(cacheKey);
-        if (cacheValue != null) {
-            return (List<ArticleSimpleVO>) cacheValue;
-        }
-
-        // 3. 缓存未命中，查询数据库
-        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
-        wrapper.select(Article::getId, Article::getTitle, Article::getViewCount, Article::getCover, Article::getCreateTime)
-                .eq(Article::getStatus, BizStatus.Article.PUBLISHED)
-                // 使用 last 拼接复杂的加权排序 SQL
-                // 权重公式：阅读量(x1) + 点赞量(x5) + 收藏量(x10)
-                .last("ORDER BY (view_count + like_count * 5 + favorite_count * 10) DESC LIMIT 5");
-
-        List<Article> articles = this.list(wrapper);
-
-        if (CollUtil.isEmpty(articles)) {
-            return Collections.emptyList();
-        }
-
-        // 4. 同步 Redis 中的最新浏览量到实体中
-        syncViewCount(articles, Article::getId, Article::setViewCount);
-
-        // 5. 实体类转 VO
-        List<ArticleSimpleVO> voList = articleConvert.entitiesToSimpleVos(articles);
-
-        // 6. 写入 Redis
-        redisUtil.set(cacheKey, voList, RedisConstants.EXPIRE_ARTICLE_HOT, TimeUnit.HOURS);
-
-        return voList;
+        return articleQueryManager.listHotArticles();
     }
 
-    /**
-     * 获取全站搜索索引数据
-     *
-     * @return 文章搜索索引列表
-     */
     @Override
     public List<ArticleSearchVO> listSearchIndexes() {
-        List<Article> articles = lambdaQuery()
-                .select(Article::getId, Article::getTitle, Article::getSummary)
-                .eq(Article::getStatus, BizStatus.Article.PUBLISHED)
-                .list();
-        Map<String, Object> extraMaps = articleAssembler.queryBaseArticleExtraMaps(articles);
-        return articleConvert.entitiesToSearchVos(articles, extraMaps);
+        return articleQueryManager.listSearchIndexes();
     }
 
-    /**
-     * 前台详情查询文章
-     *
-     * @return 文章详情
-     */
     @Override
     public ArticleDetailVO getArticleDetail(Long id) {
-        Assert.notNull(id, "文章ID不能为空");
-
-        String articleCacheKey = RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + id;
-        // 尝试从 Redis 获取完整的 VO 对象
-        ArticleDetailVO vo = null;
-        try {
-            // 尝试获取，如果反序列化失败（脏数据），捕获异常不报错
-            vo = (ArticleDetailVO) redisUtil.get(articleCacheKey);
-        } catch (Exception e) {
-            log.error("Redis文章详情数据异常，Key: {}", articleCacheKey);
-            redisUtil.delete(articleCacheKey); // 删除坏数据
-        }
-        // 如果缓存不存在，查询数据库并组装
-        if (vo == null) {
-            Article article = this.getById(id);
-            if (article == null) {
-                throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_ARTICLE_NOT_EXIST);
-            }
-
-            vo = articleConvert.entityToVo(article);
-
-            // 填充用户信息
-            User user = userMapper.selectById(article.getUserId());
-            if (user != null) {
-                vo.setUserNickname(user.getNickname());
-                vo.setUserAvatar(user.getAvatar());
-            }
-
-            // 填充分类信息
-            Category category = categoryMapper.selectById(article.getCategoryId());
-            if (category != null) {
-                vo.setCategoryName(category.getName());
-            }
-
-            // 填充标签信息
-            List<ArticleTag> articleTags = articleTagService.list(
-                    new LambdaQueryWrapper<ArticleTag>()
-                            .select(ArticleTag::getTagId)
-                            .eq(ArticleTag::getArticleId, id)
-            );
-
-            if (CollUtil.isNotEmpty(articleTags)) {
-                List<Long> tagIds = articleTags.stream()
-                        .map(ArticleTag::getTagId)
-                        .collect(Collectors.toList());
-
-                List<Tag> tags = tagMapper.selectList(
-                        new LambdaQueryWrapper<Tag>()
-                                .in(Tag::getId, tagIds)
-                                .select(Tag::getId, Tag::getName)
-                );
-
-                if (CollUtil.isNotEmpty(tags)) {
-                    vo.setTags(tags.stream()
-                            .map(t -> TagVO.builder().id(t.getId()).name(t.getName()).build())
-                            .collect(Collectors.toList()));
-                }
-            }
-
-            // 填充评论数
-            Long commentCount = commentMapper.selectCount(
-                    new LambdaQueryWrapper<Comment>().eq(Comment::getArticleId, id)
-            );
-            vo.setCommentCount(commentCount);
-
-            // 存入 Redis (只存对象，30分钟过期)
-            redisUtil.set(articleCacheKey, vo, RedisConstants.EXPIRE_ARTICLE_DETAIL, TimeUnit.MINUTES);
-        }
-
-        // 判断当前用户是否已点赞该文章
-        boolean isLiked = articleLikeService.isLikedArticle(vo.getId());
-        vo.setLiked(isLiked);
-
-        // 判断当前用户是否已收藏该文章
-        boolean isFavorite = articleFavoriteService.isFavoriteArticle(vo.getId());
-        vo.setFavorite(isFavorite);
-
-        // 使用 Hash 结构的 Key
-        String hashKey = RedisConstants.REDIS_VIEW_HASH_KEY;
-        // 从 Hash 中获取该文章的最新阅读量
-        Object viewCountObj = redisUtil.hGet(hashKey, id.toString());
-        if (viewCountObj != null) {
-            // 如果 Redis Hash 里有数据，直接覆盖 VO 里的值
-            try {
-                vo.setViewCount(Long.valueOf((viewCountObj.toString())));
-            } catch (NumberFormatException e) {
-                log.warn("Redis阅读量格式异常: {}", viewCountObj);
-            }
-        } else {
-            // 场景：Redis Hash 里丢数据了（可能是过期或误删），但我们手里有 vo 对象
-            // 动作：利用手中的 vo 数据，反向修复 Redis Hash，实现“缓存预热/自愈”
-            // 注意：vo.getViewCount() 可能是 null，要判空，或者默认 0
-            Long initViewCount = vo.getViewCount() != null ? vo.getViewCount() : 0;
-
-            // 重新塞回 Hash 中，这样下一个访客进来 increment 时就不用查库了
-            try {
-                redisUtil.hSet(hashKey, id.toString(), initViewCount);
-            } catch (Exception e) {
-                // 吞掉异常，不要因为这个次要逻辑影响主业务返回详情
-                log.warn("Redis阅读量反向初始化失败: {}", e.getMessage());
-            }
-        }
-
-        return vo;
+        return articleQueryManager.getArticleDetail(id);
     }
 
     @Override
     public AdminArticleVO getArticleForEdit(Long id) {
-        Assert.notNull(id, "文章ID不能为空");
-
-        Article article = this.getById(id);
-        if (article == null) {
-            throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_ARTICLE_NOT_EXIST);
-        }
-        Map<String, Object> extraMaps = articleAssembler.queryArticleExtraMaps(article);
-        return articleConvert.entityToAdminVo(article, extraMaps);
+        return articleQueryManager.getArticleForEdit(id);
     }
 
-    /**
-     * 前台归档查询文章
-     *
-     * @return 归档数据
-     */
     @Override
-    @SuppressWarnings("unchecked")
     public List<ArchiveAggregateVO> listArchives() {
-        // 尝试从 Redis 获取
-        try {
-            List<ArchiveAggregateVO> cachedArchive = (List<ArchiveAggregateVO>) redisUtil.get(RedisConstants.REDIS_ARTICLE_ARCHIVE_KEY);
-            if (cachedArchive != null) {
-                return cachedArchive;
-            }
-        } catch (Exception e) {
-            log.error("Redis归档数据异常，Key: " + RedisConstants.REDIS_ARTICLE_ARCHIVE_KEY);
-            redisUtil.delete(RedisConstants.REDIS_ARTICLE_ARCHIVE_KEY);
-        }
-
-        // 查询数据库
-        List<Article> articles = this.list(
-                new LambdaQueryWrapper<Article>()
-                        .select(Article::getId, Article::getTitle, Article::getCreateTime)
-                        .eq(Article::getStatus, BizStatus.Article.PUBLISHED)
-                        .orderByDesc(Article::getCreateTime)
-        );
-
-        // 转换为ArchiveVO
-        List<ArticleArchiveVO> articleArchiveVOS = articleConvert.entitiesToArchiveVos(articles);
-
-        // 按年份分组
-        Map<Integer, List<ArticleArchiveVO>> yearMap = new LinkedHashMap<>();
-
-        for (ArticleArchiveVO articleArchiveVO : articleArchiveVOS) {
-            // 从创建时间中提取年份
-            String createTimeStr = String.valueOf(articleArchiveVO.getCreateTime()); // 格式：yyyy-MM-dd HH:mm:ss
-            int year = Integer.parseInt(createTimeStr.substring(0, 4));
-
-            // 按年份分组
-            yearMap.computeIfAbsent(year, k -> new ArrayList<>()).add(articleArchiveVO);
-        }
-
-        // 按年份倒序排列（最新的年份在前）
-        List<ArchiveAggregateVO> result = yearMap.entrySet().stream()
-                // 按年份倒序
-                .sorted(Map.Entry.<Integer, List<ArticleArchiveVO>>comparingByKey().reversed())
-                // 映射为 VO 对象
-                .map(entry -> ArchiveAggregateVO.builder()
-                        .year(entry.getKey())
-                        .count(entry.getValue().size())
-                        .articles(entry.getValue())
-                        .build())
-                .collect(Collectors.toList());
-
-        // 写入 Redis (设置1小时过期)
-        redisUtil.set(RedisConstants.REDIS_ARTICLE_ARCHIVE_KEY, result, RedisConstants.EXPIRE_ARTICLE_ARCHIVE, TimeUnit.HOURS);
-
-        return result;
+        return articleQueryManager.listArchives();
     }
 
     @Override
     public List<ArticleCarouselVO> listCarousel() {
-        // 1. 获取 Redis Key
-        String cacheKey = RedisConstants.REDIS_ARTICLE_CAROUSEL_KEY;
-
-        // 2. 查询缓存
-        Object cacheValue = redisUtil.get(cacheKey);
-        if (cacheValue != null) {
-            return (List<ArticleCarouselVO>) cacheValue;
-        }
-
-        // 3. 缓存未命中，查询数据库
-        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
-        wrapper.select(Article::getId, Article::getTitle, Article::getCover, Article::getCreateTime) // 只查需要的字段，优化性能
-                .eq(Article::getIsCarousel, BizStatus.Common.ENABLE)        // 必须是轮播图
-                .eq(Article::getStatus, BizStatus.Article.PUBLISHED)            // 必须是已发布
-                .orderByDesc(Article::getCreateTime)  // 按时间倒序
-                .last("limit 5");                     // 限制 5 条
-
-        List<Article> articles = this.list(wrapper);
-
-        // 4. 判空处理 (防止缓存穿透，也可以选择缓存空列表)
-        if (articles == null || articles.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // 5. 实体类转 VO
-        List<ArticleCarouselVO> voList = articleConvert.entitiesToCarouseVos(articles);
-
-        // 6. 写入 Redis
-        redisUtil.set(cacheKey, voList, RedisConstants.EXPIRE_ARTICLE_CAROUSEL, TimeUnit.HOURS);
-
-        return voList;
+        return articleQueryManager.listCarousel();
     }
 
     @Override
     public List<ArticleSimpleVO> listArticleCardsByIds(List<Long> ids) {
-        if (CollUtil.isEmpty(ids)) {
-            return Collections.emptyList();
-        }
-
-        // 1. 批量查询数据库
-        List<Article> articles = this.listByIds(ids);
-        if (CollUtil.isEmpty(articles)) {
-            return Collections.emptyList();
-        }
-
-        // 2. 按传入的 ids 顺序进行内存重排序！
-        Map<Long, Article> articleMap = articles.stream()
-                .collect(Collectors.toMap(Article::getId, a -> a));
-
-        List<Article> sortedArticles = ids.stream()
-                .map(articleMap::get)
-                .filter(Objects::nonNull) // 过滤掉可能已经被物理删除的文章
-                .toList();
-
-        // 3. 转换并返回
-        return articleConvert.entitiesToSimpleVos(sortedArticles);
+        return articleQueryManager.listArticleCardsByIds(ids);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public IPage<ArticleCardVO> pageArticles(ArticleQueryDTO queryDTO) {
-        Assert.notNull(queryDTO, "查询条件不能为空");
-
-        // 判断是否是“首页第一页”（无搜索、无分类、无标签、第1页）
-        boolean isFirstPageHome = queryDTO.getPageNum() == 1
-                && StrUtil.isBlank(queryDTO.getTitle())
-                && queryDTO.getCategoryId() == null
-                && CollUtil.isEmpty(queryDTO.getTagIds());
-
-        if (isFirstPageHome) {
-            try {
-                Object cache = redisUtil.get(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
-                if (cache != null) {
-                    IPage<ArticleCardVO> page = (IPage<ArticleCardVO>) cache;
-                    syncViewCount(page.getRecords(), ArticleCardVO::getId, ArticleCardVO::setViewCount);
-                    return page;
-                }
-            } catch (Exception e) {
-                log.error("Redis首页列表数据异常，Key: " + RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
-                redisUtil.delete(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
-            }
-        }
-
-        Page<Article> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
-        LambdaQueryWrapper<Article> articleQueryWrapper = new LambdaQueryWrapper<>();
-        if (CollUtil.isNotEmpty(queryDTO.getTagIds())) {
-            List<Long> articleIds = getArticleIdsByTagIds(queryDTO.getTagIds());
-
-            if (CollUtil.isEmpty(articleIds)) {
-                return new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
-            }
-
-            articleQueryWrapper.in(Article::getId, articleIds);
-        }
-        articleQueryWrapper.like(StrUtil.isNotBlank(queryDTO.getTitle()), Article::getTitle, queryDTO.getTitle())
-                .eq(queryDTO.getCategoryId() != null, Article::getCategoryId, queryDTO.getCategoryId())
-                .eq(Article::getStatus, BizStatus.Article.PUBLISHED)
-                .orderByDesc(Article::getIsTop)
-                .orderByDesc(Article::getCreateTime);
-        IPage<Article> articleIPage  = this.page(page, articleQueryWrapper);
-        List<Article> articles = articleIPage .getRecords();
-        if (CollUtil.isEmpty(articles)) {
-            return articleIPage.convert(article -> null);
-        }
-
-        // 同步 Redis 中的最新浏览量到文章实体中
-        syncViewCount(articles, Article::getId, Article::setViewCount);
-
-        Map<String, Object> extraMaps = articleAssembler.batchQueryArticleExtraMaps(articles);
-        List<ArticleCardVO> vos = articleConvert.entitiesToListVos(articles, extraMaps);
-        IPage<ArticleCardVO> voiPage = articleIPage.convert(article -> null);
-        voiPage.setRecords(vos);
-        if (isFirstPageHome) {
-            redisUtil.set(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY, voiPage, RedisConstants.EXPIRE_ARTICLE_LIST_FIRST_PAGE, TimeUnit.MINUTES);
-        }
-        return voiPage;
+        return articleQueryManager.pageArticles(queryDTO);
     }
 
-    /**
-     * 后台管理分页查询文章
-     *
-     * @param queryDTO 查询条件DTO
-     * @return 分页结果
-     */
     @Override
     public IPage<AdminArticleVO> pageAdminArticles(ArticleQueryDTO queryDTO) {
-        Assert.notNull(queryDTO, "查询条件不能为空");
-
-        Page<Article> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
-        LambdaQueryWrapper<Article> articleQueryWrapper = new LambdaQueryWrapper<>();
-        if (CollUtil.isNotEmpty(queryDTO.getTagIds())) {
-            List<Long> articleIds = getArticleIdsByTagIds(queryDTO.getTagIds());
-
-            if (CollUtil.isEmpty(articleIds)) {
-                return new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
-            }
-
-            articleQueryWrapper.in(Article::getId, articleIds);
-        }
-        articleQueryWrapper.like(StrUtil.isNotBlank(queryDTO.getTitle()), Article::getTitle, queryDTO.getTitle())
-                .eq(queryDTO.getCategoryId() != null, Article::getCategoryId, queryDTO.getCategoryId())
-                .orderByDesc(Article::getIsTop)
-                .orderByDesc(Article::getCreateTime);
-        IPage<Article> articleIPage  = this.page(page, articleQueryWrapper);
-        List<Article> articles = articleIPage .getRecords();
-        articles = CollUtil.isEmpty(articles) ? Collections.emptyList() : articles;
-
-        // 同步 Redis 中的最新浏览量到文章实体中
-        syncViewCount(articles, Article::getId, Article::setViewCount);
-
-        Map<String, Object> extraMaps = articleAssembler.batchQueryArticleExtraMaps(articles);
-        List<AdminArticleVO> adminVos = articleConvert.entitiesToAdminVos(articles, extraMaps);
-        IPage<AdminArticleVO> adminVOIPage = articleIPage.convert(article -> null);
-        adminVOIPage.setRecords(adminVos);
-        return adminVOIPage;
+        return articleQueryManager.pageAdminArticles(queryDTO);
     }
+
+    @Override
+    public List<ArticleCategoryCountDTO> countArticleByCategoryId() {
+        return articleQueryManager.countArticleByCategoryId();
+    }
+
+    @Override
+    public void incrementViewCount(ArticleVisitorDTO visitorDTO) {
+        articleCacheManager.incrementViewCount(visitorDTO);
+    }
+
+    /* ================= 以下为写操作，保留在 ServiceImpl 控制核心业务与事务 ================= */
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -562,7 +150,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         if (updateDTO.getCategoryId() != null) {
-            Category category = categoryMapper.selectById(updateDTO.getCategoryId());
+            Category category = categoryService.getById(updateDTO.getCategoryId());
             if (category == null) {
                 throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_CATEGORY_NOT_EXIST);
             }
@@ -581,7 +169,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 删除该文章的详情缓存
         redisUtil.delete(RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + updateDTO.getId());
         // 删除归档和首页列表缓存
-        clearListCache();
+        articleCacheManager.clearListCache();
     }
 
     @Override
@@ -589,7 +177,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public void addArticle(ArticleAddDTO addDTO) {
         Assert.notNull(addDTO, "新增文章参数不能为空");
 
-        Category category = categoryMapper.selectById(addDTO.getCategoryId());
+        Category category = categoryService.getById(addDTO.getCategoryId());
         if (category == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_CATEGORY_NOT_EXIST);
         }
@@ -612,7 +200,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         articleTagService.updateArticleTags(article.getId(), addDTO.getTagIds());
 
         // 清理列表缓存
-        clearListCache();
+        articleCacheManager.clearListCache();
     }
 
     @Override
@@ -633,21 +221,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             redisUtil.hDel(RedisConstants.REDIS_VIEW_HASH_KEY, id.toString());
             redisUtil.setRemove(RedisConstants.REDIS_VIEW_DIRTY_SET, id);
             // 删除列表和归档
-            clearListCache();
+            articleCacheManager.clearListCache();
 
-            // 通知作者
+            // 触发文章删除事件
             Article article = this.getById(id);
             if (article != null) {
-                sysMessageService.sendSystemNotice(
-                        MessageSendDTO.builder()
-                                .toUserId(article.getUserId())
-                                .title(MessageConstants.TITLE_ARTICLE_DELETE)
-                                .content(String.format(MessageConstants.CONTENT_ARTICLE_DELETE, article.getTitle()))
-                                .build()
-                );
+                Map<Long, String> deletedMap = new HashMap<>();
+                deletedMap.put(article.getUserId(), article.getTitle());
+                eventPublisher.publishEvent(new ArticlesDeletedEvent(this, deletedMap));
             }
         }
-
     }
 
     @Override
@@ -695,129 +278,20 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             }
 
             // 删除列表和归档
-            clearListCache();
+            articleCacheManager.clearListCache();
 
-            // 通知作者
+            // 批量触发文章删除事件
             List<Article> deletedArticles = this.listByIds(ids);
-
-            // 构建消息实体列表
-            List<SysMessage> messageList = new ArrayList<>();
-            for (Article article : deletedArticles) {
-                SysMessage msg = SysMessage.builder()
-                        .toUserId(article.getUserId())
-                        .fromUserId(null)
-                        .type(BizStatus.MessageType.SYSTEM)
-                        .title(MessageConstants.TITLE_ARTICLE_DELETE)
-                        .content(String.format(MessageConstants.CONTENT_ARTICLE_DELETE, article.getTitle()))
-                        .isRead(BizStatus.ReadStatus.UNREAD)
-                        .build();
-                messageList.add(msg);
+            if (CollUtil.isNotEmpty(deletedArticles)) {
+                Map<Long, String> deletedMap = deletedArticles.stream()
+                        .collect(Collectors.toMap(Article::getUserId, Article::getTitle, (t1, t2) -> t1 + "、" + t2));
+                eventPublisher.publishEvent(new ArticlesDeletedEvent(this, deletedMap));
             }
-
-            // 批量插入数据库 (一条 SQL 语句搞定)
-            if (CollUtil.isNotEmpty(messageList)) {
-                sysMessageService.saveBatch(messageList);
-            }
-        }
-    }
-
-    @Override
-    public List<ArticleCategoryCountDTO> countArticleByCategoryId() {
-        Integer status = BizStatus.Article.PUBLISHED.getValue();
-
-        List<ArticleCategoryCountDTO> list = this.baseMapper.selectCountByCategoryId(status);
-
-        if (CollUtil.isEmpty(list)) {
-            return Collections.emptyList();
-        }
-
-        List<Long> categoryIds = list.stream()
-                .map(ArticleCategoryCountDTO::getCategoryId)
-                .toList();
-
-        List<Category> categories = categoryMapper.selectBatchIds(categoryIds);
-
-        Map<Long, String> nameMap = categories.stream()
-                .collect(Collectors.toMap(Category::getId, Category::getName));
-
-        for (ArticleCategoryCountDTO dto : list) {
-            String name = nameMap.get(dto.getCategoryId());
-            dto.setCategoryName(name);
-        }
-
-        return list;
-    }
-
-    /**
-     * 增加文章阅读量 (基于 Redis 缓存与防刷机制)
-     * <p>
-     * 核心处理逻辑：
-     * 1. 【防刷拦截】：根据访客的 IP 和 UserAgent 生成唯一 MD5 指纹，利用 Redis 键的过期机制实现 1 分钟内同一用户的访问仅记录一次。
-     * 2. 【实时计数】：通过 Redis Hash 结构 (hIncr) 实时对对应文章的阅读量进行原子自增。如果 Redis 中暂无记录，则先从数据库回源初始化。
-     * 3. 【异步标记】：将被访问过的文章 ID 存入 Redis Set 集合作为“脏数据”标记，等待后台定时任务统一步伐持久化到 MySQL，大幅降低数据库写压力。
-     * </p>
-     *
-     * @param visitorDTO 访客请求信息对象，必须包含文章ID (articleId) 与 IP地址 (ip)
-     */
-    public void incrementViewCount(ArticleVisitorDTO visitorDTO) {
-        Assert.notNull(visitorDTO, "访问记录参数不能为空");
-
-        if (visitorDTO.getArticleId() == null || StrUtil.isBlank(visitorDTO.getIp())) {
-            return;
-        }
-
-        Long articleId = visitorDTO.getArticleId();
-        String ip = visitorDTO.getIp();
-        String userAgent = visitorDTO.getUserAgent();
-
-        // 生成防刷指纹 (使用 Hutool 的 SecureUtil)
-        String identity = ip + (StrUtil.isNotBlank(userAgent) ? userAgent : "");
-        String visitorFingerprint = SecureUtil.md5(identity);
-
-        // 定义防刷 Key (格式: blog:view:limit:文章ID:IP)
-        String limitKey = RedisConstants.REDIS_VIEW_LIMIT_PREFIX + articleId + ":" + visitorFingerprint;
-
-        // 检查该 IP 是否在 1 分钟内访问过
-        // 如果 Key 存在，说明还在限制时间内，直接返回，不增加阅读量
-        if (redisUtil.hasKey(limitKey)) {
-            return;
-        }
-
-        // 标记该访客已访问，1分钟过期
-        redisUtil.set(limitKey, RedisConstants.VIEW_LIMIT_VALUE, RedisConstants.VIEW_LIMIT_EXPIRE, TimeUnit.MINUTES);
-
-        try {
-            String hashKey = RedisConstants.REDIS_VIEW_HASH_KEY;
-            String field = articleId.toString();
-
-            // 1. 直接自增
-            Long currentCount = redisUtil.hIncr(hashKey, field, 1L);
-
-            // 2. 如果自增后结果为 1，说明 Redis 之前没这文章的数据，需要从 DB 补齐
-            if (currentCount == 1) {
-                Article article = this.getById(articleId);
-                long dbCount = (article != null && article.getViewCount() != null) ? article.getViewCount() : 0L;
-                // 补偿：DB 值 + 1（因为刚才那次访问也是有效的）
-                redisUtil.hSet(hashKey, field, dbCount + 1);
-            }
-
-            // 3. 记录脏数据
-            redisUtil.sSet(RedisConstants.REDIS_VIEW_DIRTY_SET, articleId);
-        } catch (Exception e) {
-            log.error("Redis 计数异常", e);
         }
     }
 
     /**
      * 异步定时同步 Redis 中的文章阅读量到 MySQL 数据库
-     * <p>
-     * 核心处理逻辑：
-     * 1. 从 Redis 的“脏数据” Set 集合中提取出自上次同步以来被访问过的所有文章 ID。
-     * 2. 根据取出的 ID 列表，从 Redis Hash 中批量 (HMGET) 获取这些文章的最新实时阅读量。
-     * 3. 组装实体对象，利用 MyBatis-Plus 提供的批量更新功能 (updateBatchById) 将数据统一落盘。
-     * 4. 【安全移除】：落盘成功后，仅从“脏数据” Set 中移除本次参与处理的 ID，以防止在同步期间产生的新增访问记录被误删。
-     * </p>
-     * 注意：此方法需配合 Spring Task (@Scheduled) 定时调度触发。
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -859,17 +333,135 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         // 4. 批量更新数据库
         if (CollUtil.isNotEmpty(updateList)) {
-            // 使用 MyBatis-Plus 的 updateBatchById (需要在 ServiceImpl 中开启)
-            // 如果数据量巨大 (如 > 1000 条)，建议分批处理
+            // 这是数据库写操作，留在 ServiceImpl 极为合理
             this.updateBatchById(updateList);
 
             log.info("定时任务：同步文章阅读量完成，共更新 {} 篇文章", updateList.size());
 
             // 5. 【重要】清除脏数据集合中的这些 ID
-            // 注意：不能直接 delete 整个 Key，因为在同步过程中可能又有新访客产生了新的脏 ID
-            // 只能移除我们本次处理过的 ID
             redisUtil.setRemove(RedisConstants.REDIS_VIEW_DIRTY_SET, dirtyIds.toArray());
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class) // 保证级联删除的原子性
+    public int clearArticleTrash(LocalDateTime recycleLimitDate) {
+        if (recycleLimitDate == null) {
+            return 0;
+        }
+
+        // 1. 调用 Mapper 查出所有过期的文章 ID
+        List<Integer> expiredIds = baseMapper.selectExpiredArticleIds(recycleLimitDate);
+
+        if (expiredIds == null || expiredIds.isEmpty()) {
+            return 0; // 没有要清理的数据，直接返回
+        }
+
+        // 2. 级联删除标签关联
+        articleTagService.remove(new LambdaQueryWrapper<ArticleTag>()
+                .in(ArticleTag::getArticleId, expiredIds));
+
+        articleFavoriteService.remove(new LambdaQueryWrapper<ArticleFavorite>().in(ArticleFavorite::getArticleId, expiredIds));
+        articleLikeService.remove(new LambdaQueryWrapper<ArticleLike>().in(ArticleLike::getArticleId, expiredIds));
+
+        // 3. 级联删除相关评论及其底下的附属数据
+        commentService.clearCommentsByArticleIds(expiredIds);
+
+        // 4. 调用 Mapper 物理删除文章本体
+        return baseMapper.physicalDeleteBatchIds(expiredIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long likeArticle(Long articleId) {
+        Assert.notNull(articleId, "文章ID不能为空");
+        UserPayloadDTO user = UserContext.get();
+        if (user == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
+        }
+
+        // 1. 调用底层服务落盘点赞记录
+        articleLikeService.saveArticleLike(articleId, user.getId());
+
+        // 2. 聚合根本身更新计数
+        this.baseMapper.incrLikeCount(articleId);
+        redisUtil.delete(RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + articleId);
+
+        // 3. 发布事件，通知系统发消息
+        Article article = this.getById(articleId);
+        if (article != null) {
+            eventPublisher.publishEvent(new InteractiveMessageEvent(
+                    this,
+                    article.getUserId(),
+                    user.getId(),
+                    BizStatus.MessageType.LIKE,
+                    articleId,
+                    BizStatus.MessageBizType.ARTICLE,
+                    null,
+                    null
+            ));
+            return article.getLikeCount();
+        }
+        return 0L;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long cancelLikeArticle(Long articleId) {
+        Assert.notNull(articleId, "文章ID不能为空");
+        UserPayloadDTO user = UserContext.get();
+        if (user == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
+        }
+
+        // 1. 调用底层服务移除点赞记录
+        articleLikeService.removeArticleLike(articleId, user.getId());
+
+        // 2. 聚合根本身减少计数
+        this.baseMapper.decrLikeCount(articleId);
+        redisUtil.delete(RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + articleId);
+
+        Article article = this.getById(articleId);
+        return article != null ? article.getLikeCount() : 0L;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long favoriteArticle(Long articleId) {
+        Assert.notNull(articleId, "文章ID不能为空");
+        UserPayloadDTO user = UserContext.get();
+        if (user == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
+        }
+
+        // 1. 调用底层服务落盘收藏记录
+        articleFavoriteService.saveArticleFavorite(articleId, user.getId());
+
+        // 2. 聚合根本身更新计数
+        this.baseMapper.incrFavoriteCount(articleId);
+        redisUtil.delete(RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + articleId);
+
+        Article article = this.getById(articleId);
+        return article != null ? article.getFavoriteCount() : 0L;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long cancelFavoriteArticle(Long articleId) {
+        Assert.notNull(articleId, "文章ID不能为空");
+        UserPayloadDTO user = UserContext.get();
+        if (user == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
+        }
+
+        // 1. 调用底层服务移除收藏记录
+        articleFavoriteService.removeArticleFavorite(articleId, user.getId());
+
+        // 2. 聚合根本身减少计数
+        this.baseMapper.decrFavoriteCount(articleId);
+        redisUtil.delete(RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + articleId);
+
+        Article article = this.getById(articleId);
+        return article != null ? article.getFavoriteCount() : 0L;
+    }
 }

@@ -1,10 +1,8 @@
 package com.example.blog.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
@@ -15,15 +13,19 @@ import com.example.blog.convert.CommentConvert;
 import com.example.blog.dto.comment.AdminCommentQueryDTO;
 import com.example.blog.dto.comment.CommentAddDTO;
 import com.example.blog.dto.comment.CommentQueryDTO;
-import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.Article;
 import com.example.blog.entity.Comment;
+import com.example.blog.entity.CommentLike;
 import com.example.blog.entity.User;
+import com.example.blog.event.InteractiveMessageEvent;
 import com.example.blog.exception.CustomerException;
+import com.example.blog.manager.CommentQueryManager;
+import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.mapper.CommentMapper;
-import com.example.blog.service.*;
-import com.example.blog.utils.CommentAssembler;
+import com.example.blog.service.CommentLikeService;
+import com.example.blog.service.CommentService;
+import com.example.blog.service.UserService;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.SensitiveWordManager;
 import com.example.blog.utils.UserContext;
@@ -31,17 +33,20 @@ import com.example.blog.vo.comment.AdminCommentVO;
 import com.example.blog.vo.comment.CommentVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * 系统用户业务服务实现类
- * 实现用户相关的具体业务逻辑
+ * 评论业务服务实现类 (评论领域聚合根 - Command侧)
+ * 专门负责评论的新增、删除、点赞、系统级连带处理与通知
  */
 @Slf4j
 @Service
@@ -51,16 +56,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     private UserService userService;
 
     @Resource
-    private ArticleService articleService;
+    private ArticleMapper articleMapper;
 
     @Resource
     private CommentLikeService commentLikeService;
-
-    @Resource
-    private SysMessageService sysMessageService;
-
-    @Resource
-    private CommentAssembler commentAssembler;
 
     @Resource
     private CommentConvert commentConvert;
@@ -71,238 +70,31 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Resource
     private SensitiveWordManager sensitiveWordManager;
 
-    /**
-     * 批量获取评论关联的附加信息（用户、文章）
-     *
-     * @param comments 评论实体列表，为空时返回空Map兜底，非空时批量查询关联信息
-     * @return Map<String, Object> 结构化附加信息Map，key及对应值说明：
-     * <ul>
-     * <li>userIdToUserMap：Map<Integer, User> - 用户ID映射包含昵称/头像/昵称的User对象</li>
-     * <li>articleIdToTitleMap: Map<Integer, String> - 文章ID映射文章标题</li>
-     * <li>replyCommentIdToReplyContent：Map<Integer, String> - 被回复的评论ID映射被回复的评论内容摘要</li>
-     * </ul>
-     */
-    public Map<String, Object> getCommentExtraInfo(List<Comment> comments) {
-        if (CollUtil.isEmpty(comments)) {
-            return Collections.emptyMap();
-        }
-        return commentAssembler.batchQueryCommentExtraMaps(comments);
-    }
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
-    /**
-     * 根据昵称查询用户ID列表
-     */
-    private List<Long> getUserIdListByNickname(String userNickname) {
-        if (StrUtil.isBlank(userNickname)) {
-            return Collections.emptyList();
-        }
+    @Resource
+    private CommentQueryManager commentQueryManager;
 
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.like(User::getNickname, userNickname);
-        queryWrapper.select(User::getId); // 只查询ID，减少数据量
-        queryWrapper.last("LIMIT 100");
-        return userService.list(queryWrapper)
-                .stream()
-                .map(User::getId)
-                .collect(Collectors.toList());
-    }
+    /* ================= 以下为读操作，统统委托给 QueryManager ================= */
 
-    /**
-     * 根据标题查询文章ID列表
-     */
-    private List<Long> getArticleIdListByTitle(String articleTitle) {
-        if (StrUtil.isBlank(articleTitle)) {
-            return Collections.emptyList();
-        }
-
-        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.like(Article::getTitle, articleTitle);
-        queryWrapper.select(Article::getId); // 只查询ID，减少数据量
-        queryWrapper.last("LIMIT 100");
-        return articleService.list(queryWrapper)
-                .stream()
-                .map(Article::getId)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 填充点赞状态
-     */
-    private void fillLikeStatus(List<CommentVO> vos) {
-        if (CollUtil.isEmpty(vos)) return;
-
-        // 提取所有评论ID
-        List<Long> allIds = vos.stream().map(CommentVO::getId).toList();
-
-        // 调用您要求的 listLikedCommentIds 获取当前用户已点赞的 ID 列表
-        // 内部已处理未登录返回空集合的逻辑
-        List<Long> likedIds = commentLikeService.listLikedCommentIds(allIds);
-
-        if (CollUtil.isNotEmpty(likedIds)) {
-            Set<Long> likedIdSet = new HashSet<>(likedIds);
-            vos.forEach(vo -> {
-                if (likedIdSet.contains(vo.getId())) {
-                    vo.setLiked(true);
-                }
-            });
-        }
-    }
-
-    /**
-     * 组装树形结构并封装结果
-     */
-    private IPage<CommentVO> buildCommentTree(List<CommentVO> allVOs, List<Long> parentIds, Page<Comment> page) {
-        if (CollUtil.isEmpty(allVOs)) {
-            Page<CommentVO> emptyPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-            emptyPage.setRecords(Collections.emptyList());
-            return emptyPage;
-        }
-
-        Set<Long> parentIdSet = new HashSet<>(parentIds);
-        List<CommentVO> rootVOs = new ArrayList<>();
-        List<CommentVO> childrenVOs = new ArrayList<>();
-
-        // 分离父子
-        for (CommentVO vo : allVOs) {
-            if (parentIdSet.contains(vo.getId())) {
-                rootVOs.add(vo);
-            } else {
-                childrenVOs.add(vo);
-            }
-        }
-
-        // 子评论按 parentId 分组
-        Map<Long, List<CommentVO>> childrenMap = childrenVOs.stream()
-                .collect(Collectors.groupingBy(CommentVO::getParentId));
-
-        // 填充树结构
-        for (CommentVO root : rootVOs) {
-            List<CommentVO> myChildren = childrenMap.getOrDefault(root.getId(), new ArrayList<>());
-            myChildren.sort(Comparator.comparing(CommentVO::getCreateTime));
-            root.setChildren(myChildren);
-            root.setReplyCount(myChildren.size());
-        }
-
-        // 封装分页结果
-        Page<CommentVO> resultPage = new Page<>();
-        resultPage.setCurrent(page.getCurrent());
-        resultPage.setSize(page.getSize());
-        resultPage.setTotal(page.getTotal());
-        resultPage.setRecords(rootVOs);
-        resultPage.setPages(page.getPages());
-        return resultPage;
-    }
-
-    /**
-     * 前台分页查询评论
-     *
-     * @param queryDTO 查询条件DTO
-     * @return 分页结果
-     */
     @Override
     public IPage<CommentVO> pageComments(CommentQueryDTO queryDTO) {
-        Assert.notNull(queryDTO, "查询条件不能为空");
-        Assert.notNull(queryDTO.getArticleId(), "文章ID不能为空");
-
-        Page<Comment> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
-        LambdaQueryWrapper<Comment> parentQuery = new LambdaQueryWrapper<>();
-
-        // 基础查询条件：指定文章、仅查顶级评论
-        parentQuery.eq(Comment::getArticleId, queryDTO.getArticleId())
-                .eq(Comment::getParentId, Constants.COMMENT_ROOT_PARENT_ID);
-
-        // 根据前端传入的 sortType 动态决定排序方式
-        if (BizStatus.CommentSort.HOTTEST.getValue().equals(queryDTO.getSortType())) {
-            // 最热：按点赞数倒序，点赞数相同的按时间倒序
-            parentQuery.orderByDesc(Comment::getLikeCount, Comment::getCreateTime);
-        } else {
-            // 最新（默认）：仅按时间倒序
-            parentQuery.orderByDesc(Comment::getCreateTime);
-        }
-
-        Page<Comment> parentPage = this.page(page, parentQuery);
-        if (CollUtil.isEmpty(parentPage.getRecords())) {
-            return parentPage.convert(c -> null);
-        }
-
-        // 查询子评论
-        List<Long> parentIds = parentPage.getRecords().stream().map(Comment::getId).toList();
-        List<Comment> childComments = new ArrayList<>();
-        if (CollUtil.isNotEmpty(parentIds)) {
-            LambdaQueryWrapper<Comment> childQuery = new LambdaQueryWrapper<>();
-            childQuery.in(Comment::getParentId, parentIds)
-                    .orderByAsc(Comment::getCreateTime);
-            childComments = this.list(childQuery);
-        }
-
-        // 合并数据处理
-        List<Comment> allComments = new ArrayList<>(parentPage.getRecords());
-        allComments.addAll(childComments);
-
-        // 转换 VO
-        Map<String, Object> extraMaps = getCommentExtraInfo(allComments);
-        List<CommentVO> allCommentVOs = commentConvert.entitiesToFrontVos(allComments, extraMaps);
-
-        // 处理点赞状态回填
-        fillLikeStatus(allCommentVOs);
-
-        // 组装树形结构
-        return buildCommentTree(allCommentVOs, parentIds, page);
+        return commentQueryManager.pageComments(queryDTO);
     }
 
-    /**
-     * 后台分页查询评论
-     *
-     * @param queryDTO 查询条件DTO
-     * @return 分页结果
-     */
     @Override
     public IPage<AdminCommentVO> pageAdminComments(AdminCommentQueryDTO queryDTO) {
-        Assert.notNull(queryDTO, "查询条件不能为空");
-
-        Page<Comment> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
-        LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
-        // 用户昵称和文章标题模糊查询
-        String userNickname = queryDTO.getUserNickname();
-        String articleTitle = queryDTO.getArticleTitle();
-        if (StrUtil.isNotBlank(userNickname)) {
-            List<Long> userIds = getUserIdListByNickname(userNickname);
-            if (userIds.isEmpty()) {
-                return page.convert(comment -> null);
-            }
-            queryWrapper.in(Comment::getUserId, userIds);
-        }
-        if (StrUtil.isNotBlank(articleTitle)) {
-            List<Long> articleIds = getArticleIdListByTitle(articleTitle);
-            if (articleIds.isEmpty()) {
-                return page.convert(comment -> null);
-            }
-            queryWrapper.in(Comment::getArticleId, articleIds);
-        }
-
-        queryWrapper.orderByDesc(Comment::getCreateTime);
-
-        Page<Comment> commentPage = this.page(page, queryWrapper);
-        List<Comment> records = commentPage.getRecords();
-
-        if (CollUtil.isEmpty(records)) {
-            return commentPage.convert(c -> null);
-        }
-
-        // 获取基础信息 (用户、文章)
-        Map<String, Object> extraMaps = getCommentExtraInfo(records);
-        List<AdminCommentVO> adminVos = commentConvert.entitiesToAdminVos(records, extraMaps);
-
-        // 返回列表
-        Page<AdminCommentVO> resultPage = new Page<>();
-        resultPage.setCurrent(page.getCurrent());
-        resultPage.setSize(page.getSize());
-        resultPage.setTotal(page.getTotal());
-        resultPage.setRecords(adminVos);
-        resultPage.setPages(page.getPages());
-
-        return resultPage;
+        return commentQueryManager.pageAdminComments(queryDTO);
     }
+
+    @Override
+    public Integer getCommentLocatorPage(Long commentId, Integer pageSize) {
+        return commentQueryManager.getCommentLocatorPage(commentId, pageSize);
+    }
+
+
+    /* ================= 以下为写操作，保留在 ServiceImpl 控制核心业务与事务 ================= */
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -355,34 +147,32 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 发送评论互动消息
         if (Constants.COMMENT_ROOT_PARENT_ID.equals(parentId)) {
             // 场景 A：这是一级评论（直接评论文章） -> 发给文章作者
-            Article article = articleService.getById(comment.getArticleId());
+            Article article = articleMapper.selectById(comment.getArticleId());
             if (article != null) {
-                sysMessageService.sendInteractiveMessage(
-                        MessageSendDTO.builder()
-                                .toUserId(article.getUserId())
-                                .fromUserId(currentUser.getId())
-                                .type(BizStatus.MessageType.COMMENT)
-                                .bizId(comment.getArticleId())
-                                .bizType(BizStatus.MessageBizType.ARTICLE)
-                                .targetId(comment.getId()) // 精准跳到这条新评论
-                                .content(comment.getContent())
-                                .build()
-                );
+                eventPublisher.publishEvent(new InteractiveMessageEvent(
+                        this,
+                        article.getUserId(),
+                        currentUser.getId(),
+                        BizStatus.MessageType.COMMENT,
+                        comment.getArticleId(),
+                        BizStatus.MessageBizType.ARTICLE,
+                        comment.getId(),
+                        comment.getContent()
+                ));
             }
         } else {
             // 场景 B：这是回复别人的评论 -> 发给被回复的那个用户
             if (comment.getReplyUserId() != null) {
-                sysMessageService.sendInteractiveMessage(
-                        MessageSendDTO.builder()
-                                .toUserId(comment.getReplyUserId())
-                                .fromUserId(currentUser.getId())
-                                .type(BizStatus.MessageType.COMMENT)
-                                .bizId(comment.getArticleId())
-                                .bizType(BizStatus.MessageBizType.COMMENT)
-                                .targetId(comment.getId()) // 同样，跳到这条新回复
-                                .content(comment.getContent())
-                                .build()
-                );
+                eventPublisher.publishEvent(new InteractiveMessageEvent(
+                        this,
+                        comment.getReplyUserId(),
+                        currentUser.getId(),
+                        BizStatus.MessageType.COMMENT,
+                        comment.getArticleId(),
+                        BizStatus.MessageBizType.COMMENT,
+                        comment.getId(),
+                        comment.getContent()
+                ));
             }
         }
     }
@@ -436,60 +226,109 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         }
     }
 
-    /**
-     * 计算某条评论在文章中的所在页码，用于精准跳转
-     */
     @Override
-    public Integer getCommentLocatorPage(Long commentId, Integer pageSize) {
-        if (commentId == null || pageSize == null || pageSize <= 0) {
-            return 1;
+    @Transactional(rollbackFor = Exception.class)
+    public Long likeComment(Long commentId) {
+        Assert.notNull(commentId, "评论ID不能为空");
+
+        UserPayloadDTO user = UserContext.get();
+        if (user == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
         }
 
         Comment comment = this.getById(commentId);
         if (comment == null) {
-            return 1;
+            throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_COMMENT_NOT_EXIST);
         }
 
-        // 1. 找到该评论所属的顶级评论ID
-        Long rootId = comment.getParentId().equals(Constants.COMMENT_ROOT_PARENT_ID)
-                ? comment.getId()
-                : comment.getParentId();
+        // 1. 调用子服务落盘点赞关联关系
+        commentLikeService.saveCommentLike(commentId, user.getId());
 
-        Comment rootComment = this.getById(rootId);
-        if (rootComment == null) {
-            return 1;
-        }
+        // 2. 聚合根本身更新计数 (假设你的 Mapper 里有 incrLikeCount 方法)
+        this.baseMapper.incrLikeCount(commentId);
 
-        // 2. 计算在当前文章中，排在这个 rootComment 前面的顶级评论有多少条
-        // 注意：这里的排序规则必须与 pageComments 接口默认的排序规则保持完全一致！
-        // 假设当前采用的是最新排序 (CreateTime Desc)
-        LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Comment::getArticleId, rootComment.getArticleId())
-                .eq(Comment::getParentId, Constants.COMMENT_ROOT_PARENT_ID)
-                .gt(Comment::getCreateTime, rootComment.getCreateTime()); // 大于它的时间，说明排在它前面
-
-        long countAhead = this.count(queryWrapper);
-
-        // 3. 计算页码 (前面的条数 / 每页条数 + 1)
-        return (int) (countAhead / pageSize) + 1;
+        // 3. 使用发布事件来触发消息
+        eventPublisher.publishEvent(new InteractiveMessageEvent(
+                this,
+                comment.getUserId(),
+                user.getId(),
+                BizStatus.MessageType.LIKE,
+                comment.getArticleId(),
+                BizStatus.MessageBizType.COMMENT,
+                commentId,
+                comment.getContent()
+        ));
+        // 返回最新的点赞数
+        return comment.getLikeCount() + 1;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long cancelLikeComment(Long commentId) {
+        Assert.notNull(commentId, "评论ID不能为空");
+
+        UserPayloadDTO user = UserContext.get();
+        if (user == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
+        }
+
+        // 1. 调用子服务移除关联关系
+        commentLikeService.removeCommentLike(commentId, user.getId());
+
+        // 2. 聚合根本身更新计数
+        this.baseMapper.decrLikeCount(commentId);
+
+        Comment comment = this.getById(commentId);
+        return comment != null ? comment.getLikeCount() : 0L;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void clearCommentsByArticleIds(List<Integer> articleIds) {
+        if (CollUtil.isEmpty(articleIds)) {
+            return;
+        }
+
+        // 1. 先查出这些文章下所有的评论 ID
+        List<Long> commentIds = this.baseMapper.selectObjs(
+                new LambdaQueryWrapper<Comment>()
+                        .select(Comment::getId)
+                        .in(Comment::getArticleId, articleIds)
+        ).stream().map(id -> Long.valueOf(id.toString())).collect(Collectors.toList());
+
+        if (CollUtil.isNotEmpty(commentIds)) {
+            // 2. 清理这些评论的点赞数据 (blog_comment_like 表)
+            commentLikeService.remove(new LambdaQueryWrapper<CommentLike>()
+                    .in(CommentLike::getCommentId, commentIds));
+
+            // 如果评论还有“举报记录”、“回复的回复”等其他子数据，都在这里一并清理
+        }
+
+        // 3. 物理删除评论本体 (blog_comment 表)
+        this.baseMapper.physicalDeleteByArticleIds(articleIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int clearCommentTrash(LocalDateTime msgLimitDate) {
+        if (msgLimitDate == null) {
+            return 0;
+        }
+        // 直接调用底层 Mapper 进行物理删除
+        return this.baseMapper.physicalDeleteExpiredTrash(msgLimitDate);
+    }
 
     /**
-     * 封装级联删除子评论的逻辑
+     * 封装级联删除子评论的逻辑 (内部写操作辅助方法)
      */
     private void deleteChildrenComments(List<Long> potentialParentIds) {
         if (CollUtil.isEmpty(potentialParentIds)) {
             return;
         }
-        // 只有当删除的是父评论(parentId=0)时，才需要删子评论
-        // 这里为了性能，直接查找库里这些ID作为ParentId的记录进行删除
-        // 如果业务逻辑严格，可以先查 selectedIds 中哪些是 parentId=0 的
         this.lambdaUpdate()
                 .in(Comment::getParentId, potentialParentIds)
                 .set(Comment::getIsDeleted, 1)
                 .set(Comment::getDeleteTime, LocalDateTime.now())
                 .update();
     }
-
 }

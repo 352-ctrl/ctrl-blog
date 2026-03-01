@@ -6,6 +6,7 @@ import com.example.blog.dto.article.*;
 import com.example.blog.entity.Article;
 import com.example.blog.vo.article.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -129,5 +130,32 @@ public interface ArticleService extends IService<Article> {
      * 该方法由 Quartz 定时任务调用
      */
     void syncArticleViewsToDb();
+
+    /**
+     * 清理文章回收站（包含级联清理标签关联和评论）
+     * @param recycleLimitDate 过期时间阈值
+     * @return 成功删除的文章数量
+     */
+    int clearArticleTrash(LocalDateTime recycleLimitDate);
+
+    /**
+     * 聚合操作：文章点赞 (落盘关联记录、增加计数、发消息)
+     */
+    Long likeArticle(Long articleId);
+
+    /**
+     * 聚合操作：取消文章点赞
+     */
+    Long cancelLikeArticle(Long articleId);
+
+    /**
+     * 聚合操作：文章收藏
+     */
+    Long favoriteArticle(Long articleId);
+
+    /**
+     * 聚合操作：取消文章收藏
+     */
+    Long cancelFavoriteArticle(Long articleId);
 
 }

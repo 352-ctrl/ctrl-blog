@@ -5,30 +5,23 @@ import com.example.blog.entity.ArticleFavorite;
 
 /**
  * 文章收藏业务服务接口
- * 定义文章收藏相关的业务操作方法
+ * 纯粹的子实体服务，仅负责关联表和对应缓存的维护
  */
 public interface ArticleFavoriteService extends IService<ArticleFavorite> {
 
     /**
-     * 收藏文章
-     *
-     * @param articleId 文章ID
+     * 底层方法：保存收藏记录
      */
-    Long favoriteArticle(Long articleId);
+    void saveArticleFavorite(Long articleId, Long userId);
 
     /**
-     * 取消收藏文章
-     *
-     * @param articleId 文章ID
+     * 底层方法：移除收藏记录
      */
-    Long cancelFavoriteArticle(Long articleId);
+    void removeArticleFavorite(Long articleId, Long userId);
 
     /**
-     * 判断当前登录用户是否已收藏指定文章
-     *
-     * @param articleId 文章ID
-     * @return true-已收藏，false-未收藏或未登录
+     * 判断指定用户是否已收藏指定文章
      */
-    boolean isFavoriteArticle(Long articleId);
+    boolean isFavoriteArticle(Long articleId, Long userId);
 
 }

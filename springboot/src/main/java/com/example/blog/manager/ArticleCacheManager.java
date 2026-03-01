@@ -4,15 +4,18 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.dto.article.ArticleVisitorDTO;
 import com.example.blog.entity.Article;
+import com.example.blog.event.UserInfoChangedEvent;
 import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.utils.RedisUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -21,13 +24,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 文章通用管理器 (Manager层)
- * 职责：负责封装 Redis 缓存控制、浏览量防刷与同步等偏底层的通用逻辑。
- * 架构规范：Controller -> Service -> Manager -> Mapper
+ * 文章缓存与底层组件管理器
+ * 专门封装 Redis 相关的底层操作，如缓存清理、浏览量实时同步、事件监听等
  */
 @Slf4j
 @Component
-public class ArticleManager {
+public class ArticleCacheManager {
 
     @Resource
     private RedisUtil redisUtil;
@@ -85,19 +87,35 @@ public class ArticleManager {
     }
 
     /**
+     * 监听用户信息变更事件，清除相关的文章缓存
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onUserInfoChanged(UserInfoChangedEvent event) {
+        log.info("接收到用户信息变更事件，开始清理相关文章缓存，用户ID: {}", event.getUserId());
+        // 清除公共文章列表缓存
+        redisUtil.delete(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
+        redisUtil.delete(RedisConstants.REDIS_ARTICLE_HOT_KEY);
+        redisUtil.delete(RedisConstants.REDIS_ARTICLE_CAROUSEL_KEY);
+
+        // 清除该用户的文章详情缓存
+        List<Article> userArticles = articleMapper.selectList(
+                new LambdaQueryWrapper<Article>()
+                        .select(Article::getId)
+                        .eq(Article::getUserId, event.getUserId())
+        );
+
+        if (CollUtil.isNotEmpty(userArticles)) {
+            List<String> articleCacheKeys = userArticles.stream()
+                    .map(article -> RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + article.getId())
+                    .collect(Collectors.toList());
+            redisUtil.delete(articleCacheKeys);
+        }
+    }
+
+    /**
      * 增加文章阅读量 (基于 Redis 缓存与防刷机制)
-     * <p>
-     * 核心处理逻辑：
-     * 1. 【防刷拦截】：根据访客的 IP 和 UserAgent 生成唯一 MD5 指纹，利用 Redis 键的过期机制实现 1 分钟内同一用户的访问仅记录一次。
-     * 2. 【实时计数】：通过 Redis Hash 结构 (hIncr) 实时对对应文章的阅读量进行原子自增。如果 Redis 中暂无记录，则先从数据库回源初始化。
-     * 3. 【异步标记】：将被访问过的文章 ID 存入 Redis Set 集合作为“脏数据”标记，等待后台定时任务统一步伐持久化到 MySQL，大幅降低数据库写压力。
-     * </p>
-     *
-     * @param visitorDTO 访客请求信息对象，必须包含文章ID (articleId) 与 IP地址 (ip)
      */
     public void incrementViewCount(ArticleVisitorDTO visitorDTO) {
-        Assert.notNull(visitorDTO, "访问记录参数不能为空");
-
         if (visitorDTO.getArticleId() == null || StrUtil.isBlank(visitorDTO.getIp())) {
             return;
         }
@@ -131,7 +149,6 @@ public class ArticleManager {
 
             // 2. 如果自增后结果为 1，说明 Redis 之前没这文章的数据，需要从 DB 补齐
             if (currentCount == 1) {
-                // 直接调用 mapper 进行兜底查询
                 Article article = articleMapper.selectById(articleId);
                 long dbCount = (article != null && article.getViewCount() != null) ? article.getViewCount() : 0L;
                 // 补偿：DB 值 + 1（因为刚才那次访问也是有效的）

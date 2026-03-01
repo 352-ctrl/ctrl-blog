@@ -74,4 +74,28 @@ public class CommentController {
         Integer pageNum = commentService.getCommentLocatorPage(id, pageSize);
         return Result.success(pageNum);
     }
+
+    /**
+     * 点赞评论
+     */
+    @PostMapping("/{commentId}/like")
+    @AuthCheck
+    @RateLimit(key = "ip", time = 10, count = 5)
+    @Operation(summary = "点赞评论", description = "登录用户对指定评论进行点赞。")
+    public Result<Long> likeComment(@PathVariable @Positive(message = "评论ID非法") Long commentId) {
+        Long likeCount = commentService.likeComment(commentId);
+        return Result.success(likeCount);
+    }
+
+    /**
+     * 取消点赞评论
+     */
+    @PostMapping("/{commentId}/cancel-like")
+    @AuthCheck
+    @RateLimit(key = "ip", time = 10, count = 5)
+    @Operation(summary = "取消点赞评论", description = "登录用户取消对指定评论的点赞。")
+    public Result<Long> cancelLikeComment(@PathVariable @Positive(message = "评论ID非法") Long commentId) {
+        Long likeCount = commentService.cancelLikeComment(commentId);
+        return Result.success(likeCount);
+    }
 }

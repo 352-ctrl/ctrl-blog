@@ -7,29 +7,33 @@ import java.util.List;
 
 /**
  * 评论点赞业务服务接口
- * 定义评论点赞相关的业务操作方法
+ * 纯粹的子实体服务，仅负责关联表和对应缓存的维护
  */
 public interface CommentLikeService extends IService<CommentLike> {
 
     /**
-     * 点赞评论
+     * 底层方法：保存点赞关联记录并同步缓存
      *
      * @param commentId 评论ID
+     * @param userId    用户ID
      */
-    Long likeComment(Long commentId);
+    void saveCommentLike(Long commentId, Long userId);
 
     /**
-     * 取消点赞评论
+     * 底层方法：移除点赞关联记录并同步缓存
      *
      * @param commentId 评论ID
+     * @param userId    用户ID
      */
-    Long cancelLikeComment(Long commentId);
+    void removeCommentLike(Long commentId, Long userId);
 
     /**
-     * 批量检查：在给定的评论ID列表中，哪些是当前用户已点赞的
+     * 批量检查：在给定的评论ID列表中，哪些是指定用户已点赞的
+     *
      * @param commentIds 需要检查的评论ID列表
-     * @return 用户已点赞的评论ID列表
+     * @param userId     指定的查询用户ID
+     * @return 该用户已点赞的评论ID列表
      */
-    List<Long> listLikedCommentIds(List<Long> commentIds);
+    List<Long> listLikedCommentIds(List<Long> commentIds, Long userId);
 
 }

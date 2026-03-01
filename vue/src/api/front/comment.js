@@ -37,3 +37,19 @@ export function getCommentLocatorPage(id, pageSize = 10) {
         params: { pageSize }
     })
 }
+
+// 5. 点赞评论
+export function likeComment(commentId) {
+    return request({
+        url: `${BASE_URL}/${commentId}/like`,
+        method: 'post'
+    })
+}
+
+// 6. 取消点赞评论
+export function cancelLikeComment(commentId) {
+    return request({
+        url: `${BASE_URL}/${commentId}/cancel-like`,
+        method: 'post'
+    })
+}
