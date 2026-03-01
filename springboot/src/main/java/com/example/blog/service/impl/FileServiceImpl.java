@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -113,5 +114,43 @@ public class FileServiceImpl implements FileService {
             // 下载过程中连接断开是正常现象，通常只记录 debug
             log.debug("文件下载中断: {}", fileName);
         }
+    }
+
+    @Override
+    public int clearOrphanFiles(Set<String> activeFileNames) {
+        File dir = new File(basePath);
+        if (!dir.exists() || !dir.isDirectory()) {
+            return 0;
+        }
+
+        File[] files = dir.listFiles();
+        if (files == null || files.length == 0) {
+            return 0;
+        }
+
+        int deleteCount = 0;
+        long currentTime = System.currentTimeMillis();
+        // 核心安全期：24小时的毫秒数
+        // 作用：防止误删用户刚刚上传、还没来得及保存进数据库的文章草稿图片
+        long safeTimeWindow = 24 * 60 * 60 * 1000L;
+
+        for (File file : files) {
+            if (file.isFile()) {
+                // 1. 检查是否在安全期内 (创建时间不到 24 小时的，坚决不删)
+                if (currentTime - file.lastModified() < safeTimeWindow) {
+                    continue;
+                }
+
+                // 2. 如果不在活跃文件集合中，执行物理删除
+                if (!activeFileNames.contains(file.getName())) {
+                    boolean deleted = file.delete();
+                    if (deleted) {
+                        deleteCount++;
+                        log.debug("成功删除孤儿文件: {}", file.getName());
+                    }
+                }
+            }
+        }
+        return deleteCount;
     }
 }

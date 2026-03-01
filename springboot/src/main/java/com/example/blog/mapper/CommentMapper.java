@@ -25,7 +25,7 @@ public interface CommentMapper extends BaseMapper<Comment> {
      * 场景：用户只删除了评论，没删文章。这些评论在回收站待满30天后需要清理。
      */
     @Delete("DELETE FROM blog_comment WHERE is_deleted = 1 AND delete_time < #{limitTime}")
-    int deleteExpiredTrash(@Param("limitTime") LocalDateTime limitTime);
+    int physicalDeleteExpiredTrash(@Param("limitTime") LocalDateTime limitTime);
 
     /**
      * 2. 根据文章ID物理删除评论 (用于文章彻底删除时的级联清理)

@@ -15,6 +15,6 @@ public interface SysLoginLogMapper extends BaseMapper<SysLoginLog> {
      * 物理删除过期的日志
      */
     @Delete("DELETE FROM sys_login_log WHERE create_time < #{expireDate}")
-    int deleteExpiredLogs(@Param("expireDate") LocalDateTime expireDate);
+    int physicalDeleteExpiredLogs(@Param("expireDate") LocalDateTime expireDate);
 
 }

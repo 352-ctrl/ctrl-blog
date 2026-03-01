@@ -2,7 +2,11 @@ package com.example.blog.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.blog.entity.SysMessage;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
 
 /**
  * 系统消息数据访问层
@@ -15,5 +19,11 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface SysMessageMapper extends BaseMapper<SysMessage> {
+
+    /**
+     * 物理删除过期的系统消息
+     */
+    @Delete("DELETE FROM sys_message WHERE create_time <= #{limitDate}")
+    int physicalDeleteExpired(@Param("limitDate") LocalDateTime limitDate);
 
 }

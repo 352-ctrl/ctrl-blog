@@ -93,6 +93,10 @@ blog:
     recycle-bin-days: 30
     # 系统日志保留时间
     log-retention-days: 7
+    # 注销冷静期天数
+    cancel-cooling-days: 7
+    # 消息保留天数
+    message-retention-days: 30
 
 file:
   # 这里的 ${user.dir} 会自动被 Spring 替换为当前项目运行的根目录

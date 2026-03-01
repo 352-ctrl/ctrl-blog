@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+
 /**
  * 系统日志业务实现类
  * 实现保存系统日志的业务逻辑
@@ -56,6 +58,11 @@ public class SysOperLogServiceImpl extends ServiceImpl<SysOperLogMapper, SysOper
         Page<SysOperLog> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
         IPage<SysOperLog> entityPage = this.page(page, queryWrapper);
         return entityPage.convert(sysOperLogConvert::entityToVo);
+    }
+
+    @Override
+    public int clearOperLogTrash(LocalDateTime logLimitDate) {
+        return this.baseMapper.physicalDeleteExpiredLogs(logLimitDate);
     }
 
 }

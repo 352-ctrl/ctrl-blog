@@ -6,6 +6,8 @@ import com.example.blog.dto.SysOperLogQueryDTO;
 import com.example.blog.entity.SysOperLog;
 import com.example.blog.vo.SysOperLogVO;
 
+import java.time.LocalDateTime;
+
 /**
  * 系统日志业务服务接口
  * 定义保存系统日志的业务操作方法
@@ -23,5 +25,12 @@ public interface SysOperLogService extends IService<SysOperLog> {
      * 分页查询系统日志
      */
     IPage<SysOperLogVO> pageAdminOperLog(SysOperLogQueryDTO queryDTO);
+
+    /**
+     * 清理过期的操作日志
+     * @param logLimitDate 过期时间阈值
+     * @return 删除的条数
+     */
+    int clearOperLogTrash(LocalDateTime logLimitDate);
 
 }
