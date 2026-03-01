@@ -10,7 +10,6 @@ import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
-import com.example.blog.convert.ArticleConvert;
 import com.example.blog.convert.UserConvert;
 import com.example.blog.dto.EmailRequestDTO;
 import com.example.blog.dto.PageQueryDTO;
@@ -22,7 +21,10 @@ import com.example.blog.entity.*;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.UserMapper;
 import com.example.blog.service.*;
-import com.example.blog.utils.*;
+import com.example.blog.utils.MailService;
+import com.example.blog.utils.PasswordEncoderUtil;
+import com.example.blog.utils.RedisUtil;
+import com.example.blog.utils.UserContext;
 import com.example.blog.vo.UserDashboardVO;
 import com.example.blog.vo.article.ArticleSimpleVO;
 import com.example.blog.vo.comment.UserCommentVO;
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,13 +50,7 @@ import java.util.stream.Collectors;
 public class UserProfileServiceImpl extends ServiceImpl<UserMapper, User> implements UserProfileService {
 
     @Resource
-    private ArticleAssembler articleAssembler;
-
-    @Resource
     private UserConvert userConvert;
-
-    @Resource
-    private ArticleConvert articleConvert;
 
     @Resource
     private AuthService authService;
@@ -516,6 +513,36 @@ public class UserProfileServiceImpl extends ServiceImpl<UserMapper, User> implem
         redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + currentUser.getId());
 
         // 调用 AuthService 的 logout 方法拉黑 Token
+        if (StrUtil.isNotBlank(token)) {
+            authService.logout(token);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void requestAccountDeletion(String token) {
+        UserPayloadDTO currentUser = UserContext.get();
+        if (currentUser == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
+        }
+
+        // 获取并校验用户状态
+        User user = this.getById(currentUser.getId());
+        if (user == null) {
+            throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_USER_NOT_EXIST);
+        }
+
+        user.setStatus(BizStatus.User.PENDING_DELETION);
+        user.setCancelTime(LocalDateTime.now());       // 记录当下时间作为冷静期起点
+
+        // 更新数据库
+        boolean success = this.updateById(user);
+        if (!success) {
+            throw new CustomerException(MessageConstants.MSG_UPDATE_FAILED);
+        }
+
+        // 清理缓存，使其立即下线
+        redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + currentUser.getId());
         if (StrUtil.isNotBlank(token)) {
             authService.logout(token);
         }

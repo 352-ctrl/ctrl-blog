@@ -75,7 +75,7 @@ public final class BizStatus {
     public enum User implements BaseEnum<Integer> {
         NORMAL(0, "正常"),
         DISABLE(1, "禁用"),
-        COOL_OFF(2, "注销冷静期");
+        PENDING_DELETION(2, "注销冷静期");
 
         @EnumValue
         private final Integer code;
@@ -316,5 +316,25 @@ public final class BizStatus {
 
         @Override
         public Integer getValue() { return code; }
+    }
+
+    /* ============================== 8. 安全与系统事件 ============================== */
+
+    /**
+     * 系统安全/重要操作事件类型
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum SecurityEventType implements BaseEnum<String> {
+        PASSWORD_RESET("PASSWORD_RESET", "重置密码"),
+        ROLE_CHANGE("ROLE_CHANGE", "角色变更");
+
+        @EnumValue
+        @JsonValue
+        private final String code;
+        private final String desc;
+
+        @Override
+        public String getValue() { return code; }
     }
 }

@@ -73,6 +73,15 @@
             <el-option label="普通用户" value="USER" />
           </el-select>
         </el-form-item>
+
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="data.form.status">
+            <el-radio :label="0">正常</el-radio>
+            <el-radio :label="1">禁用</el-radio>
+            <el-radio :label="2" disabled v-if="data.form.status === 2">注销冷静期</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
         <el-form-item label="个人简介" prop="bio">
           <el-input
               v-model="data.form.bio"
@@ -162,7 +171,9 @@ const data = reactive({
       { required: true, message: '请输入密码', trigger: 'blur' },
       { validator: validatePasswordComplexity, trigger: 'blur' }
     ],
-    role: [{ required: true, message: '请选择角色', trigger: 'change' }]
+    role: [{ required: true, message: '请选择角色', trigger: 'change' }],
+    // ✨ 新增状态必选规则
+    status: [{ required: true, message: '请选择状态', trigger: 'change' }]
   }
 });
 
@@ -196,7 +207,7 @@ const resetSearch = () => {
 
 // 新增按钮逻辑
 const handleAdd = () => {
-  data.form = {};
+  data.form = { status: 0 };
   data.formVisible = true;
 };
 
@@ -296,6 +307,13 @@ const userColumns = reactive([
       "SUPER_ADMIN": { text: '超级管理员', type: 'warning' },
       "ADMIN": { text: '管理员', type: 'danger' },
       "USER": { text: '用户', type: 'success' }
+    }
+  },
+  { type: 'status', prop: 'status', label: '状态',
+    statusMap: {
+      0: { text: '正常', type: 'success' },
+      1: { text: '禁用', type: 'danger' },
+      2: { text: '注销冷静期', type: 'info' }
     }
   },
   { prop: 'createTime', label: '创建时间' }

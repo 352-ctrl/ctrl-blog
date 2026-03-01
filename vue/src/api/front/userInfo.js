@@ -84,3 +84,11 @@ export function getUserComments(params) {
         params: params
     })
 }
+
+// 10. 申请注销账号
+export function requestAccountDeletion() {
+    return request({
+        url: `${BASE_URL}/cancel`,
+        method: 'post'
+    })
+}

@@ -8,6 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
+
 /**
  * 系统用户实体类
  */
@@ -53,5 +55,10 @@ public class User extends BaseLogicEntity {
      * 状态: 0-正常, 1-禁用, 2-注销冷静期
      */
     private BizStatus.User status;
+
+    /**
+     * 注销申请时间 (用于计算冷静期)
+     */
+    private LocalDateTime cancelTime;
 
 }

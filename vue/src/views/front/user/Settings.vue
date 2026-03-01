@@ -153,13 +153,8 @@
 import { reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useUserStore } from '@/store/user.js';
-// 按需引入 Element Plus 图标
-import { Setting, Lock, Message, Warning } from '@element-plus/icons-vue';
-// 验证规则与前台 API
 import { validatePasswordComplexity, validateEmail, validateVerifyCode } from "@/utils/validate.js";
-import { changePassword, sendBindEmailCode, changeEmail } from "@/api/front/userInfo.js";
-// 引入验证码组件（请确保路径正确）
-import Verify from "@/components/Verifition/Verify.vue";
+import { changePassword, sendBindEmailCode, changeEmail, requestAccountDeletion } from "@/api/front/userInfo.js";
 
 const userStore = useUserStore();
 
@@ -332,17 +327,28 @@ const submitEmailForm = () => {
 // ==================== 注销账号逻辑 ====================
 const handleCancelAccount = () => {
   ElMessageBox.confirm(
-      '注销账号为不可逆操作，注销后您将无法找回账号数据，是否继续？',
-      '危险操作确认',
+      '申请注销后，您的账号将进入注销冷静期并强制下线。冷静期内再次登录可撤销注销申请。确定要继续吗？',
+      '注销账号确认',
       {
         confirmButtonText: '确定注销',
         cancelButtonText: '暂不注销',
-        type: 'error',
+        type: 'warning',
         buttonSize: 'default'
       }
   ).then(() => {
-    // 💡 这里暂时放置提示，如果后端有对应的自主注销接口，可以在这里调用
-    ElMessage.info('注销功能正在开发中，如有需要请联系管理员。');
+    // 调用后端申请注销接口
+    requestAccountDeletion().then(res => {
+      if (res.code === 200) {
+        ElMessage.success('已进入注销冷静期，即将退出登录');
+        setTimeout(() => {
+          userStore.logout(); // 清理本地缓存并返回首页
+        }, 1500);
+      } else {
+        ElMessage.error(res.msg);
+      }
+    }).catch(error => {
+      ElMessage.error('请求失败: ' + error.message);
+    });
   }).catch(() => {});
 };
 </script>
@@ -353,7 +359,6 @@ const handleCancelAccount = () => {
   border: 1px solid var(--el-border-color-light);
   border-radius: 12px;
   background-color: var(--el-bg-color-overlay);
-  min-height: 500px;
 }
 
 :deep(.user-page-card .el-card__header) {
@@ -414,7 +419,6 @@ const handleCancelAccount = () => {
   gap: 12px;
 }
 
-/* ✨ 优化：去除了背景色、内边距和圆角，只保留纯图标 */
 .item-icon {
   font-size: 24px;
   color: var(--el-text-color-regular);
@@ -438,7 +442,6 @@ const handleCancelAccount = () => {
   color: var(--el-text-color-secondary);
 }
 
-/* ✨ 优化：确保只是高亮文字，没有背景色 */
 .highlight-text {
   color: var(--el-color-primary);
   font-weight: 500;
@@ -463,5 +466,13 @@ const handleCancelAccount = () => {
   .item-right {
     align-self: flex-end;
   }
+}
+/* ==================== 验证码弹窗层级优化 ==================== */
+:deep(.mask) {
+  z-index: 9998 !important; /* 验证码的半透明黑底遮罩 */
+}
+
+:deep(.verifybox) {
+  z-index: 9999 !important; /* 验证码的主体拼图框 */
 }
 </style>

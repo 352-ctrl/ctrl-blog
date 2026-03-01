@@ -75,4 +75,12 @@ public interface UserProfileService {
      */
     void changePassword(UserChangePwdDTO userChangePwdDTO, String token);
 
+
+    /**
+     * 申请注销当前账号
+     *
+     * @param token 当前登录用户的Token，用于强制下线
+     */
+    void requestAccountDeletion(String token);
+
 }

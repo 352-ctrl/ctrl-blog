@@ -132,4 +132,17 @@ public class UserProfileController {
     public Result<IPage<UserCommentVO>> pageMyComments(@Valid @ModelAttribute PageQueryDTO queryDTO) {
         return Result.success(userProfileService.pageMyComments(queryDTO));
     }
+
+    /**
+     * 申请注销账号
+     */
+    @PostMapping("/cancel")
+    @RateLimit(key = "ip", time = 60, count = 1)
+    @Log(module = "个人中心", type = "安全", desc = "用户申请注销了账号")
+    @Operation(summary = "申请注销账号", description = "将账号状态改为注销冷静期，并强制下线。冷静期内再次登录可撤销。")
+    public Result<Void> requestAccountDeletion(HttpServletRequest request) {
+        String token = request.getHeader(Constants.HEADER_TOKEN);
+        userProfileService.requestAccountDeletion(token);
+        return Result.success();
+    }
 }
