@@ -78,7 +78,7 @@
 
           <el-col :sm="24" :md="12">
             <el-form-item label="任务分组" prop="jobGroup">
-              <el-select v-model="data.form.jobGroup" placeholder="请选择分组">
+              <el-select v-model="data.form.jobGroup" placeholder="请选择分组" style="width: 100%;">
                 <el-option
                     v-for="item in data.JobGroupOptions"
                     :key="item.value"
@@ -115,8 +115,13 @@
           <el-col :span="24" v-if="data.form.id != null">
             <el-form-item label="状态" prop="status">
               <el-radio-group v-model="data.form.status">
-                <el-radio :value="0">正常</el-radio>
-                <el-radio :value="1">暂停</el-radio>
+                <el-radio
+                    v-for="item in data.JobStatusOptions"
+                    :key="item.value"
+                    :value="item.value"
+                >
+                  {{ item.label }}
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -171,24 +176,22 @@
 import { reactive, ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import AdminPagination from "@/components/admin/AdminPagination/AdminPagination.vue";
-import Crontab from '@/views/admin/monitor/job/components/Crontab/Crontab.vue'
-// 引入 API 模块
+import Crontab from '@/views/admin/monitor/job/components/Crontab/Crontab.vue';
+
 import {
   addJob, changeStatus,
   deleteJob,
   deleteJobs,
   getJobById,
-  getJobGroupOptions,
   getJobPage,
-  getJobStatusOptions,
   updateJob
 } from "@/api/admin/job.js";
-import {validateInvokeTarget} from "@/utils/validate.js";
+import { validateInvokeTarget } from "@/utils/validate.js";
 
 const formRef = ref(null);
 
 // 控制弹窗显示的变量
-const showCron = ref(false)
+const showCron = ref(false);
 
 const data = reactive({
   jobName: '',
@@ -199,18 +202,26 @@ const data = reactive({
   total: 0,
   tableData: [],
   formVisible: false,
-  form: {
-
-  },
+  form: {},
   selectedIds: [],
-  JobGroupOptions: [],
-  JobStatusOptions: [],
+
+  JobGroupOptions: [
+    { label: '默认分组', value: 'DEFAULT' },
+    { label: '系统分组', value: 'SYSTEM' }
+  ],
+
+  JobStatusOptions: [
+    { label: '正常', value: 0 },
+    { label: '暂停', value: 1 }
+  ],
+
   rules: {
     jobName: [
       { required: true, message: '请输入任务名称', trigger: 'blur' },
       { max: 64, message: '任务名称不能超过64个字符', trigger: 'blur' }
     ],
     jobGroup: [
+      { required: true, message: '请选择任务组名', trigger: 'change' },
       { max: 64, message: '任务组名不能超过64个字符', trigger: 'blur' }
     ],
     invokeTarget: [
@@ -247,29 +258,9 @@ const loadPage = () => {
   });
 };
 
-// 加载任务组名和状态选项
-const loadOptions = () => {
-  getJobGroupOptions().then(res => {
-    if (res.code === 200) {
-      data.JobGroupOptions = res.data || [];
-    } else {
-      ElMessage.error('加载任务组名失败：' + res.msg);
-    }
-  });
-
-  getJobStatusOptions().then(res => {
-    if (res.code === 200) {
-      data.JobStatusOptions = res.data || [];
-    } else {
-      ElMessage.error('加载任务状态失败：' + res.msg);
-    }
-  });
-};
-
 // 初始化加载
 onMounted(() => {
   loadPage();
-  loadOptions();
 });
 
 // 重置搜索
@@ -286,7 +277,7 @@ const handleAdd = () => {
   data.form = {
     misfirePolicy: 1,      // 默认选中 "立即执行"
     status: 0,             // 默认状态 "正常"
-    jobGroup: 'DEFAULT',     // 默认分组 "DEFAULT"
+    jobGroup: 'DEFAULT',   // 默认分组 "DEFAULT"
   };
   data.formVisible = true;
 };
@@ -313,12 +304,12 @@ const handleEdit = async (row) => {
 
 // 点击按钮：显示弹窗
 const handleShowCron = () => {
-  showCron.value = true
+  showCron.value = true;
 }
 
 const handleCronFill = (value) => {
-  data.form.cronExpression = value
-  showCron.value = false
+  data.form.cronExpression = value;
+  showCron.value = false;
 }
 
 // 提交表单 (新增或修改)
@@ -353,7 +344,6 @@ const batchDeleteJobApi = async (selectedIds) => {
 const handleStatusChange = (row) => {
   const text = row.status === 0 ? "启用" : "停用";
 
-  // 2. 弹出确认框
   ElMessageBox.confirm(
       `确认要"${text}""${row.jobName}"任务吗？`,
       "警告",
@@ -364,26 +354,19 @@ const handleStatusChange = (row) => {
       }
   )
       .then(() => {
-        // 3. 用户点击"确定"，发起 API 请求
         return changeStatus(row.id, row.status);
       })
       .then((res) => {
-        // 4. API 请求成功
         if (res.code === 200) {
           ElMessage.success(`任务已${text}`);
         } else {
-          // 业务逻辑失败（如权限不足），回滚开关状态
           row.status = row.status === 0 ? 1 : 0;
           ElMessage.error(res.msg);
         }
       })
       .catch((err) => {
-        // 5. 捕获异常：包含"用户点击取消"和"网络请求错误"
-
-        // 无论哪种情况，操作未完成，都需要把开关状态回滚
         row.status = row.status === 0 ? 1 : 0;
 
-        // 如果不是用户主动取消，而是报错，则提示错误
         if (err !== 'cancel') {
           console.error(err);
           ElMessage.error('系统异常，操作失败');
@@ -392,7 +375,6 @@ const handleStatusChange = (row) => {
         }
       })
       .finally(() => {
-        // 6. 关闭 Switch 的 loading 动画
         row.loading = false;
       });
 };
@@ -400,11 +382,16 @@ const handleStatusChange = (row) => {
 // 任务列表列配置
 const JobColumns = reactive([
   { prop: 'jobName', label: '任务名称' },
-  { prop: 'jobGroup', label: '任务组名' },
+  { type: 'status', prop: 'jobGroup', label: '任务组名',
+    statusMap: {
+      "DEFAULT": { text: '默认分组', type: 'info' },
+      "SYSTEM": { text: '系统分组', type: 'primary' }
+    }
+  },
   { prop: 'invokeTarget', label: '调用目标字符串' },
   { prop: 'cronExpression', label: 'cron执行表达式' },
   { type: 'switch', prop: 'status', label: '状态' }
-])
+]);
 </script>
 
 <style scoped>

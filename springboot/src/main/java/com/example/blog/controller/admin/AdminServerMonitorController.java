@@ -1,5 +1,6 @@
 package com.example.blog.controller.admin;
 
+import cn.hutool.core.util.StrUtil;
 import com.example.blog.annotation.AuthCheck;
 import com.example.blog.common.Result;
 import com.example.blog.common.enums.BizStatus;
@@ -106,6 +107,6 @@ public class AdminServerMonitorController {
         long hour = (seconds % (24 * 3600)) / 3600;
         long minute = (seconds % 3600) / 60;
         long second = seconds % 60;
-        return (day > 0 ? day + "天 " : "") + hour + "小时 " + minute + "分 " + second + "秒";
+        return (day > 0 ? day + "天 " : StrUtil.EMPTY) + hour + "小时 " + minute + "分 " + second + "秒";
     }
 }

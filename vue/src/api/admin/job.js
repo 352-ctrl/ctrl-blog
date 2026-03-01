@@ -71,19 +71,3 @@ export function changeStatus(id, status) {
         data: { status: status }
     })
 }
-
-// 9. 获取任务分组列表
-export function getJobGroupOptions() {
-    return request({
-        url: `${BASE_URL}/options/groups`,
-        method: 'get'
-    })
-}
-
-// 10. 获取任务状态列表
-export function getJobStatusOptions() {
-    return request({
-        url: `${BASE_URL}/options/status`,
-        method: 'get'
-    })
-}

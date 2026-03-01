@@ -70,8 +70,8 @@ public class LogAspect {
 
             // 提取关键信息 (String 是线程安全的)
             String ip = request != null ? IpUtils.getIpAddr(request) : Constants.UNKNOWN;
-            String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : "";
-            String requestMethod = request != null ? request.getMethod() : "";
+            String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : StrUtil.EMPTY;
+            String requestMethod = request != null ? request.getMethod() : StrUtil.EMPTY;
 
             // 提取需要异步处理的数据
             saveLogAsync(joinPoint, controllerLog, result, exception, costTime, ip, userAgent, requestMethod);
@@ -149,7 +149,7 @@ public class LogAspect {
      */
     private String maskSensitiveData(Object[] args) {
         if (args == null || args.length == 0) {
-            return "";
+            return StrUtil.EMPTY;
         }
 
         try {

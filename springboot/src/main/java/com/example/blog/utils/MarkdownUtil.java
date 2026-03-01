@@ -1,5 +1,6 @@
 package com.example.blog.utils;
 
+import cn.hutool.core.util.StrUtil;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -29,7 +30,7 @@ public class MarkdownUtil {
     @Named("markdownToHtml")
     public static String markdownToHtml(String markdown) {
         if (markdown == null || markdown.trim().isEmpty()) {
-            return "";
+            return StrUtil.EMPTY;
         }
 
         try {

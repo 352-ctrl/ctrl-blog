@@ -1,5 +1,6 @@
 package com.example.blog.convert;
 
+import cn.hutool.core.util.StrUtil;
 import com.example.blog.dto.comment.CommentAddDTO;
 import com.example.blog.entity.Comment;
 import com.example.blog.vo.user.UserVO;
@@ -103,14 +104,14 @@ public interface CommentConvert extends BaseConvert<Comment, CommentAddDTO, Void
      */
     @SuppressWarnings("unchecked")
     default String getUserNickname(Comment comment, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null || comment.getUserId() == null) return "";
+        if (extraMaps == null || comment.getUserId() == null) return StrUtil.EMPTY;
 
         Map<Long, UserVO> userIdToUserMap = (Map<Long, UserVO>) extraMaps.get("userIdToUserMap");
-        if (userIdToUserMap == null) return "";
+        if (userIdToUserMap == null) return StrUtil.EMPTY;
 
         return Optional.ofNullable(userIdToUserMap.get(comment.getUserId()))
                 .map(UserVO::getNickname)
-                .orElse("");
+                .orElse(StrUtil.EMPTY);
     }
 
     /**
@@ -122,14 +123,14 @@ public interface CommentConvert extends BaseConvert<Comment, CommentAddDTO, Void
      */
     @SuppressWarnings("unchecked")
     default String getUserAvatar(Comment comment, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null || comment.getUserId() == null) return "";
+        if (extraMaps == null || comment.getUserId() == null) return StrUtil.EMPTY;
 
         Map<Long, UserVO> userIdToUserMap = (Map<Long, UserVO>) extraMaps.get("userIdToUserMap");
-        if (userIdToUserMap == null) return "";
+        if (userIdToUserMap == null) return StrUtil.EMPTY;
 
         return Optional.ofNullable(userIdToUserMap.get(comment.getUserId()))
                 .map(UserVO::getAvatar)
-                .orElse("");
+                .orElse(StrUtil.EMPTY);
     }
 
     /**
@@ -141,10 +142,10 @@ public interface CommentConvert extends BaseConvert<Comment, CommentAddDTO, Void
      */
     @SuppressWarnings("unchecked")
     default String getArticleTitle(Comment comment, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null || comment.getArticleId() == null) return "";
+        if (extraMaps == null || comment.getArticleId() == null) return StrUtil.EMPTY;
         Map<Long, String> articleIdToTitleMap = (Map<Long, String>) extraMaps.get("articleIdToTitleMap");
-        if (articleIdToTitleMap == null) return "";
-        return articleIdToTitleMap.getOrDefault(comment.getArticleId(), "");
+        if (articleIdToTitleMap == null) return StrUtil.EMPTY;
+        return articleIdToTitleMap.getOrDefault(comment.getArticleId(), StrUtil.EMPTY);
     }
 
     /**
@@ -156,14 +157,14 @@ public interface CommentConvert extends BaseConvert<Comment, CommentAddDTO, Void
      */
     @SuppressWarnings("unchecked")
     default String getReplyUserNickname(Comment comment, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null || comment.getReplyUserId() == null) return "";
+        if (extraMaps == null || comment.getReplyUserId() == null) return StrUtil.EMPTY;
         // 从CommentInfoFillUtil返回的extraMaps中取用户Map
         Map<Long, UserVO> userIdToUserMap = (Map<Long, UserVO>) extraMaps.get("userIdToUserMap");
-        if (userIdToUserMap == null) return "";
+        if (userIdToUserMap == null) return StrUtil.EMPTY;
         // 安全取值：避免NPE，兜底返回空字符串
         return Optional.ofNullable(userIdToUserMap.get(comment.getReplyUserId()))
                 .map(UserVO::getNickname)
-                .orElse("");
+                .orElse(StrUtil.EMPTY);
     }
 
     /**
@@ -175,9 +176,9 @@ public interface CommentConvert extends BaseConvert<Comment, CommentAddDTO, Void
      */
     @SuppressWarnings("unchecked")
     default String getReplyContent(Comment comment, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null) return "";
+        if (extraMaps == null) return StrUtil.EMPTY;
         Map<Long, String> contentMap = (Map<Long, String>) extraMaps.get("replyCommentIdToReplyContentMap");
-        if (contentMap == null) return "";
+        if (contentMap == null) return StrUtil.EMPTY;
 
         // 定位目标 ID
         Long targetId = null;
@@ -195,7 +196,7 @@ public interface CommentConvert extends BaseConvert<Comment, CommentAddDTO, Void
         if (targetId != null) {
             return contentMap.getOrDefault(targetId, "原评论已删除");
         }
-        return "";
+        return StrUtil.EMPTY;
     }
 
 }

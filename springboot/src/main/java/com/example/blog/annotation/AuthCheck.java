@@ -1,5 +1,7 @@
 package com.example.blog.annotation;
 
+import cn.hutool.core.util.StrUtil;
+
 import java.lang.annotation.*;
 
 /**
@@ -10,5 +12,5 @@ import java.lang.annotation.*;
 @Documented
 public @interface AuthCheck {
     // 默认不限制特定角色
-    String role() default "";
+    String role() default StrUtil.EMPTY;
 }

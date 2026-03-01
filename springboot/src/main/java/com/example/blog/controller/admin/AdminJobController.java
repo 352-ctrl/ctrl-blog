@@ -10,8 +10,6 @@ import com.example.blog.dto.job.SysJobAddDTO;
 import com.example.blog.dto.job.SysJobQueryDTO;
 import com.example.blog.dto.job.SysJobUpdateDTO;
 import com.example.blog.service.SysJobService;
-import com.example.blog.utils.EnumUtils;
-import com.example.blog.vo.OptionVO;
 import com.example.blog.vo.SysJobVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -133,15 +131,4 @@ public class AdminJobController {
         return Result.success();
     }
 
-    @Operation(summary = "获取任务分组列表(下拉框)")
-    @GetMapping("/options/groups")
-    public Result<List<OptionVO<String>>> getJobGroupOptions() {
-        return Result.success(EnumUtils.toOptions(BizStatus.JobGroup.class));
-    }
-
-    @Operation(summary = "获取任务状态列表(下拉框)")
-    @GetMapping("/options/status")
-    public Result<List<OptionVO<Integer>>> getJobStatusOptions() {
-        return Result.success(EnumUtils.toOptions(BizStatus.JobStatus.class));
-    }
 }

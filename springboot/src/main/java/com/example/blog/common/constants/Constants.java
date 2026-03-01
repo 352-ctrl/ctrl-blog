@@ -74,6 +74,11 @@ public final class Constants {
      */
     public static final String DELETE_PREFIX = "#deleted_";
 
+    /**
+     * 注销用户的伪造邮箱后缀 (无效的域名)
+     */
+    public static final String DELETED_EMAIL_SUFFIX = "@null.com";
+
     // ============================== 外部资源与配置 ==============================
 
     /* ---------- 数据脱敏与掩码 ---------- */

@@ -1,5 +1,7 @@
 package com.example.blog.annotation;
 
+import cn.hutool.core.util.StrUtil;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -13,5 +15,5 @@ import java.lang.annotation.Target;
 public @interface Log {
     String module(); // 模块，例：文章管理
     String type();   // 操作类型，例：新增、修改、删除
-    String desc() default ""; // 描述
+    String desc() default StrUtil.EMPTY; // 描述
 }

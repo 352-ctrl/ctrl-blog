@@ -1,6 +1,8 @@
 package com.example.blog.exception;
 
+import cn.hutool.core.util.StrUtil;
 import com.example.blog.common.Result;
+import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.ResultCode;
 import org.slf4j.Logger;
@@ -86,8 +88,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public Result<Void> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
         String paramName = e.getName();
-        String invalidValue = Objects.toString(e.getValue(), "");
-        String requiredType = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "Unknown";
+        String invalidValue = Objects.toString(e.getValue(), StrUtil.EMPTY);
+        String requiredType = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : Constants.UNKNOWN;
 
         String errorMsg = String.format(MessageConstants.MSG_PARAM_TYPE_MISMATCH,
                 paramName, requiredType, invalidValue);

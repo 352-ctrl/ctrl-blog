@@ -1,5 +1,6 @@
 package com.example.blog.convert;
 
+import cn.hutool.core.util.StrUtil;
 import com.example.blog.dto.article.ArticleAddDTO;
 import com.example.blog.dto.article.ArticleUpdateDTO;
 import com.example.blog.entity.Article;
@@ -200,14 +201,14 @@ public interface ArticleConvert extends BaseConvert<Article, ArticleAddDTO, Arti
      */
     @SuppressWarnings("unchecked")
     default String getUserNickname(Article article, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null || article.getUserId() == null) return "";
+        if (extraMaps == null || article.getUserId() == null) return StrUtil.EMPTY;
 
         Map<Long, UserVO> userIdToUserMap = (Map<Long, UserVO>) extraMaps.get("userIdToUserMap");
-        if (userIdToUserMap == null) return "";
+        if (userIdToUserMap == null) return StrUtil.EMPTY;
 
         return Optional.ofNullable(userIdToUserMap.get(article.getUserId()))
                 .map(UserVO::getNickname)
-                .orElse("");
+                .orElse(StrUtil.EMPTY);
     }
 
     /**
@@ -219,14 +220,14 @@ public interface ArticleConvert extends BaseConvert<Article, ArticleAddDTO, Arti
      */
     @SuppressWarnings("unchecked")
     default String getUserAvatar(Article article, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null || article.getUserId() == null) return "";
+        if (extraMaps == null || article.getUserId() == null) return StrUtil.EMPTY;
 
         Map<Long, UserVO> userIdToUserMap = (Map<Long, UserVO>) extraMaps.get("userIdToUserMap");
-        if (userIdToUserMap == null) return "";
+        if (userIdToUserMap == null) return StrUtil.EMPTY;
 
         return Optional.ofNullable(userIdToUserMap.get(article.getUserId()))
                 .map(UserVO::getAvatar)
-                .orElse("");
+                .orElse(StrUtil.EMPTY);
     }
 
     /**
@@ -238,10 +239,10 @@ public interface ArticleConvert extends BaseConvert<Article, ArticleAddDTO, Arti
      */
     @SuppressWarnings("unchecked")
     default String getCategoryName(Article article, @Context Map<String, Object> extraMaps) {
-        if (extraMaps == null || article.getCategoryId() == null) return "";
+        if (extraMaps == null || article.getCategoryId() == null) return StrUtil.EMPTY;
         Map<Long, String> categoryIdToNameMap = (Map<Long, String>) extraMaps.get("categoryIdToNameMap");
-        if (categoryIdToNameMap == null) return "";
-        return categoryIdToNameMap.getOrDefault(article.getCategoryId(), "");
+        if (categoryIdToNameMap == null) return StrUtil.EMPTY;
+        return categoryIdToNameMap.getOrDefault(article.getCategoryId(), StrUtil.EMPTY);
     }
 
     /**
