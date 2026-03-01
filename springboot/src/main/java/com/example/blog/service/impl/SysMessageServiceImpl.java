@@ -12,18 +12,26 @@ import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.SysMessage;
 import com.example.blog.entity.User;
+import com.example.blog.event.ArticlesDeletedEvent;
+import com.example.blog.event.InteractiveMessageEvent;
+import com.example.blog.event.UserRegisteredEvent;
+import com.example.blog.event.UserSecurityEvent;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.SysMessageMapper;
-import com.example.blog.mapper.UserMapper;
 import com.example.blog.service.SysMessageService;
+import com.example.blog.service.UserService;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.MessageVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.Assert;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,7 +44,95 @@ import java.util.stream.Collectors;
 public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMessage> implements SysMessageService {
 
     @Resource
-    private UserMapper userMapper;
+    private UserService userService;
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    public void onUserRegistered(UserRegisteredEvent event) {
+        this.sendSystemNotice(
+                MessageSendDTO.builder()
+                        .toUserId(event.getUserId())
+                        .title(MessageConstants.TITLE_WELCOME)
+                        .content(MessageConstants.CONTENT_WELCOME)
+                        .build()
+        );
+    }
+
+    /**
+     * 监听互动消息事件（点赞、评论）
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class) // 开启新事务，避免受外层事务已提交的影响
+    public void onInteractiveMessageEvent(InteractiveMessageEvent event) {
+        log.info("监听到互动消息事件，准备发送通知。接收人ID: {}", event.getToUserId());
+
+        // 复用原来底层的发信逻辑
+        this.sendInteractiveMessage(
+                MessageSendDTO.builder()
+                        .toUserId(event.getToUserId())
+                        .fromUserId(event.getFromUserId())
+                        .type(event.getType())
+                        .bizId(event.getBizId())
+                        .bizType(event.getBizType())
+                        .targetId(event.getTargetId())
+                        .content(event.getContent())
+                        .build()
+        );
+    }
+
+    /**
+     * 监听用户安全相关事件（修改密码、修改角色）
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class) // 强制开启独立的新事务，解决自调用和连接状态问题
+    public void onUserSecurityEvent(UserSecurityEvent event) {
+        log.info("监听到用户安全变更事件，准备发送通知。用户ID: {}", event.getUserId());
+
+        // 告别魔法值，使用枚举的 equals 比较
+        if (BizStatus.SecurityEventType.PASSWORD_RESET.equals(event.getEventType())) {
+            this.sendSystemNotice(
+                    MessageSendDTO.builder()
+                            .toUserId(event.getUserId())
+                            .title(MessageConstants.TITLE_PWD_RESET)
+                            .content(MessageConstants.CONTENT_PWD_RESET)
+                            .build()
+            );
+        } else if (BizStatus.SecurityEventType.ROLE_CHANGE.equals(event.getEventType()) && event.getNewRole() != null) {
+            this.sendSystemNotice(
+                    MessageSendDTO.builder()
+                            .toUserId(event.getUserId())
+                            .title(MessageConstants.TITLE_ROLE_CHANGE)
+                            .content(String.format(MessageConstants.CONTENT_ROLE_CHANGE, event.getNewRole().getDesc()))
+                            .build()
+            );
+        }
+    }
+
+    /**
+     * 监听文章被删除事件
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onArticlesDeletedEvent(ArticlesDeletedEvent event) {
+        log.info("监听到文章删除事件，准备发送通知。");
+        Map<Long, String> deletedMap = event.getDeletedArticlesMap();
+        List<SysMessage> messageList = new ArrayList<>();
+
+        deletedMap.forEach((userId, titles) -> {
+            SysMessage msg = SysMessage.builder()
+                    .toUserId(userId)
+                    .fromUserId(null)
+                    .type(BizStatus.MessageType.SYSTEM)
+                    .title(MessageConstants.TITLE_ARTICLE_DELETE)
+                    .content(String.format(MessageConstants.CONTENT_ARTICLE_DELETE, titles))
+                    .isRead(BizStatus.ReadStatus.UNREAD)
+                    .build();
+            messageList.add(msg);
+        });
+
+        if (!messageList.isEmpty()) {
+            this.saveBatch(messageList);
+        }
+    }
 
     @Override
     public List<MessageVO> listMessages(BizStatus.MessageType type) {
@@ -67,7 +163,7 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
         // 3. 批量查询 User 信息
         final Map<Long, User> userMap;
         if (!fromUserIds.isEmpty()) {
-            List<User> users = userMapper.selectBatchIds(fromUserIds);
+            List<User> users = userService.listByIds(fromUserIds);
             userMap = users.stream().collect(Collectors.toMap(User::getId, u -> u));
         } else {
             userMap = Collections.emptyMap(); // 如果为空，赋予一个不可变的空 Map
@@ -195,7 +291,7 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
         }
 
         // 查询触发动作的用户(发送方)的昵称
-        User fromUser = userMapper.selectById(sendDTO.getFromUserId());
+        User fromUser = userService.getById(sendDTO.getFromUserId());
         // 如果用户被物理删除、注销或昵称为空，显示为"神秘用户"
         String fromNickname = (fromUser != null && StrUtil.isNotBlank(fromUser.getNickname()))
                 ? fromUser.getNickname()
@@ -220,5 +316,15 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
         }
 
         this.save(message);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int clearMessageTrash(LocalDateTime recycleLimitDate) {
+        if (recycleLimitDate == null) {
+            return 0;
+        }
+        // 直接调用底层 Mapper 进行物理删除
+        return this.baseMapper.physicalDeleteExpired(recycleLimitDate);
     }
 }

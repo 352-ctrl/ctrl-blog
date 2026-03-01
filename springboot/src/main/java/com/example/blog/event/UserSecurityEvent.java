@@ -1,17 +1,22 @@
 package com.example.blog.event;
 
-import com.example.blog.dto.user.UserUpdateDTO;
-import com.example.blog.entity.User;
-import lombok.AllArgsConstructor;
+import com.example.blog.common.enums.BizStatus;
 import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
 /**
- * 用户信息变更事件
+ * 用户安全/状态相关变更事件 (用于发送系统通知)
  */
 @Getter
-@AllArgsConstructor
-public class UserChangedEvent {
-    private final User user;
-    private final UserUpdateDTO updateDTO; // 可能包含修改前后的差异信息
-    private final boolean roleChanged;
+public class UserSecurityEvent extends ApplicationEvent {
+    private final Long userId;
+    private final BizStatus.SecurityEventType eventType; // 可选值: "PASSWORD_RESET", "ROLE_CHANGE"
+    private final BizStatus.Role newRole; // 仅角色变更时有值
+
+    public UserSecurityEvent(Object source, Long userId, BizStatus.SecurityEventType eventType, BizStatus.Role newRole) {
+        super(source);
+        this.userId = userId;
+        this.eventType = eventType;
+        this.newRole = newRole;
+    }
 }

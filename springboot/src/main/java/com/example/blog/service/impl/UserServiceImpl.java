@@ -11,14 +11,12 @@ import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.UserConvert;
-import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.*;
-import com.example.blog.entity.Article;
 import com.example.blog.entity.User;
+import com.example.blog.event.UserInfoChangedEvent;
+import com.example.blog.event.UserSecurityEvent;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.UserMapper;
-import com.example.blog.service.ArticleService;
-import com.example.blog.service.SysMessageService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.GravatarUtils;
 import com.example.blog.utils.PasswordEncoderUtil;
@@ -26,11 +24,13 @@ import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.user.UserVO;
 import jakarta.annotation.Resource;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,13 +44,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserConvert userConvert;
 
     @Resource
-    private ArticleService articleService;
-
-    @Resource
-    private SysMessageService sysMessageService;
-
-    @Resource
     private RedisUtil redisUtil;
+
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * 校验目标对象操作权限（防向上越权、防横向平级越权）
@@ -121,14 +118,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + targetUser.getId());
         redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + targetUser.getId());
 
-        // 发送密码重置系统通知
-        sysMessageService.sendSystemNotice(
-                MessageSendDTO.builder()
-                        .toUserId(targetUser.getId())
-                        .title(MessageConstants.TITLE_PWD_RESET)
-                        .content(MessageConstants.CONTENT_PWD_RESET)
-                        .build()
-        );
+        // 使用事件驱动发送系统通知
+        eventPublisher.publishEvent(new UserSecurityEvent(this, targetUser.getId(), BizStatus.SecurityEventType.PASSWORD_RESET, null));
     }
 
     @Override
@@ -200,45 +191,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         this.updateById(targetUser);
 
         redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + updateDTO.getId());
-        // 如果角色变更，强制下线
+
         if (updateDTO.getRole() != null && updateDTO.getRole() != oldRole) {
             redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + updateDTO.getId());
-
-            // 发送角色变更系统通知
-            sysMessageService.sendSystemNotice(
-                    MessageSendDTO.builder()
-                            .toUserId(updateDTO.getId())
-                            .title(MessageConstants.TITLE_ROLE_CHANGE)
-                            .content(String.format(MessageConstants.CONTENT_ROLE_CHANGE, updateDTO.getRole().getDesc()))
-                            .build()
-            );
+            // 发送角色变更事件
+            eventPublisher.publishEvent(new UserSecurityEvent(this, updateDTO.getId(), BizStatus.SecurityEventType.ROLE_CHANGE, updateDTO.getRole()));
         }
 
-        // 只有管理员和超级管理员修改资料，才有可能影响文章展示，才去清理文章缓存
         boolean isAdminOrSuperAdmin = BizStatus.Role.ADMIN.equals(currentUser.getRole()) ||
                 BizStatus.Role.SUPER_ADMIN.equals(currentUser.getRole());
 
-        // 如果修改了昵称或头像，清除关联的文章缓存
+        // 资料发生修改，发布事件让 ArticleService 决定是否清理缓存
         if (isAdminOrSuperAdmin && (StrUtil.isNotBlank(updateDTO.getNickname()) || StrUtil.isNotBlank(updateDTO.getAvatar()))) {
-
-            // 清除公共文章列表缓存
-            redisUtil.delete(RedisConstants.REDIS_ARTICLE_LIST_FIRST_PAGE_KEY);
-            redisUtil.delete(RedisConstants.REDIS_ARTICLE_HOT_KEY);
-            redisUtil.delete(RedisConstants.REDIS_ARTICLE_CAROUSEL_KEY);
-
-            // 清除该用户的文章详情缓存
-            List<Article> userArticles = articleService.list(
-                    new LambdaQueryWrapper<Article>()
-                            .select(Article::getId)
-                            .eq(Article::getUserId, updateDTO.getId())
-            );
-
-            if (userArticles != null && !userArticles.isEmpty()) {
-                List<String> articleCacheKeys = userArticles.stream()
-                        .map(article -> RedisConstants.REDIS_ARTICLE_DETAIL_PREFIX + article.getId())
-                        .collect(Collectors.toList());
-                redisUtil.delete(articleCacheKeys);
-            }
+            eventPublisher.publishEvent(new UserInfoChangedEvent(this, updateDTO.getId()));
         }
     }
 
@@ -258,13 +223,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CANNOT_DELETE_SELF);
         }
 
+        // 校验权限
         checkTargetPermission(targetUser, currentUser);
 
-        targetUser.setEmail(targetUser.getEmail() + Constants.DELETE_PREFIX + System.currentTimeMillis());
+        // ==========================================
+        // 数据脱敏 (匿名化处理)
+        // ==========================================
+        // 1. 生成唯一伪造邮箱: #deleted_1001_1712345678@null.com
+        String fakeEmail = Constants.DELETE_PREFIX + targetUserId + StrUtil.UNDERLINE + System.currentTimeMillis() + Constants.DELETED_EMAIL_SUFFIX;
+
+        targetUser.setEmail(fakeEmail);
+        targetUser.setPassword(Constants.MASK_PASSWORD); // 使用常量 ****** 破坏密码
+        targetUser.setNickname(Constants.DEFAULT_UNKNOWN_NICKNAME); // 账号已注销
+        targetUser.setAvatar(GravatarUtils.getRetroAvatar(fakeEmail)); // 根据新生成的伪造邮箱，分配一个随机的像素头像
+        targetUser.setStatus(BizStatus.User.DISABLE); // 状态设为禁用
+
+        // 2. 将脱敏后的数据更新到数据库
         this.updateById(targetUser);
-        boolean success = this.removeById(targetUserId);
+
+        // 3. 执行逻辑删除
+        boolean success = this.lambdaUpdate()
+                .eq(User::getId, targetUserId)
+                .set(User::getIsDeleted, 1)
+                .set(User::getDeleteTime, LocalDateTime.now())
+                .update();
 
         if (success) {
+            // 4. 清理缓存，强制下线
             redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + targetUserId);
             redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + targetUserId);
         }
@@ -286,20 +271,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         List<User> targetUsers = this.listByIds(ids);
 
+        long timestamp = System.currentTimeMillis();
+
+        // 校验权限并执行脱敏赋值
         for (User targetUser : targetUsers) {
             checkTargetPermission(targetUser, currentUser);
+
+            // 生成唯一伪造邮箱
+            String fakeEmail = Constants.DELETE_PREFIX + targetUser.getId() + StrUtil.UNDERLINE + timestamp + Constants.DELETED_EMAIL_SUFFIX;
+
+            targetUser.setEmail(fakeEmail);
+            targetUser.setPassword(Constants.MASK_PASSWORD);
+            targetUser.setNickname(Constants.DEFAULT_UNKNOWN_NICKNAME);
+            targetUser.setAvatar(GravatarUtils.getRetroAvatar(fakeEmail));
+            targetUser.setStatus(BizStatus.User.DISABLE);
         }
 
-        for (User targetUser : targetUsers) {
-            targetUser.setEmail(targetUser.getEmail() + Constants.DELETE_PREFIX + System.currentTimeMillis());
-        }
-
+        // 1. 批量更新脱敏数据
         this.updateBatchById(targetUsers);
-        this.removeByIds(ids);
 
-        List<String> keysInfo = ids.stream().map(id -> RedisConstants.REDIS_USER_INFO_KEY + id).collect(Collectors.toList());
-        List<String> keysToken = ids.stream().map(id -> RedisConstants.REDIS_USER_TOKEN_KEY + id).collect(Collectors.toList());
-        redisUtil.delete(keysInfo);
-        redisUtil.delete(keysToken);
+        // 2. 批量执行逻辑删除
+        boolean success = this.lambdaUpdate()
+                .in(User::getId, ids)
+                .set(User::getIsDeleted, 1)
+                .set(User::getDeleteTime, LocalDateTime.now())
+                .update();
+
+        // 3. 批量清理缓存
+        if (success) {
+            List<String> keysInfo = ids.stream().map(id -> RedisConstants.REDIS_USER_INFO_KEY + id).collect(Collectors.toList());
+            List<String> keysToken = ids.stream().map(id -> RedisConstants.REDIS_USER_TOKEN_KEY + id).collect(Collectors.toList());
+            redisUtil.delete(keysInfo);
+            redisUtil.delete(keysToken);
+        }
     }
 }

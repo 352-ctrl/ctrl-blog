@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
@@ -13,22 +14,22 @@ import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.UserConvert;
 import com.example.blog.dto.EmailRequestDTO;
-import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserForgotPwdDTO;
 import com.example.blog.dto.user.UserLoginDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.entity.User;
+import com.example.blog.event.LoginLogEvent;
+import com.example.blog.event.UserRegisteredEvent;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.service.AuthService;
-import com.example.blog.service.SysLoginLogService;
-import com.example.blog.service.SysMessageService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.*;
 import com.example.blog.vo.user.UserLoginVO;
 import com.example.blog.vo.user.UserVO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,10 +58,7 @@ public class AuthServiceImpl implements AuthService {
     private MailService mailService;
 
     @Resource
-    private SysLoginLogService sysLoginLogService;
-
-    @Resource
-    private SysMessageService sysMessageService;
+    private ApplicationEventPublisher eventPublisher;
 
     @Resource
     private RedisUtil redisUtil;
@@ -72,9 +70,9 @@ public class AuthServiceImpl implements AuthService {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = attributes != null ? attributes.getRequest() : null;
         String ip = IpUtils.getIpAddr(request);
-        String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : "";
+        String userAgent = request != null ? request.getHeader(Constants.HEADER_USER_AGENT) : StrUtil.EMPTY;
 
-        sysLoginLogService.recordLoginLog(email, status, msg, ip, userAgent);
+        eventPublisher.publishEvent(new LoginLogEvent(this, email, status, msg, ip, userAgent));
     }
 
     /**
@@ -237,9 +235,18 @@ public class AuthServiceImpl implements AuthService {
         }
 
         boolean isRestored = false; // 标记是否触发了恢复
-        if (dbUser.getStatus() == BizStatus.User.COOL_OFF) {
+        if (dbUser.getStatus() == BizStatus.User.PENDING_DELETION) {
+            LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.set(User::getStatus, BizStatus.User.NORMAL)
+                    .set(User::getCancelTime, null)
+                    .eq(User::getId, dbUser.getId());
+
+            userService.update(updateWrapper);
+
+            // 同步更新内存里的 dbUser 对象，保证后续流程拿到的数据是最新的
             dbUser.setStatus(BizStatus.User.NORMAL);
-            userService.updateById(dbUser);
+            dbUser.setCancelTime(null);
+
             isRestored = true; // 标记为已恢复
         }
 
@@ -312,13 +319,7 @@ public class AuthServiceImpl implements AuthService {
         redisUtil.delete(redisKey);
 
         // 发送欢迎系统通知
-        sysMessageService.sendSystemNotice(
-                MessageSendDTO.builder()
-                        .toUserId(user.getId())
-                        .title(MessageConstants.TITLE_WELCOME)
-                        .content(MessageConstants.CONTENT_WELCOME)
-                        .build()
-        );
+        eventPublisher.publishEvent(new UserRegisteredEvent(this, user.getId()));
         // 调用私有方法统一构建返回值
         return buildLoginResult(user, false, MessageConstants.LOG_REGISTER_AND_LOGIN_SUCCESS);
     }

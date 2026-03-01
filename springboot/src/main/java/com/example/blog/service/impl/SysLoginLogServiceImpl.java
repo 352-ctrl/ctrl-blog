@@ -10,11 +10,13 @@ import com.example.blog.common.constants.Constants;
 import com.example.blog.convert.SysLoginLogConvert;
 import com.example.blog.dto.SysLoginLogQueryDTO;
 import com.example.blog.entity.SysLoginLog;
+import com.example.blog.event.LoginLogEvent;
 import com.example.blog.mapper.SysLoginLogMapper;
 import com.example.blog.service.SysLoginLogService;
 import com.example.blog.utils.IpUtils;
 import com.example.blog.vo.SysLoginLogVO;
 import jakarta.annotation.Resource;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -27,6 +29,12 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
 
     @Resource
     private SysLoginLogConvert sysLoginLogConvert;
+
+    @EventListener
+    @Async
+    public void onLoginLogEvent(LoginLogEvent event) {
+        this.recordLoginLog(event.getEmail(), event.getStatus(), event.getMsg(), event.getIp(), event.getUserAgent());
+    }
 
     @Async // 异步执行，不阻塞主线程
     @Override
@@ -75,4 +83,14 @@ public class SysLoginLogServiceImpl extends ServiceImpl<SysLoginLogMapper, SysLo
         IPage<SysLoginLog> entityPage = this.page(page, queryWrapper);
         return entityPage.convert(sysLoginLogConvert::entityToVo);
     }
+
+    @Override
+    public int clearLoginLogTrash(LocalDateTime logLimitDate) {
+        if (logLimitDate == null) {
+            return 0;
+        }
+        // 直接调用底层 Mapper 进行物理删除
+        return this.baseMapper.physicalDeleteExpiredLogs(logLimitDate);
+    }
+
 }

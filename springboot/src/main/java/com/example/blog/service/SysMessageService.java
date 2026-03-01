@@ -6,6 +6,7 @@ import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.entity.SysMessage;
 import com.example.blog.vo.MessageVO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -57,5 +58,14 @@ public interface SysMessageService extends IService<SysMessage> {
      * @param sendDTO 消息发送参数对象
      */
     void sendInteractiveMessage(MessageSendDTO sendDTO);
+
+    /**
+     * 清理过期的系统消息垃圾数据
+     * 用于定时任务物理删除早期无用的系统消息
+     *
+     * @param msgLimitDate 过期时间阈值
+     * @return 成功删除的条数
+     */
+    int clearMessageTrash(LocalDateTime msgLimitDate);
 
 }

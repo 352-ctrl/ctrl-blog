@@ -1,13 +1,20 @@
 package com.example.blog.event;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
+
+import java.util.Map;
 
 /**
- * 用户删除事件
+ * 文章删除事件 (用于发送系统通知)
  */
 @Getter
-@AllArgsConstructor
-public class UserDeletedEvent {
-    private final Long userId;
+public class ArticlesDeletedEvent extends ApplicationEvent {
+    // Key: 用户ID, Value: 文章标题
+    private final Map<Long, String> deletedArticlesMap;
+
+    public ArticlesDeletedEvent(Object source, Map<Long, String> deletedArticlesMap) {
+        super(source);
+        this.deletedArticlesMap = deletedArticlesMap;
+    }
 }
