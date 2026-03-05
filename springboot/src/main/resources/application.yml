@@ -83,6 +83,9 @@ mybatis-plus:
       logic-not-delete-value: 0             # 未删除为 0
 
 blog:
+  admin:
+    # 接收系统通知（如用户反馈）的管理员邮箱
+    email: ${ADMIN_EMAIL}
   jwt:
     # 签名密钥：生产环境请务必使用复杂的随机字符串（建议32位以上）
     secret: ${JWT_SECRET}
