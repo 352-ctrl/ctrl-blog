@@ -69,9 +69,18 @@
             <el-avatar v-if="msg.type === 'SYSTEM'" class="system-avatar" :size="45">
               <el-icon :size="24"><BellFilled /></el-icon>
             </el-avatar>
-            <el-avatar v-else :src="msg.fromUserAvatar" :size="45">
-              <el-icon><UserFilled /></el-icon>
-            </el-avatar>
+
+            <UserInfoPopover
+                v-else
+                :user-id="msg.fromUserId"
+                :avatar="msg.fromUserAvatar"
+                :nickname="msg.fromUserNickname"
+                :bio="msg.fromUserBio"
+            >
+              <el-avatar :src="msg.fromUserAvatar" :size="45" style="cursor: pointer;">
+                <el-icon><UserFilled /></el-icon>
+              </el-avatar>
+            </UserInfoPopover>
           </div>
 
           <div class="info-box">
@@ -300,6 +309,7 @@ html.dark .message-item.is-unread {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
+  padding-right: 25px;
 }
 .action-title {
   font-weight: 600;

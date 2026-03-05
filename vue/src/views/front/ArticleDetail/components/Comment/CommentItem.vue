@@ -6,7 +6,6 @@
           :avatar="data.userAvatar"
           :nickname="data.userNickname"
           :bio="data.userBio"
-          @report-user="handleReportUser"
       >
         <el-avatar
             :size="isSub ? 24 : 34"
@@ -55,8 +54,20 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="report">
-                  <el-icon><Warning /></el-icon>
-                  举报
+                  <div class="dropdown-item-wrapper">
+                    <el-icon><Warning /></el-icon>
+                    <span>举报</span>
+                  </div>
+                </el-dropdown-item>
+                <el-dropdown-item
+                    v-if="userStore.userId === data.userId"
+                    command="delete"
+                    divided
+                >
+                  <div class="dropdown-item-wrapper delete-action">
+                    <el-icon><Delete /></el-icon>
+                    <span>删除</span>
+                  </div>
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -107,8 +118,9 @@
 import { ref, computed, inject, watch } from 'vue';
 import CommentBox from './CommentBox.vue';
 import CommentLikeButton from './CommentLikeButton.vue';
-import { addComment } from "@/api/front/comment.js";
+import { addComment, deleteComment } from "@/api/front/comment.js";
 import { useUserStore } from "@/store/user.js";
+import { useDialogStore } from "@/store/dialog.js";
 import { ElMessage } from "element-plus";
 
 defineOptions({ name: 'CommentItem' });
@@ -122,9 +134,10 @@ const props = defineProps({
 
 const emit = defineEmits(['reply-success']);
 const userStore = useUserStore();
+const dialogStore = useDialogStore();
 
 // 接收祖先组件传递下来的定位状态
-const { activeReplyId, setActiveReplyId, targetCommentIdRef, openReportDialog } = inject('commentState');
+const { activeReplyId, setActiveReplyId, targetCommentIdRef } = inject('commentState');
 
 const isReplying = computed(() => activeReplyId.value === props.data.id);
 
@@ -140,16 +153,6 @@ watch(() => targetCommentIdRef?.value, (newTargetId) => {
     }
   }
 }, { immediate: true });
-
-// 处理点击举报用户头像的事件
-const handleReportUser = (userId) => {
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录后操作');
-    return;
-  }
-
-  openReportDialog(userId, 'USER');
-};
 
 const displayedChildren = computed(() => {
   const children = props.data.children || [];
@@ -196,20 +199,42 @@ const handleSubmitReply = async (content) => {
 };
 
 // 处理下拉菜单的事件
-const handleCommand = (command) => {
+const handleCommand = async (command) => {
   if (command === 'report') {
     if (!userStore.isLoggedIn) {
       ElMessage.warning('请先登录后操作');
       return;
     }
-    // 唤起父组件提供的举报弹窗方法，传入这条评论的 ID 以及类型 'COMMENT'
-    openReportDialog(props.data.id, 'COMMENT');
+    // 改用全局 Store 唤起举报弹窗，彻底解决 ref undefined 报错
+    dialogStore.openReportDialog(props.data.id, 'COMMENT');
+
+  } else if (command === 'delete') {
+    // 处理删除逻辑
+    try {
+      await ElMessageBox.confirm('确定要删除这条评论吗？删除后不可恢复。', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      });
+
+      const res = await deleteComment(props.data.id);
+      if (res.code === 200) {
+        ElMessage.success('删除成功');
+        // 借用 reply-success 事件通知外层的 CommentSection.vue 重新加载评论列表
+        emit('reply-success');
+      } else {
+        ElMessage.error(res.msg);
+      }
+    } catch (e) {
+      if (e !== 'cancel') {
+        console.error('删除异常:', e);
+      }
+    }
   }
 };
 </script>
 
 <style scoped>
-/* 保持原有 scoped 样式不变... */
 .comment-item {
   transition: background-color 0.2s;
   border-radius: 6px; /* 增加圆角让高亮更美观 */
@@ -249,6 +274,28 @@ const handleCommand = (command) => {
 .more-btn:hover {
   color: var(--el-text-color-primary);
   background: transparent;
+}
+.dropdown-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* 控制图标和文字的间距 */
+  font-size: 13px; /* 字体大小适配 */
+  padding: 2px 4px; /* 稍微增加一点点击区域 */
+}
+
+/* 删除按钮的专属高亮警告色 */
+.delete-action {
+  color: var(--el-color-danger);
+  transition: opacity 0.2s;
+}
+
+.delete-action:hover {
+  opacity: 0.8; /* 悬浮时增加轻微的透明度反馈 */
+}
+
+/* 确保图标颜色与文字保持一致 */
+.delete-action .el-icon {
+  color: var(--el-color-danger);
 }
 </style>
 

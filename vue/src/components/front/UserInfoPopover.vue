@@ -35,7 +35,9 @@
 </template>
 
 <script setup>
-import { Warning } from '@element-plus/icons-vue';
+import { useUserStore } from "@/store/user.js";
+import { useDialogStore } from "@/store/dialog.js";
+import { ElMessage } from "element-plus";
 
 // 接收外部传入的用户信息
 const props = defineProps({
@@ -45,11 +47,18 @@ const props = defineProps({
   bio: { type: String, default: '' }
 });
 
-const emit = defineEmits(['report-user']);
+const userStore = useUserStore();
+const dialogStore = useDialogStore();
 
+// 处理点击举报按钮的事件
 const handleReport = () => {
-  // 抛出举报事件，父组件可以捕捉并唤起举报弹窗
-  emit('report-user', props.userId);
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录后操作');
+    return;
+  }
+
+  // 全局唤起弹窗！
+  dialogStore.openReportDialog(props.userId, 'USER');
 };
 </script>
 

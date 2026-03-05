@@ -148,6 +148,7 @@
     </el-backtop>
 
     <AuthDialog />
+    <ReportDialog />
 
   </el-container>
 </template>
@@ -157,7 +158,13 @@ import { computed, ref } from "vue";
 import { useUserStore } from '@/store/user.js'
 import { useRoute, useRouter } from "vue-router";
 import { useDark, useToggle } from '@vueuse/core'
-import AuthDialog from "@/components/front/AuthDialog/AuthDialog.vue";
+import AuthDialog from "./components/AuthDialog/AuthDialog.vue";
+import ReportDialog from "./components/ReportDialog.vue";
+import RightSideBar from "./components/RightSidebar/RightSideBar.vue";
+import FeedbackDialog from "./components/FeedbackDialog.vue";
+import MessageBadge from "./components/MessageBadge.vue";
+import SearchModal from "./components/SearchModal.vue";
+import ThemeToggle from "./components/ThemeToggle.vue";
 import IconHamburger from "@/components/common/Icon/IconHamburger.vue";
 
 // 初始化路由和状态库
