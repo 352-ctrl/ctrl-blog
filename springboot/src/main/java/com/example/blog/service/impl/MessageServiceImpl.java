@@ -10,15 +10,18 @@ import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
 import com.example.blog.dto.message.MessageSendDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
-import com.example.blog.entity.SysMessage;
+import com.example.blog.entity.Message;
+import com.example.blog.entity.Report;
 import com.example.blog.entity.User;
-import com.example.blog.event.ArticlesDeletedEvent;
-import com.example.blog.event.InteractiveMessageEvent;
-import com.example.blog.event.UserRegisteredEvent;
-import com.example.blog.event.UserSecurityEvent;
+import com.example.blog.event.article.ArticlesDeletedEvent;
+import com.example.blog.event.feedback.FeedbackRepliedEvent;
+import com.example.blog.event.interaction.InteractiveMessageEvent;
+import com.example.blog.event.report.ReportProcessedEvent;
+import com.example.blog.event.user.UserRegisteredEvent;
+import com.example.blog.event.user.UserSecurityEvent;
 import com.example.blog.exception.CustomerException;
-import com.example.blog.mapper.SysMessageMapper;
-import com.example.blog.service.SysMessageService;
+import com.example.blog.mapper.MessageMapper;
+import com.example.blog.service.MessageService;
 import com.example.blog.service.UserService;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.MessageVO;
@@ -41,7 +44,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMessage> implements SysMessageService {
+public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> implements MessageService {
 
     @Resource
     private UserService userService;
@@ -56,6 +59,70 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
                         .content(MessageConstants.CONTENT_WELCOME)
                         .build()
         );
+    }
+
+    /**
+     * 监听管理员回复反馈事件
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    public void onFeedbackReplied(FeedbackRepliedEvent event) {
+        log.info("监听到反馈回复事件，准备发送通知。接收人ID: {}", event.getUserId());
+
+        // 截断一下原始内容防止标题太长
+        String shortContent = StrUtil.maxLength(event.getContent(), 15);
+        String statusText = event.getStatus().getDesc();
+
+        this.sendSystemNotice(
+                MessageSendDTO.builder()
+                        .toUserId(event.getUserId())
+                        .title(MessageConstants.TITLE_FEEDBACK_REPLY)
+                        .content(String.format(MessageConstants.CONTENT_FEEDBACK_REPLY, shortContent, statusText, event.getAdminReply()))
+                        .bizType(BizStatus.MessageBizType.FEEDBACK)
+                        .bizId(event.getFeedbackId())
+                        .build()
+        );
+    }
+
+    /**
+     * 监听管理员处理举报事件
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    public void onReportProcessed(ReportProcessedEvent event) {
+        Report report = event.getReport();
+        Long reporterId = report.getUserId();
+        String adminNote = StrUtil.isBlank(report.getAdminNote()) ? "无" : report.getAdminNote();
+
+        // 1. 发送通知给【举报人】
+        if (reporterId != null) {
+            String content = BizStatus.ReportStatus.VALID.equals(report.getStatus())
+                    ? MessageConstants.CONTENT_REPORT_VALID
+                    : MessageConstants.CONTENT_REPORT_INVALID;
+
+            this.sendSystemNotice(
+                    MessageSendDTO.builder()
+                            .toUserId(reporterId)
+                            .title(MessageConstants.TITLE_REPORT_RESULT)
+                            .content(String.format(content, adminNote))
+                            .build()
+            );
+        }
+
+        // 2. 如果举报属实，且找到了被处罚的【违规人】，发送系统警告
+        if (BizStatus.ReportStatus.VALID.equals(report.getStatus()) && event.getTargetUserId() != null) {
+            // 避免自己举报自己导致收到两条冲突的信息
+            if (!event.getTargetUserId().equals(reporterId)) {
+                String targetTypeDesc = report.getTargetType().getDesc(); // 例如："评论" 或 "文章"
+                this.sendSystemNotice(
+                        MessageSendDTO.builder()
+                                .toUserId(event.getTargetUserId())
+                                .title(MessageConstants.TITLE_SYSTEM_WARNING)
+                                .content(String.format(MessageConstants.CONTENT_SYSTEM_WARNING, targetTypeDesc, adminNote))
+                                .build()
+                );
+            }
+        }
     }
 
     /**
@@ -115,10 +182,10 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
     public void onArticlesDeletedEvent(ArticlesDeletedEvent event) {
         log.info("监听到文章删除事件，准备发送通知。");
         Map<Long, String> deletedMap = event.getDeletedArticlesMap();
-        List<SysMessage> messageList = new ArrayList<>();
+        List<Message> messageList = new ArrayList<>();
 
         deletedMap.forEach((userId, titles) -> {
-            SysMessage msg = SysMessage.builder()
+            Message msg = Message.builder()
                     .toUserId(userId)
                     .fromUserId(null)
                     .type(BizStatus.MessageType.SYSTEM)
@@ -142,13 +209,13 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
         }
 
         // 1. 构建查询条件
-        LambdaQueryWrapper<SysMessage> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysMessage::getToUserId, currentUser.getId())
-                .eq(type != null, SysMessage::getType, type)
-                .orderByDesc(SysMessage::getCreateTime)
+        LambdaQueryWrapper<Message> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Message::getToUserId, currentUser.getId())
+                .eq(type != null, Message::getType, type)
+                .orderByDesc(Message::getCreateTime)
                 .last("LIMIT 200"); // 强制限制条数，防爆破
 
-        List<SysMessage> messages = this.list(queryWrapper);
+        List<Message> messages = this.list(queryWrapper);
 
         if (messages.isEmpty()) {
             return Collections.emptyList();
@@ -156,7 +223,7 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
 
         // 2. 收集所有需要的 发送方ID
         Set<Long> fromUserIds = messages.stream()
-                .map(SysMessage::getFromUserId)
+                .map(Message::getFromUserId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -202,9 +269,9 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
             return 0L; // 游客状态未读数为 0
         }
 
-        LambdaQueryWrapper<SysMessage> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysMessage::getToUserId, currentUser.getId())
-                .eq(SysMessage::getIsRead, BizStatus.ReadStatus.UNREAD);
+        LambdaQueryWrapper<Message> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Message::getToUserId, currentUser.getId())
+                .eq(Message::getIsRead, BizStatus.ReadStatus.UNREAD);
 
         return this.count(queryWrapper);
     }
@@ -220,7 +287,7 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
         }
 
         // 1. 查询消息确认存在，并且确认接收方是当前登录用户（防止越权修改别人的消息状态）
-        SysMessage message = this.getById(messageId);
+        Message message = this.getById(messageId);
         if (message == null || !message.getToUserId().equals(currentUser.getId())) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_MESSAGE_NOT_FOUND);
         }
@@ -243,14 +310,14 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
             throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
         }
 
-        LambdaUpdateWrapper<SysMessage> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(SysMessage::getIsRead, BizStatus.ReadStatus.READ)
-                .eq(SysMessage::getToUserId, currentUser.getId())
-                .eq(SysMessage::getIsRead, BizStatus.ReadStatus.UNREAD); // 只更新状态为未读的
+        LambdaUpdateWrapper<Message> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.set(Message::getIsRead, BizStatus.ReadStatus.READ)
+                .eq(Message::getToUserId, currentUser.getId())
+                .eq(Message::getIsRead, BizStatus.ReadStatus.UNREAD); // 只更新状态为未读的
 
         // 如果指定了消息类型，则增加条件限制
         if (type != null) {
-            updateWrapper.eq(SysMessage::getType, type);
+            updateWrapper.eq(Message::getType, type);
         }
 
         this.update(updateWrapper);
@@ -262,7 +329,7 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
         Assert.notNull(sendDTO.getToUserId(), "接收用户ID不能为空");
         Assert.hasText(sendDTO.getTitle(), "消息标题不能为空");
 
-        SysMessage message = SysMessage.builder()
+        Message message = Message.builder()
                 .toUserId(sendDTO.getToUserId())
                 .fromUserId(null) // 系统通知没有具体的发送人
                 .type(BizStatus.MessageType.SYSTEM)
@@ -297,7 +364,7 @@ public class SysMessageServiceImpl extends ServiceImpl<SysMessageMapper, SysMess
                 ? fromUser.getNickname()
                 : Constants.DEFAULT_UNKNOWN_NICKNAME;
 
-        SysMessage message = SysMessage.builder()
+        Message message = Message.builder()
                 .toUserId(sendDTO.getToUserId())
                 .fromUserId(sendDTO.getFromUserId())
                 .type(sendDTO.getType())

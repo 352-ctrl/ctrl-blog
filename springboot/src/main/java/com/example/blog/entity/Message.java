@@ -17,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_message")
-public class SysMessage extends BaseUpdateEntity {
+public class Message extends BaseUpdateEntity {
 
     /**
      * 接收方用户ID (谁收到了这条消息)

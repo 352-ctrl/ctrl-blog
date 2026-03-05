@@ -3,7 +3,7 @@ package com.example.blog.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.dto.message.MessageSendDTO;
-import com.example.blog.entity.SysMessage;
+import com.example.blog.entity.Message;
 import com.example.blog.vo.MessageVO;
 
 import java.time.LocalDateTime;
@@ -13,7 +13,7 @@ import java.util.List;
  * 系统消息业务服务接口
  * 定义消息中心相关的业务操作方法，如获取未读数、标记已读、消息分页等
  */
-public interface SysMessageService extends IService<SysMessage> {
+public interface MessageService extends IService<Message> {
 
     /**
      * 获取当前用户的消息列表（无分页，按类型获取，最多返回最近的 200 条）

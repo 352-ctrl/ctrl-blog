@@ -1,4 +1,4 @@
-package com.example.blog.event;
+package com.example.blog.event.article;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;

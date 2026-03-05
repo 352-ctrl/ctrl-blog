@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public abstract class BaseUpdateEntity extends BaseEntity {
+public class BaseUpdateEntity extends BaseEntity {
 
     /**
      * 更新时间，插入和更新时自动填充

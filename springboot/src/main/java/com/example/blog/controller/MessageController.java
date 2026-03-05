@@ -3,7 +3,7 @@ package com.example.blog.controller.front;
 import com.example.blog.annotation.AuthCheck;
 import com.example.blog.common.Result;
 import com.example.blog.common.enums.BizStatus;
-import com.example.blog.service.SysMessageService;
+import com.example.blog.service.MessageService;
 import com.example.blog.vo.MessageVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,7 +24,7 @@ import java.util.List;
 public class MessageController {
 
     @Resource
-    private SysMessageService sysMessageService;
+    private MessageService MessageService;
 
     /**
      * 获取个人的消息列表 (最多返回200条)
@@ -35,7 +35,7 @@ public class MessageController {
             @Parameter(description = "消息大类(可选)，不传则获取所有")
             @RequestParam(value = "type", required = false) BizStatus.MessageType type) {
 
-        List<MessageVO> messageVOS = sysMessageService.listMessages(type);
+        List<MessageVO> messageVOS = MessageService.listMessages(type);
         return Result.success(messageVOS);
     }
 
@@ -45,7 +45,7 @@ public class MessageController {
     @GetMapping("/unread/count")
     @Operation(summary = "获取未读消息总数", description = "获取当前登录用户的未读消息总数，通常用于全局导航栏的小红点展示。")
     public Result<Long> getUnreadMessageCount() {
-        Long count = sysMessageService.getUnreadMessageCount();
+        Long count = MessageService.getUnreadMessageCount();
         return Result.success(count);
     }
 
@@ -56,7 +56,7 @@ public class MessageController {
     @Operation(summary = "标记单条消息为已读", description = "用户点击具体某条未读消息时，将其状态更新为已读。")
     public Result<Void> markMessageAsRead(
             @Parameter(description = "消息的主键ID") @PathVariable("id") Long id) {
-        sysMessageService.markMessageAsRead(id);
+        MessageService.markMessageAsRead(id);
         return Result.success();
     }
 
@@ -67,7 +67,7 @@ public class MessageController {
     @Operation(summary = "一键全部已读", description = "将当前用户所有的未读消息标记为已读，支持按消息大类(type)进行分类一键已读。")
     public Result<Void> markAllAsRead(
             @Parameter(description = "消息大类(可选)，不传则清空所有类型的未读") @RequestParam(value = "type", required = false) BizStatus.MessageType type) {
-        sysMessageService.markAllAsRead(type);
+        MessageService.markAllAsRead(type);
         return Result.success();
     }
 

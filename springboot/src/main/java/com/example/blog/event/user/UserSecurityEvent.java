@@ -1,4 +1,4 @@
-package com.example.blog.event;
+package com.example.blog.event.user;
 
 import com.example.blog.common.enums.BizStatus;
 import lombok.Getter;
