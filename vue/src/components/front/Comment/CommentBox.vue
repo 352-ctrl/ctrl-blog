@@ -48,6 +48,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted } from "vue";
+import { ElMessage } from "element-plus";
 import { useUserStore } from "@/store/user.js";
 import { useDark } from '@vueuse/core';
 import IconSmile from "@/components/common/Icon/IconSmile.vue";
@@ -88,6 +89,7 @@ const onEmojiSelect = (event) => {
 
 const handleSubmit = () => {
   if (!content.value.trim()) {
+    ElMessage.warning('评论内容不能为空');
     return; // 父组件处理空校验或这里处理
   }
   emit('submit', content.value);

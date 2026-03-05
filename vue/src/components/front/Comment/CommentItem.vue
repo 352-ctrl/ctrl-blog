@@ -1,11 +1,19 @@
 <template>
   <div :id="`comment-node-${data.id}`" class="comment-item" :class="{ 'is-sub-item': isSub }">
     <div class="comment-item-inner">
-      <el-avatar
-          :size="isSub ? 24 : 34"
-          :src="data.userAvatar"
-          class="user-avatar"
-      />
+      <UserInfoPopover
+          :user-id="data.userId"
+          :avatar="data.userAvatar"
+          :nickname="data.userNickname"
+          :bio="data.userBio"
+          @report-user="handleReportUser"
+      >
+        <el-avatar
+            :size="isSub ? 24 : 34"
+            :src="data.userAvatar"
+            class="user-avatar"
+        />
+      </UserInfoPopover>
 
       <div class="comment-main-content">
         <div class="info-row">
@@ -39,6 +47,20 @@
               {{ (isSub || !data.replyCount) ? '回复' : data.replyCount }}
             </span>
           </el-button>
+
+          <el-dropdown trigger="hover" placement="bottom" @command="handleCommand" style="margin-left: auto;">
+            <el-button text size="small" class="more-btn">
+              <el-icon size="14"><MoreFilled /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="report">
+                  <el-icon><Warning /></el-icon>
+                  举报
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
 
         <div v-if="isReplying" class="reply-box-wrapper">
@@ -102,7 +124,7 @@ const emit = defineEmits(['reply-success']);
 const userStore = useUserStore();
 
 // 接收祖先组件传递下来的定位状态
-const { activeReplyId, setActiveReplyId, targetCommentIdRef } = inject('commentState');
+const { activeReplyId, setActiveReplyId, targetCommentIdRef, openReportDialog } = inject('commentState');
 
 const isReplying = computed(() => activeReplyId.value === props.data.id);
 
@@ -119,6 +141,16 @@ watch(() => targetCommentIdRef?.value, (newTargetId) => {
   }
 }, { immediate: true });
 
+// 处理点击举报用户头像的事件
+const handleReportUser = (userId) => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录后操作');
+    return;
+  }
+
+  openReportDialog(userId, 'USER');
+};
+
 const displayedChildren = computed(() => {
   const children = props.data.children || [];
   if (isExpanded.value || children.length <= FOLD_THRESHOLD) {
@@ -129,7 +161,7 @@ const displayedChildren = computed(() => {
 
 const toggleReplyBox = () => {
   if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录');
+    ElMessage.warning('请先登录后回复');
     return;
   }
   setActiveReplyId(props.data.id);
@@ -160,6 +192,18 @@ const handleSubmitReply = async (content) => {
     }
   } catch (e) {
     console.error(e);
+  }
+};
+
+// 处理下拉菜单的事件
+const handleCommand = (command) => {
+  if (command === 'report') {
+    if (!userStore.isLoggedIn) {
+      ElMessage.warning('请先登录后操作');
+      return;
+    }
+    // 唤起父组件提供的举报弹窗方法，传入这条评论的 ID 以及类型 'COMMENT'
+    openReportDialog(props.data.id, 'COMMENT');
   }
 };
 </script>
@@ -195,6 +239,17 @@ const handleSubmitReply = async (content) => {
 .expand-control { margin-top: 8px; font-size: 12px; color: var(--el-text-color-placeholder); }
 .expand-btn { cursor: pointer; display: inline-block; padding: 2px 0; transition: all 0.2s; }
 .expand-btn:hover { color: var(--el-color-primary); }
+.more-btn {
+  padding: 0 4px;
+  height: auto;
+  color: var(--el-text-color-placeholder);
+  display: flex;
+  align-items: center;
+}
+.more-btn:hover {
+  color: var(--el-text-color-primary);
+  background: transparent;
+}
 </style>
 
 <style>

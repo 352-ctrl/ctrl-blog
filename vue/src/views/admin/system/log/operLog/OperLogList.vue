@@ -61,28 +61,37 @@
           @delete-success="loadPage"
       >
         <template #expand="{ row }">
-          <el-form label-position="left" inline class="expand-form">
-            <el-row>
-              <el-form-item label="执行方法：">
-                <span class="expand-value">{{ row.method }}</span>
-              </el-form-item>
-            </el-row>
-            <el-row>
-              <el-form-item label="请求参数：">
-                <span class="expand-value">{{ row.params || '无' }}</span>
-              </el-form-item>
-            </el-row>
-            <el-row>
-              <el-form-item label="返回结果：">
-                <span class="expand-value">{{ row.result || '无' }}</span>
-              </el-form-item>
-            </el-row>
-            <el-row>
-              <el-form-item label="用户代理：">
-                <span class="expand-value">{{ row.userAgent }}</span>
-              </el-form-item>
-            </el-row>
-          </el-form>
+          <el-row>
+            <el-form-item label="执行方法：">
+              <span class="expand-value-box">{{ row.method }}</span>
+            </el-form-item>
+          </el-row>
+
+          <el-row>
+            <el-form-item label="请求参数：">
+              <span class="expand-value-box">{{ row.params || '无' }}</span>
+            </el-form-item>
+          </el-row>
+
+          <el-row>
+            <el-form-item label="返回结果：">
+              <span class="expand-value-box">{{ row.result || '无' }}</span>
+            </el-form-item>
+          </el-row>
+
+          <el-row v-if="row.status === 0 && row.errorMsg">
+            <el-form-item label="异常信息：">
+              <span class="expand-value-box" style="color: var(--el-color-danger); border-color: var(--el-color-danger-light-7); background-color: var(--el-color-danger-light-9);">
+                {{ row.errorMsg }}
+              </span>
+            </el-form-item>
+          </el-row>
+
+          <el-row>
+            <el-form-item label="用户代理：">
+              <span class="expand-value-box">{{ row.userAgent }}</span>
+            </el-form-item>
+          </el-row>
         </template>
       </AdminTable>
 
@@ -167,7 +176,7 @@ const columns = reactive([
   { prop: 'nickname', label: '操作人', minWidth: '100px' },
   { prop: 'module', label: '操作模块', minWidth: '100px' },
   { prop: 'type', label: '操作类型', minWidth: '90px' },
-  { prop: 'description', label: '操作描述', minWidth: '160px', align: 'left' },
+  { prop: 'description', label: '操作描述', minWidth: '160px', align: 'left', showOverflowTooltip: true },
   {
     type: 'status',
     prop: 'requestMethod',
@@ -200,34 +209,5 @@ const columns = reactive([
 </script>
 
 <style scoped>
-/* 展开行表单项间距 */
-.expand-form {
-  margin-left: 20px;
-}
 
-/* 强制覆盖 el-form-item 的默认 margin，并让其独占一行 */
-.expand-form :deep(.el-form-item) {
-  margin-bottom: 8px;
-  margin-right: 0;
-  width: 100%;
-  display: flex; /* 使用 flex 保证 label 和内容对齐 */
-}
-
-/* 展开内容的文字样式适配黑暗模式 */
-.expand-value {
-  word-break: break-all;
-  white-space: pre-wrap;
-  font-family: Consolas, Monaco, monospace;
-  display: inline-block;
-  min-width: 300px;
-  max-width: 800px;
-  padding: 6px 12px;
-  border-radius: 4px;
-  line-height: 1.5;
-
-  /* --- 核心：使用 Element Plus 的 CSS 变量实现亮/暗色自适应 --- */
-  color: var(--el-text-color-regular); /* 替代原先写死的 #606266 */
-  background-color: var(--el-fill-color-light); /* 替代原先写死的 #f8f8f8 */
-  border: 1px solid var(--el-border-color-lighter); /* 增加浅边框提升层级边界感 */
-}
 </style>

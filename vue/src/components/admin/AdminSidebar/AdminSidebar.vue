@@ -122,17 +122,33 @@ const menuRoutes = computed(() => {
    ==================================== */
 .sidebar-menu {
   border-right: none;
-  background-color: transparent; /* 背景透明，跟随父容器 Aside 的颜色 */
+  background-color: transparent;
+  height: 100%; /* 确保占满父容器高度 */
+  overflow-y: auto; /* 内容超出高度时允许纵向滚动 */
+  overflow-x: hidden; /* 防止横向抖动 */
+
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+/* WebKit 内核浏览器 (Chrome, Safari, Edge) 隐藏滚动条 */
+.sidebar-menu::-webkit-scrollbar {
+  display: none;
 }
 
 .sidebar-logo-container {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  background-color: var(--el-bg-color);
+
   height: 60px;
   display: flex;
   align-items: center;
   padding: 0 10px;
   overflow: hidden;
-  border-bottom: 1px solid var(--el-border-color-lighter); /* 增加极淡的底部分割线 */
-  background-color: transparent;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .logo-img {
@@ -161,6 +177,7 @@ const menuRoutes = computed(() => {
 :deep(.el-menu-item),
 :deep(.el-sub-menu__title) {
   color: var(--el-text-color-regular);
+  border-left: 3px solid transparent;
 }
 
 /* 悬浮态：极淡的背景色填充 */
@@ -178,14 +195,15 @@ const menuRoutes = computed(() => {
   border-left: 3px solid var(--el-color-primary); /* 左边框高亮条 */
 }
 
+.el-menu--collapse :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
+  color: var(--el-color-primary) !important;
+  background-color: var(--el-color-primary-light-9) !important;
+  border-left: 3px solid var(--el-color-primary) !important;
+}
+
 /* 针对暗黑模式修正激活态底色 */
 html.dark :deep(.el-menu-item.is-active) {
   background-color: var(--el-color-primary-light-8);
-}
-
-/* 抵消掉由于左侧增加边框导致的内边距偏移 */
-:deep(.el-menu-item) {
-  border-left: 3px solid transparent;
 }
 
 /* ====================================

@@ -43,11 +43,31 @@ export const adminRoutes = {
                     component: () => import('@/views/admin/content/tag/TagList.vue'),
                     meta: { title: '标签管理', icon: 'CollectionTag' }
                 },
+            ]
+        },
+        {
+            path: 'interaction',
+            component: BlankLayout,
+            meta: { title: '互动管理', icon: 'ChatDotRound' },
+            redirect: '/admin/interaction/comments',
+            children: [
                 {
                     path: 'comments',
                     name: 'AdminCommentList',
-                    component: () => import('@/views/admin/content/comment/CommentList.vue'),
+                    component: () => import('@/views/admin/interaction/comment/CommentList.vue'),
                     meta: { title: '评论管理', icon: 'ChatLineRound' }
+                },
+                {
+                    path: 'feedbacks',
+                    name: 'AdminFeedbackList',
+                    component: () => import('@/views/admin/interaction/feedback/FeedbackList.vue'),
+                    meta: { title: '意见反馈', icon: 'Service' }
+                },
+                {
+                    path: 'reports',
+                    name: 'AdminReportList',
+                    component: () => import('@/views/admin/interaction/report/ReportList.vue'),
+                    meta: { title: '举报管理', icon: 'Warning' }
                 }
             ]
         },
@@ -73,7 +93,7 @@ export const adminRoutes = {
                     path: 'words',
                     name: 'AdminSensitiveWordList',
                     component: () => import('@/views/admin/system/word/SensitiveWordList.vue'),
-                    meta: { title: '敏感词管理', icon: 'Warning' }
+                    meta: { title: '敏感词管理', icon: 'CircleClose' }
                 },
                 {
                     path: 'log',

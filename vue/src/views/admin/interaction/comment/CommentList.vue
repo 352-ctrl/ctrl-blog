@@ -32,12 +32,31 @@
       <AdminTable
           :table-data="data.tableData"
           :columns="commentColumns"
-          v-model:selectedIds="data.selectedIds"
+          :expandable="true"   v-model:selectedIds="data.selectedIds"
           :editable="false"
           :delete-api="deleteCommentApi"
           delete-tip="确定删除该评论吗？"
           @delete-success="loadPage"
-      />
+      >
+        <template #expand="{ row }">
+          <el-row v-if="row.replyUserNickname">
+            <el-form-item label="引用内容：">
+              <div class="expand-value-box reply-quote-box">
+                <span class="reply-target">@{{ row.replyUserNickname }}</span>：
+                {{ row.replyContent || '原评论已被删除或为空' }}
+              </div>
+            </el-form-item>
+          </el-row>
+
+          <el-row>
+            <el-form-item label="完整评论：">
+              <div class="expand-value-box">
+                {{ row.content }}
+              </div>
+            </el-form-item>
+          </el-row>
+        </template>
+      </AdminTable>
 
       <AdminPagination
           v-model:current-page="data.pageNum"
@@ -115,12 +134,22 @@ const commentColumns = reactive([
   { type: 'avatar', prop: 'userAvatar', label: '用户头像' },
   { prop: 'userNickname', label: '用户昵称' },
   { type: 'reply', prop: 'replyUserNickname', contentProp: 'replyContent', label: '回复对象' },
-  { prop: 'articleTitle', align: 'left', label: '文章标题' },
-  { prop: 'content', minWidth: '200px', align: 'left', label: '评论内容' },
-  { prop: 'createTime', label: '创建时间' }
+  { prop: 'articleTitle', align: 'left', label: '文章标题', showOverflowTooltip: true },
+  { prop: 'content', minWidth: '200px', align: 'left', label: '评论内容', showOverflowTooltip: true },
+  { prop: 'createTime', label: '创建时间', minWidth: '160px' }
 ])
 </script>
 
 <style scoped>
+.reply-quote-box {
+  border-left: 3px solid var(--el-border-color-darker) !important;
+  background-color: var(--el-fill-color-light) !important;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
 
+.reply-target {
+  color: var(--el-color-primary);
+  font-weight: 500;
+}
 </style>

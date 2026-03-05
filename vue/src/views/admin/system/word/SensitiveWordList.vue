@@ -172,7 +172,7 @@ const batchDeleteSensitiveWordApi = async (selectedIds) => {
 // 敏感词列表列配置
 const wordColumns = reactive([
   { prop: 'word', label: '敏感词内容' },
-  { prop: 'createTime', label: '创建时间' }
+  { prop: 'createTime', label: '创建时间', minWidth: '160px' }
 ])
 </script>
 

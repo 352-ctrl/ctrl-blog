@@ -16,7 +16,9 @@
     <el-table-column v-if="expandable" type="expand">
       <template #default="scope">
         <div class="expand-wrapper">
-          <slot name="expand" :row="scope.row"></slot>
+          <el-form label-position="left" inline class="admin-table-expand-form">
+            <slot name="expand" :row="scope.row"></slot>
+          </el-form>
         </div>
       </template>
     </el-table-column>
@@ -335,5 +337,45 @@ const handleSwitchChange = (row) => {
 .table-actions :deep(.el-button) {
   margin-left: 0 !important;
   margin-right: 0 !important;
+}
+
+/* ==========================================
+   展开行 (Expand) 全局通用样式
+   ========================================== */
+.expand-wrapper {
+  padding: 15px 30px;
+  background-color: var(--el-fill-color-lighter);
+}
+
+.admin-table-expand-form {
+  margin-left: 20px;
+}
+
+:deep(.admin-table-expand-form .el-form-item) {
+  margin-bottom: 8px;
+  margin-right: 0;
+  width: 100%;
+  display: flex;
+}
+
+:deep(.admin-table-expand-form .el-form-item__label) {
+  color: var(--el-text-color-secondary);
+  font-weight: bold;
+  width: 90px; /* 统一下巴宽度，如需特殊宽度在业务侧覆盖 */
+}
+
+/* 展开内容的通用包裹框样式 */
+:deep(.expand-value-box) {
+  display: inline-block;
+  width: 800px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  line-height: 1.6;
+  color: var(--el-text-color-regular);
+  background-color: var(--el-bg-color-page);
+  border: 1px solid var(--el-border-color-lighter);
+  word-break: break-all;
+  white-space: pre-wrap;
+  font-size: 14px;
 }
 </style>

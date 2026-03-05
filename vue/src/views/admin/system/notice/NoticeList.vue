@@ -221,7 +221,7 @@ const batchDeleteNoticeApi = async (selectedIds) => {
 
 // 公告列表列配置
 const noticeColumns = reactive([
-  { type: 'html', prop: 'contentHtml', label: '内容' },
+  { type: 'html', prop: 'contentHtml', label: '内容',minWidth: '350px' },
   { type: 'top', prop: 'isTop', label: '置顶' },
   { type: 'status', prop: 'status', label: '状态',
     statusMap: {
@@ -229,7 +229,7 @@ const noticeColumns = reactive([
       0: { text: '隐藏' }
     }
   },
-  { prop: 'createTime', label: '创建时间' }
+  { prop: 'createTime', label: '创建时间', minWidth: '160px' }
 ])
 </script>
 

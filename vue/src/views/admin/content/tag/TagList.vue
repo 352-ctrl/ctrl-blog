@@ -168,7 +168,7 @@ const batchDeleteTagApi = async (selectedIds) => {
 // 标签列表列配置
 const tagColumns = reactive([
   { prop: 'name', label: '名称' },
-  { prop: 'createTime', label: '创建时间' }
+  { prop: 'createTime', label: '创建时间', minWidth: '160px' }
 ])
 </script>
 

@@ -138,13 +138,12 @@
       </div>
     </el-main>
 
-    <div class="theme-toggle-wrapper">
-      <el-button
-          circle
-          @click="toggleDark()"
-          :icon="isDark ? 'Sunny' : 'Moon'"
-          class="theme-btn custom-float-btn"
-      />
+    <div class="feedback-toggle-wrapper custom-float-btn">
+      <FeedbackDialog />
+    </div>
+
+    <div class="theme-toggle-wrapper custom-float-btn">
+      <ThemeToggle />
     </div>
 
     <el-backtop target=".page-scroll-view" :right="50" :bottom="50" class="custom-float-btn" />
@@ -164,14 +163,9 @@ import IconHamburger from "@/components/common/Icon/IconHamburger.vue";
 
 // 初始化路由和状态库
 const route = useRoute();
-const router = useRouter();
-const userStore = useUserStore()
 
 // 控制移动端抽屉开关
 const drawer = ref(false)
-
-const isDark = useDark()
-const toggleDark = useToggle(isDark)
 
 /**
  * 处理移动端菜单点击事件
@@ -442,11 +436,20 @@ html.dark .page-scroll-view {
    5. 悬浮按钮统一设计
    ==================================== */
 
+.feedback-toggle-wrapper {
+  position: fixed;
+  right: 50px;
+  bottom: 170px;
+  z-index: 99;
+  padding: 0;
+}
+
 .theme-toggle-wrapper {
   position: fixed;
   right: 50px;
   bottom: 110px;
   z-index: 99;
+  padding: 0;
 }
 
 .custom-float-btn,
@@ -463,6 +466,7 @@ html.dark .page-scroll-view {
   align-items: center;
   justify-content: center;
   font-size: 20px !important;
+  cursor: pointer;
 }
 
 .custom-float-btn:hover,
@@ -471,6 +475,17 @@ html.dark .page-scroll-view {
   color: var(--el-color-primary) !important;
   box-shadow: var(--el-box-shadow) !important;
   background-color: var(--el-bg-color-overlay) !important;
+}
+
+:deep(.custom-float-btn .el-button) {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  margin: 0;
+  padding: 0;
 }
 
 /* ====================================
@@ -484,6 +499,11 @@ html.dark .page-scroll-view {
 
   .app-container {
     padding-top: 10px !important;
+  }
+
+  .feedback-toggle-wrapper {
+    right: 20px;
+    bottom: 140px;
   }
 
   .theme-toggle-wrapper {

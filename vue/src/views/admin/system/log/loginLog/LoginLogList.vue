@@ -36,12 +36,30 @@
       <AdminTable
           :table-data="data.tableData"
           :columns="columns"
-          v-model:selectedIds="data.selectedIds"
+          :expandable="true"   v-model:selectedIds="data.selectedIds"
           :editable="false"
           :delete-api="deleteApi"
           delete-tip="确定删除该登录日志吗？"
           @delete-success="loadPage"
-      />
+      >
+        <template #expand="{ row }">
+          <el-row>
+            <el-form-item label="操作系统：">
+              <span class="expand-value-box">{{ row.os || '未知' }}</span>
+            </el-form-item>
+          </el-row>
+          <el-row>
+            <el-form-item label="浏览器：">
+              <span class="expand-value-box">{{ row.browser || '未知' }}</span>
+            </el-form-item>
+          </el-row>
+          <el-row v-if="row.userAgent">
+            <el-form-item label="用户代理：">
+              <span class="expand-value-box">{{ row.userAgent }}</span>
+            </el-form-item>
+          </el-row>
+        </template>
+      </AdminTable>
 
       <AdminPagination
           v-model:current-page="data.pageNum"
@@ -118,8 +136,6 @@ const columns = reactive([
   { prop: 'email', label: '登录账号', minWidth: '160px', align: 'left' },
   { prop: 'ip', label: '登录IP地址', minWidth: '120px' },
   { prop: 'location', label: '登录地点', minWidth: '140px' },
-  { prop: 'os', label: '操作系统', minWidth: '160px', align: 'left' },
-  { prop: 'browser', label: '浏览器', minWidth: '100px' },
   {
     type: 'status',
     prop: 'status',

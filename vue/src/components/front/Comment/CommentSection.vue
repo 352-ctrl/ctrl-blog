@@ -39,6 +39,8 @@
       </div>
     </div>
 
+    <ReportDialog ref="reportDialogRef" />
+
     <FrontPagination
         v-model:current-page="pageNum"
         v-model:page-size="pageSize"
@@ -76,8 +78,14 @@ const pageNum = ref(1);
 const pageSize = ref(10);
 const loading = ref(false);
 const mainBoxRef = ref(null);
+const reportDialogRef = ref(null);
 
 const sortType = ref(1);
+
+// 动态传入 targetType，如果不传则默认是 'COMMENT'
+const openReportDialog = (targetId, targetType = 'COMMENT') => {
+  reportDialogRef.value?.open(targetType, targetId);
+};
 
 // 全局控制回复框状态和目标高亮 ID
 const activeReplyId = ref(null);
@@ -91,7 +99,8 @@ const setActiveReplyId = (id) => {
 provide('commentState', {
   activeReplyId,
   setActiveReplyId,
-  targetCommentIdRef
+  targetCommentIdRef,
+  openReportDialog
 });
 
 const handleSortChange = (type) => {
@@ -142,9 +151,6 @@ const executeHighlightAndScroll = (commentId) => {
         targetElement.classList.remove('highlight-flash');
         targetCommentIdRef.value = null;
 
-        // ==============================================================
-        // 🚀 核心修复：使用原生 HTML5 History API 清理 URL，不触发 Router 滚动
-        // ==============================================================
         const newQuery = { ...route.query };
         delete newQuery.commentId;
 
@@ -192,8 +198,12 @@ const loadComment = async () => {
 };
 
 const submitMainComment = async (content) => {
+  if (!content || !content.trim()) {
+    ElMessage.warning('评论内容不能为空');
+    return;
+  }
   if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录');
+    ElMessage.warning('请先登录后评论');
     return;
   }
   const postData = {

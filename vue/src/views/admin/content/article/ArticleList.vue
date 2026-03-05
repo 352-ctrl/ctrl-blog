@@ -54,12 +54,47 @@
       <AdminTable
           :table-data="data.tableData"
           :columns="articleColumns"
-          v-model:selectedIds="data.selectedIds"
+          :expandable="true"   v-model:selectedIds="data.selectedIds"
           :delete-api="deleteArticleApi"
           delete-tip="确定删除该文章吗？"
           @edit="handleEdit"
           @delete-success="loadPage"
-      />
+      >
+        <template #expand="{ row }">
+          <el-row>
+            <el-form-item label="文章摘要：">
+              <span class="expand-value-box">{{ row.summary || '暂无摘要' }}</span>
+            </el-form-item>
+          </el-row>
+
+          <el-row>
+            <el-form-item label="文章标签：">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <template v-if="row.tagNames && row.tagNames.length > 0">
+                  <el-tag v-for="tag in row.tagNames" :key="tag" size="small">{{ tag }}</el-tag>
+                </template>
+                <span v-else style="color: #909399; font-size: 13px;">无标签</span>
+              </div>
+            </el-form-item>
+          </el-row>
+
+          <el-row>
+            <el-form-item label="附加属性：">
+              <div style="display: flex; gap: 10px;">
+                <el-tag size="small" :type="row.isTop === 1 ? 'danger' : 'info'">
+                  置顶: {{ row.isTop === 1 ? '是' : '否' }}
+                </el-tag>
+                <el-tag size="small" :type="row.isCarousel === 1 ? 'success' : 'info'">
+                  首页轮播: {{ row.isCarousel === 1 ? '是' : '否' }}
+                </el-tag>
+                <el-tag size="small" :type="row.isAiSummary === 1 ? 'primary' : 'info'" v-if="row.summary">
+                  摘要来源: {{ row.isAiSummary === 1 ? 'AI 自动生成' : '人工编写' }}
+                </el-tag>
+              </div>
+            </el-form-item>
+          </el-row>
+        </template>
+      </AdminTable>
 
       <AdminPagination
           v-model:current-page="data.pageNum"
@@ -463,10 +498,6 @@ const handleEdit = async (row) => {
 
 // 提交表单 (新增或修改)
 const submitForm = () => {
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录')
-    return
-  }
   formRef.value.validate((valid) => {
     if (valid) {
       // 构造提交数据
@@ -589,16 +620,14 @@ const articleColumns = reactive([
   { prop: 'title', label: '标题', showOverflowTooltip: true },
   { prop: 'userNickname', label: '作者' },
   { prop: 'categoryName', label: '分类' },
-  { type: 'tags', prop: 'tagNames', label: '标签' },
   { prop: 'viewCount', label: '浏览量' },
-  { type: 'top', prop: 'isTop', label: '置顶' },
   { type: 'status', prop: 'status', label: '状态',
     statusMap: {
       1: { text: '发布' },
       0: { text: '草稿' }
     }
   },
-  { prop: 'createTime', label: '创建时间' }
+  { prop: 'createTime', label: '创建时间', minWidth: '160px' }
 ])
 </script>
 
