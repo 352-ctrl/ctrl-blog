@@ -13,8 +13,9 @@ import com.example.blog.common.enums.ResultCode;
 import com.example.blog.convert.UserConvert;
 import com.example.blog.dto.user.*;
 import com.example.blog.entity.User;
-import com.example.blog.event.UserInfoChangedEvent;
-import com.example.blog.event.UserSecurityEvent;
+import com.example.blog.event.user.UserInfoChangedEvent;
+import com.example.blog.event.user.UserSecurityEvent;
+import com.example.blog.event.user.UserUnbannedEvent;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.mapper.UserMapper;
 import com.example.blog.service.UserService;
@@ -24,7 +25,9 @@ import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.user.UserVO;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +40,7 @@ import java.util.stream.Collectors;
 /**
  * 系统用户业务服务实现类
  */
+@Slf4j
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
@@ -97,6 +101,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_ADMIN_CANNOT_GRANT_ADMIN);
             }
         }
+    }
+
+    /**
+     * 监听用户解封事件
+     */
+    @EventListener
+    public void handleUserUnbannedEvent(UserUnbannedEvent event) {
+        Long userId = event.getUserId();
+        if (userId == null) {
+            return;
+        }
+
+        // 1. 修改数据库状态为正常，并清空封禁信息
+        this.lambdaUpdate()
+                .eq(User::getId, userId)
+                .set(User::getStatus, BizStatus.User.NORMAL)
+                .set(User::getDisableEndTime, null)
+                .set(User::getDisableReason, null)
+                .update();
+
+        // 2. 清理该用户的 Redis 缓存
+        redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + userId);
+
+        log.info("[事件处理] 用户已成功解封并清理缓存，用户ID: {}", userId);
     }
 
     @Override

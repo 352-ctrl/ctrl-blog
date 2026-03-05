@@ -32,14 +32,16 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, onUnmounted } from "vue";
-import { ElMessage, ElNotification } from "element-plus";
+import { reactive, ref, onMounted, onUnmounted, h } from "vue";
+import { ElMessage, ElNotification, ElMessageBox } from "element-plus";
+import { useRouter } from "vue-router";
 import { useUserStore } from "@/store/user.js";
 import { validateEmail, validatePasswordComplexity } from "@/utils/validate.js";
 import Verify from "@/components/verifition/Verify.vue";
 
 const emit = defineEmits(['success']);
 const userStore = useUserStore();
+const router = useRouter();
 const formRef = ref();
 const verifyRef = ref(null);
 const loading = ref(false);
@@ -65,11 +67,55 @@ const handleLogin = () => {
   });
 };
 
+const handleBanException = (errorMsg) => {
+  ElMessageBox.confirm(
+      // 使用 h 函数构建干净、扁平化的弹窗内容
+      h('div', null, [
+        h('div', {
+          style: 'font-size: 14px; color: var(--el-text-color-primary); margin-bottom: 12px;'
+        }, '您的账号目前处于封禁状态，无法进行登录。'),
+        h('div', {
+          // 使用 Element Plus 内置的浅灰色填充，低调且适配暗黑模式
+          style: 'padding: 10px 12px; background-color: var(--el-fill-color-light); border-radius: 6px; font-size: 13px; color: var(--el-text-color-regular); line-height: 1.6; word-break: break-all;'
+        }, [
+          h('strong', { style: 'color: var(--el-text-color-primary);' }, '封禁原因：'),
+          errorMsg
+        ])
+      ]),
+      '登录受限',
+      {
+        confirmButtonText: '我要申诉',
+        cancelButtonText: '我知道了',
+        type: 'warning', // 使用 warning 图标，比 error 显得柔和一些
+        center: true,
+        // 这里不需要 dangerouslyUseHTMLString，因为我们使用了 h 函数安全渲染
+      }
+  ).then(() => {
+    // 用户点击了“我要申诉”
+
+    // 1. 关闭登录弹窗
+    userStore.showAuthDialog = false;
+
+    // 2. 跳转到意见反馈页，同时携带 type 和刚才填写的 email 参数
+    router.push({
+      path: '/',
+      query: {
+        type: 2,
+        email: data.form.email
+      }
+    });
+
+  }).catch(() => {
+    // 用户点击了“我知道了”或关闭了弹窗，什么都不做
+  });
+};
+
 const onVerifySuccess = async (params) => {
   loading.value = true;
   try {
     const loginPayload = { ...data.form, captchaVerification: params.captchaVerification };
     const result = await userStore.login(loginPayload);
+
     if (result.success) {
       if (result.data.isRestored) {
         ElNotification({
@@ -82,10 +128,20 @@ const onVerifySuccess = async (params) => {
       }
       emit('success');
     } else {
-      ElMessage.error(result.msg || '登录失败，请重试');
+      if (result.code === 4031) {
+        handleBanException(result.msg);
+      } else {
+        // 其他的普通错误（账号密码错误等），照常显示红色小提示
+        ElMessage.error(result.msg || '登录失败，请重试');
+      }
     }
   } catch (error) {
-    ElMessage.error(error.msg || error.message || '系统异常，请联系管理员');
+    const errorMsg = error.msg || error.message || '系统异常，请联系管理员';
+    if (error.code === 4031) {
+      handleBanException(errorMsg);
+    } else {
+      ElMessage.error(errorMsg);
+    }
   } finally {
     loading.value = false;
   }

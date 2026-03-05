@@ -23,14 +23,24 @@
         @update:isFavorite="(val) => $emit('update:isFavorite', val)"
         @update:count="(val) => $emit('update:favoriteCount', val)"
     />
+
+    <div class="panel-btn report-btn" @click="handleReportArticle" title="举报文章">
+      <el-icon size="20" class="icon-wrapper"><Warning /></el-icon>
+    </div>
+
+    <ReportDialog ref="reportDialogRef" />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { defineProps, defineEmits } from 'vue';
+import { ElMessage } from "element-plus";
 import ArticleLikeButton from './ArticleLikeButton.vue';
 import ArticleFavoriteButton from './ArticleFavoriteButton.vue';
-import ArticleCommentButton from './ArticleCommentButton.vue'; // 引入新组件
+import ArticleCommentButton from './ArticleCommentButton.vue';
+import {useUserStore} from "@/store/user.js";
+
 
 // 接收外部传来的数据
 const props = defineProps({
@@ -71,6 +81,20 @@ const emit = defineEmits([
 
 const scrollToComment = () => {
   emit('scrollToComment');
+};
+
+
+const reportDialogRef = ref(null);
+const userStore = useUserStore();
+
+// 处理文章举报
+const handleReportArticle = () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录后举报');
+    return;
+  }
+  // 打开弹窗，传入类型 'ARTICLE' 和 文章ID
+  reportDialogRef.value.open('ARTICLE', props.articleId);
 };
 </script>
 
@@ -143,5 +167,9 @@ const scrollToComment = () => {
     background-color: var(--el-fill-color-light);
     color: var(--el-color-primary);
   }
+}
+
+.panel-btn.report-btn:hover {
+  color: var(--el-color-danger); /* 鼠标悬浮变红色，提示操作警告 */
 }
 </style>

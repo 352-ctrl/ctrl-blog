@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 public class UserLoginDTO {
 
     @Schema(description = "登录邮箱", example = "admin@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Size(max = 100, message = "邮箱长度不能超过100个字符")
     @NotBlank(message = "登录邮箱不能为空")
     @Email(message = "邮箱格式不正确")
     private String email;

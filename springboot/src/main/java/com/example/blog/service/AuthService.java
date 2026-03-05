@@ -51,4 +51,10 @@ public interface AuthService {
      * @param token 当前请求携带的令牌
      */
     void logout(String token);
+
+    /**
+     * 根据用户ID强制用户下线 (拉黑当前 Token 并清除缓存)
+     * @param userId 目标用户ID
+     */
+    void forceLogoutByUserId(Long userId);
 }

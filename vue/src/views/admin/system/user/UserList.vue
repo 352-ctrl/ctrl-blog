@@ -27,13 +27,37 @@
       <AdminTable
           :table-data="data.tableData"
           :columns="userColumns"
-          v-model:selectedIds="data.selectedIds"
+          :expandable="true"  v-model:selectedIds="data.selectedIds"
           :delete-api="deleteUserApi"
           delete-tip="确定删除该用户吗？"
           :action-width="190"
           @edit="handleEdit"
           @delete-success="loadPage"
       >
+        <template #expand="{ row }">
+          <el-row>
+            <el-form-item label="个人简介：">
+              <span class="expand-value-box">{{ row.bio || '该用户很懒，什么都没写~' }}</span>
+            </el-form-item>
+          </el-row>
+          <el-row v-if="row.status === 1 || row.disableReason || row.disableEndTime">
+            <el-form-item label="封禁详情：">
+              <div class="expand-value-box ban-box">
+                <div class="ban-item">
+                  <span class="ban-label">解封时间：</span>
+                  <span class="ban-text" :style="{ fontWeight: row.disableEndTime?.startsWith('2099') ? 'bold' : 'normal' }">
+                    {{ !row.disableEndTime ? '未设置 (需手动解封)' : (row.disableEndTime.startsWith('2099') ? '永久封禁' : row.disableEndTime) }}
+                  </span>
+                </div>
+                <div class="ban-item">
+                  <span class="ban-label">处罚原因：</span>
+                  <span class="ban-text">{{ row.disableReason || '未填写具体原因' }}</span>
+                </div>
+              </div>
+            </el-form-item>
+          </el-row>
+        </template>
+
         <template #custom-actions="{ row }">
           <el-tooltip content="重置密码" placement="top">
             <el-button
@@ -80,6 +104,32 @@
             <el-radio :label="1">禁用</el-radio>
             <el-radio :label="2" disabled v-if="data.form.status === 2">注销冷静期</el-radio>
           </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="解封时间" prop="disableEndTime" v-if="data.form.status === 1">
+          <el-date-picker
+              v-model="data.form.disableEndTime"
+              type="datetime"
+              placeholder="请选择自动解封时间"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              style="width: 100%"
+              clearable
+          />
+          <div style="font-size: 12px; color: #909399; margin-top: 4px; line-height: 1.4;">
+            留空代表无限期封禁(需手动解封)；选择未来的时间，系统将在该时间自动解封。
+          </div>
+        </el-form-item>
+
+        <el-form-item label="封禁原因" prop="disableReason" v-if="data.form.status === 1">
+          <el-input
+              v-model="data.form.disableReason"
+              type="textarea"
+              :rows="2"
+              maxlength="255"
+              show-word-limit
+              placeholder="请输入封禁原因（选填，该内容将在用户尝试登录时展示）"
+          />
         </el-form-item>
 
         <el-form-item label="个人简介" prop="bio">
@@ -172,7 +222,6 @@ const data = reactive({
       { validator: validatePasswordComplexity, trigger: 'blur' }
     ],
     role: [{ required: true, message: '请选择角色', trigger: 'change' }],
-    // ✨ 新增状态必选规则
     status: [{ required: true, message: '请选择状态', trigger: 'change' }]
   }
 });
@@ -316,6 +365,40 @@ const userColumns = reactive([
       2: { text: '注销冷静期', type: 'info' }
     }
   },
-  { prop: 'createTime', label: '创建时间' }
+  { prop: 'createTime', label: '创建时间', minWidth: '160px' }
 ])
 </script>
+
+<style scoped>
+/* --- 封禁详情专属警示样式 --- */
+.ban-box {
+  /* 覆盖 expand-value 的默认背景，改为危险色的极浅背景 */
+  background-color: var(--el-color-danger-light-9) !important;
+  border-color: var(--el-color-danger-light-7) !important;
+  color: var(--el-color-danger);
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* 两行之间增加呼吸感间距 */
+}
+
+.ban-item {
+  display: flex;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ban-label {
+  font-weight: bold;
+  margin-right: 8px;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.ban-text {
+  flex: 1;
+  word-break: break-all;
+  color: var(--el-color-danger);
+}
+</style>

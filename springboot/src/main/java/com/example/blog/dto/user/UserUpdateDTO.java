@@ -2,6 +2,7 @@ package com.example.blog.dto.user;
 
 import com.example.blog.annotation.CheckSensitive;
 import com.example.blog.common.enums.BizStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
+
+import java.time.LocalDateTime;
 
 /**
  * 修改用户DTO (后台管理专用)
@@ -24,11 +27,6 @@ public class UserUpdateDTO {
     @NotNull(message = "用户ID不能为空")
     @Positive(message = "用户ID必须为正整数")
     private Long id;
-
-    @Schema(description = "邮箱地址", example = "admin@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank(message = "邮箱不能为空")
-    @Email(message = "邮箱格式不正确")
-    private String email;
 
     @Schema(description = "用户昵称 (只能包含中文、字母、数字和下划线)", example = "极客博主", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "昵称不能为空")
@@ -56,5 +54,15 @@ public class UserUpdateDTO {
 
     @Schema(description = "账号状态", example = "NORMAL")
     private BizStatus.User status;
+
+
+    @Schema(description = "封禁到期时间", example = "2023-12-31 23:59:59")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private LocalDateTime disableEndTime;
+
+    @Schema(description = "封禁原因", example = "发布违规不良信息")
+    @Size(max = 255, message = "封禁原因不能超过255个字符")
+    @CheckSensitive(message = "封禁原因包含违规词汇，请修改")
+    private String disableReason;
 
 }

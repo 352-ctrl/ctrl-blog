@@ -104,6 +104,7 @@ export const useUserStore = defineStore('user', () => {
             } else {
                 return {
                     success: false,
+                    code: res.code,
                     msg: res.msg || '登录失败'
                 }
             }
@@ -111,6 +112,7 @@ export const useUserStore = defineStore('user', () => {
             console.error('登录失败:', error)
             return {
                 success: false,
+                code: error.code,
                 msg: error.msg || '登录失败，请检查网络'
             }
         } finally {

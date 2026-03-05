@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.Article;
@@ -47,7 +48,7 @@ public class BlogTask {
     private SysLoginLogService sysLoginLogService;
 
     @Resource
-    private SysMessageService sysMessageService;
+    private MessageService messageService;
 
     @Resource
     private FileService fileService;
@@ -142,7 +143,7 @@ public class BlogTask {
         // --- 子任务 E: 清理系统消息通知 ---
         try {
             LocalDateTime msgLimitDate = LocalDateTime.now().minusDays(messageRetentionDays);
-            int count = sysMessageService.clearMessageTrash(msgLimitDate);
+            int count = messageService.clearMessageTrash(msgLimitDate);
             if (count > 0) log.info("[维护] 物理删除旧系统消息: {} 条", count);
         } catch (Exception e) {
             log.error("[维护] 清理系统消息失败", e);
@@ -197,6 +198,27 @@ public class BlogTask {
             }
         } catch (Exception e) {
             log.error("[维护] 清理孤儿文件失败", e);
+        }
+
+        // --- 子任务 H: 扫描并主动解封已到期的用户 ---
+        try {
+            log.info("开始扫描并主动解封已到期的用户...");
+            LambdaUpdateWrapper<User> unbanWrapper = new LambdaUpdateWrapper<>();
+            unbanWrapper.set(User::getStatus, BizStatus.User.NORMAL)
+                    .set(User::getDisableEndTime, null)
+                    .set(User::getDisableReason, null)
+                    .eq(User::getStatus, BizStatus.User.DISABLE)
+                    .isNotNull(User::getDisableEndTime)
+                    .le(User::getDisableEndTime, LocalDateTime.now()); // 到期时间 <= 当前时间
+
+            boolean success = userService.update(unbanWrapper);
+            if (success) {
+                log.info("[维护] 自动解封任务执行完成！");
+            } else {
+                log.info("[维护] 暂无需要自动解封的用户");
+            }
+        } catch (Exception e) {
+            log.error("[维护] 自动解封任务执行失败", e);
         }
 
         log.info("=== 每日系统维护任务结束 ===");

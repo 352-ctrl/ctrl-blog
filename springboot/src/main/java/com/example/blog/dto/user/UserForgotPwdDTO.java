@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 public class UserForgotPwdDTO {
 
     @Schema(description = "注册邮箱 (将用于接收验证码)", example = "newuser@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Size(max = 100, message = "邮箱长度不能超过100个字符")
     @NotBlank(message = "邮箱不能为空")
     @Email(message = "邮箱格式不正确")
     private String email;

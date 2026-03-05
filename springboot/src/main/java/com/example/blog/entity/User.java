@@ -61,4 +61,16 @@ public class User extends BaseLogicEntity {
      */
     private LocalDateTime cancelTime;
 
+    /**
+     * 封禁到期时间 (为空表示未封禁或已解封)
+     * 如果 status 为 DISABLE，且此时间晚于当前时间，则表示在封禁期内
+     * 如果此时间为 2099 年或极大值，可代表永久封禁
+     */
+    private LocalDateTime disableEndTime;
+
+    /**
+     * 封禁原因
+     */
+    private String disableReason;
+
 }

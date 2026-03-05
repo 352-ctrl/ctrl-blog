@@ -21,6 +21,7 @@ import org.hibernate.validator.constraints.URL;
 public class UserAddDTO {
 
     @Schema(description = "邮箱地址", example = "test@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Size(max = 100, message = "邮箱长度不能超过100个字符")
     @NotBlank(message = "邮箱不能为空")
     @Email(message = "邮箱格式不正确")
     private String email;

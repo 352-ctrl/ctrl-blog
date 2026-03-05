@@ -19,8 +19,8 @@ import com.example.blog.dto.user.UserLoginDTO;
 import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.dto.user.UserRegisterDTO;
 import com.example.blog.entity.User;
-import com.example.blog.event.LoginLogEvent;
-import com.example.blog.event.UserRegisteredEvent;
+import com.example.blog.event.system.LoginLogEvent;
+import com.example.blog.event.user.UserRegisteredEvent;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.service.AuthService;
 import com.example.blog.service.UserService;
@@ -37,7 +37,8 @@ import org.springframework.util.Assert;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -139,7 +140,31 @@ public class AuthServiceImpl implements AuthService {
         Map<String, Object> model = new HashMap<>();
         model.put("code", code);
         model.put("title", subject);
-        mailService.sendHtmlMail(email, subject, model);
+        mailService.sendHtmlMail(email, subject, Constants.TEMPLATE_REGISTER_CODE, model);
+    }
+
+    /**
+     * 私有辅助方法：解析 Token 并将其加入 Redis 黑名单
+     * @param token 需要拉黑的 JWT 字符串
+     */
+    private void blacklistToken(String token) {
+        if (StrUtil.isBlank(token)) {
+            return;
+        }
+        try {
+            // 解析 Token 获取过期时间
+            DecodedJWT jwt = JWT.decode(token);
+            long remainingTime = jwt.getExpiresAt().getTime() - System.currentTimeMillis();
+
+            // 如果 Token 尚未过期，则将其拉入黑名单
+            if (remainingTime > 0) {
+                String blacklistKey = RedisConstants.REDIS_TOKEN_BLACKLIST_PREFIX + token;
+                // 将 Token 存入 Redis，过期时间设为 Token 的剩余寿命
+                redisUtil.set(blacklistKey, RedisConstants.REDIS_TOKEN_BLACKLIST_VALUE, remainingTime, TimeUnit.MILLISECONDS);
+            }
+        } catch (Exception e) {
+            // 解析失败说明 Token 本身无效或已损坏，无需额外处理
+        }
     }
 
     @Override
@@ -157,7 +182,7 @@ public class AuthServiceImpl implements AuthService {
         doSendEmailCode(
                 email,
                 RedisConstants.REDIS_EMAIL_REGISTER_CODE_KEY,
-                MessageConstants.MSG_EMAIL_SUBJECT_REGISTER
+                Constants.EMAIL_SUBJECT_REGISTER
         );
     }
 
@@ -176,7 +201,7 @@ public class AuthServiceImpl implements AuthService {
         doSendEmailCode(
                 email,
                 RedisConstants.REDIS_EMAIL_RESET_CODE_KEY,
-                MessageConstants.MSG_EMAIL_SUBJECT_RESET
+                Constants.EMAIL_SUBJECT_RESET
         );
     }
 
@@ -200,9 +225,9 @@ public class AuthServiceImpl implements AuthService {
                 // 格式化字符串
                 String msg = String.format(MessageConstants.MSG_LOGIN_LOCKED, displayTime);
                 // 记录因为锁定导致的登录失败
-                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_LOCKED);
+                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), Constants.LOG_LOGIN_LOCKED);
                 // 抛出带有动态时间的异常
-                throw new CustomerException(ResultCode.FORBIDDEN, msg);
+                throw new CustomerException(ResultCode.ACCOUNT_LOCKED, msg);
             }
         }
         // 查询用户
@@ -218,20 +243,65 @@ public class AuthServiceImpl implements AuthService {
             long currentFailCount = recordLoginFailed(failKey);
             if (currentFailCount >= 5) {
                 // 如果正好达到 5 次，直接抛出锁定异常
-                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_LOCKED);
+                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), Constants.LOG_LOGIN_LOCKED);
                 // 锁定 30 分钟
-                throw new CustomerException(ResultCode.FORBIDDEN, String.format(MessageConstants.MSG_LOGIN_LOCKED, RedisConstants.LOGIN_LOCKED_TIME));
+                throw new CustomerException(ResultCode.ACCOUNT_LOCKED, String.format(MessageConstants.MSG_LOGIN_LOCKED, RedisConstants.LOGIN_LOCKED_TIME));
             } else {
                 // 还没到 5 次，抛出普通的密码错误
-                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_PWD_ERROR);
+                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), Constants.LOG_LOGIN_PWD_ERROR);
                 throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
             }
         }
 
+        // 判断是否封禁
         if (dbUser.getStatus() == BizStatus.User.DISABLE) {
-            recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.LOG_LOGIN_BANNED);
-            // 如果是封禁状态，即使密码对也不让进
-            throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_ACCOUNT_BANNED);
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime disableEndTime = dbUser.getDisableEndTime();
+
+            // 1. 判断是否刑满释放 (有封禁时间，且当前时间已经超过了封禁时间)
+            if (disableEndTime != null && now.isAfter(disableEndTime)) {
+                // 1.1 更新数据库，恢复正常状态并清空封禁时间
+                LambdaUpdateWrapper<User> unbanWrapper = new LambdaUpdateWrapper<>();
+                unbanWrapper.set(User::getStatus, BizStatus.User.NORMAL)
+                        .set(User::getDisableEndTime, null)
+                        .set(User::getDisableReason, null)
+                        .eq(User::getId, dbUser.getId());
+                userService.update(unbanWrapper);
+
+                // 1.2 同步更新内存里的 dbUser 对象，保证后续生成 Token 等流程顺利进行
+                dbUser.setStatus(BizStatus.User.NORMAL);
+                dbUser.setDisableEndTime(null);
+                dbUser.setDisableReason(null);
+
+                // 此时代码会继续往下走，正常登录成功
+            } else {
+                // 2. 还在封禁期内 (或者没有封禁时间但状态是禁用)
+                recordAuthLog(email, BizStatus.Log.FAIL.getValue(), Constants.LOG_LOGIN_BANNED);
+
+                String banMsg = MessageConstants.MSG_ACCOUNT_BANNED; // 默认提示：“账号已被禁用”
+
+                // 获取封禁原因
+                String reason = StrUtil.isNotBlank(dbUser.getDisableReason()) ? dbUser.getDisableReason() : StrUtil.EMPTY;
+
+                String displayReason = StrUtil.isNotBlank(reason) ? reason : Constants.DEFAULT_NO_REASON;
+
+                if (disableEndTime != null) {
+                    // 如果年份极大，视为永久封禁
+                    if (disableEndTime.getYear() > Constants.PERMANENT_BAN_YEAR_THRESHOLD) {
+                        banMsg = String.format(MessageConstants.MSG_ACCOUNT_BANNED_PERMANENT, displayReason);
+                    } else {
+                        // 格式化时间给用户看
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.FORMAT_DATETIME_SHORT);
+                        banMsg = String.format(MessageConstants.MSG_ACCOUNT_BANNED_TEMPORARY, disableEndTime.format(formatter), displayReason);
+                    }
+                } else {
+                    // 如果没有明确的时间，只拼接原因
+                    if (StrUtil.isNotBlank(reason)) {
+                        banMsg += Constants.BAN_REASON_PREFIX + reason;
+                    }
+                }
+                throw new CustomerException(ResultCode.ACCOUNT_BANNED, banMsg);
+            }
         }
 
         boolean isRestored = false; // 标记是否触发了恢复
@@ -254,7 +324,7 @@ public class AuthServiceImpl implements AuthService {
         redisUtil.delete(failKey);
 
         // 调用私有方法统一构建返回值
-        return buildLoginResult(dbUser, isRestored, MessageConstants.LOG_LOGIN_SUCCESS);
+        return buildLoginResult(dbUser, isRestored, Constants.LOG_LOGIN_SUCCESS);
     }
 
     @Override
@@ -321,7 +391,7 @@ public class AuthServiceImpl implements AuthService {
         // 发送欢迎系统通知
         eventPublisher.publishEvent(new UserRegisteredEvent(this, user.getId()));
         // 调用私有方法统一构建返回值
-        return buildLoginResult(user, false, MessageConstants.LOG_REGISTER_AND_LOGIN_SUCCESS);
+        return buildLoginResult(user, false, Constants.LOG_REGISTER_AND_LOGIN_SUCCESS);
     }
 
     @Override
@@ -385,44 +455,44 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String token) {
-        // 1. 基础校验
         if (StrUtil.isBlank(token)) {
             return;
         }
 
         try {
-            // 2. 解析 Token 获取过期时间
-            DecodedJWT jwt = JWT.decode(token);
-            Date expiresAt = jwt.getExpiresAt();
+            // 1. 将当前传入的 Token 拉入黑名单
+            this.blacklistToken(token);
 
-            // 3. 计算 Token 距离过期的剩余毫秒数
-            long currentTime = System.currentTimeMillis();
-            long remainingTime = expiresAt.getTime() - currentTime;
-
-            // 4. 如果 Token 尚未过期，则将其拉入黑名单
-            if (remainingTime > 0) {
-                String blacklistKey = RedisConstants.REDIS_TOKEN_BLACKLIST_PREFIX + token;
-
-                // 将 Token 存入 Redis，过期时间设为 Token 的剩余寿命
-                // 这样可以保证 Redis 空间不被永久浪费，Token 真正过期后黑名单也会自动消失
-                redisUtil.set(blacklistKey, RedisConstants.REDIS_TOKEN_BLACKLIST_VALUE, remainingTime, TimeUnit.MILLISECONDS);
-            }
-
-            // 5. 清理该用户的基本信息缓存 (如果有的话)
+            // 2. 清理当前用户的 Redis 缓存
             UserPayloadDTO currentUser = UserContext.get();
             if (currentUser != null && currentUser.getId() != null) {
                 Long userId = currentUser.getId();
-                // 5.1 清理用户信息缓存
                 redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + userId);
-                // 5.2 清理该用户的在线 Token 记录，保持 Redis 干净
                 redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + userId);
             }
-
-        } catch (Exception e) {
-            // 解析失败说明 Token 本身无效，无需额外处理
         } finally {
-            // 6. 强制清理当前线程变量
+            // 3. 强制清理当前线程变量，防止内存泄漏
             UserContext.remove();
         }
+    }
+
+    @Override
+    public void forceLogoutByUserId(Long userId) {
+        if (userId == null) {
+            return;
+        }
+
+        // 1. 从 Redis 中找出该用户当前在线的 Token，并将其拉入黑名单
+        String tokenKey = RedisConstants.REDIS_USER_TOKEN_KEY + userId;
+        Object oldTokenObj = redisUtil.get(tokenKey);
+
+        if (oldTokenObj != null) {
+            this.blacklistToken(oldTokenObj.toString());
+            // 彻底移除该用户的在线 Token 记录
+            redisUtil.delete(tokenKey);
+        }
+
+        // 2. 清除用户的基本信息缓存
+        redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + userId);
     }
 }

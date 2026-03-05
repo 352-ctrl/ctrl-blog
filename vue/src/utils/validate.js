@@ -34,6 +34,10 @@ export const validateEmail = (rule, value, callback) => {
     if (!value) {
         return callback(new Error("请输入邮箱"));
     }
+    const email = value.trim();
+    if (email.length > 100) {
+        return callback(new Error("邮箱长度不能超过100个字符"));
+    }
     if (!regEmail.test(value.trim())) {
         return callback(new Error("请输入有效的邮箱地址"));
     }

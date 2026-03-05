@@ -59,4 +59,16 @@ public class UserVO {
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
+
+    @Schema(
+            description = "封禁解封时间",
+            example = "2023-10-31 10:24:00",
+            type = "string",
+            pattern = "yyyy-MM-dd HH:mm:ss"
+    )
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private LocalDateTime disableEndTime;
+
+    @Schema(description = "封禁原因", example = "发布违规不良信息")
+    private String disableReason;
 }
