@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.blog.bo.ArticleExtraContext;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
@@ -17,9 +18,9 @@ import com.example.blog.entity.Article;
 import com.example.blog.entity.Category;
 import com.example.blog.entity.Comment;
 import com.example.blog.exception.CustomerException;
+import com.example.blog.manager.builder.ArticleContextBuilder;
 import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.service.*;
-import com.example.blog.utils.ArticleAssembler;
 import com.example.blog.utils.RedisUtil;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.TagVO;
@@ -63,7 +64,7 @@ public class ArticleQueryManager {
     @Resource
     private ArticleFavoriteService articleFavoriteService;
     @Resource
-    private ArticleAssembler articleAssembler;
+    private ArticleContextBuilder articleContextBuilder;
     @Resource
     private ArticleCacheManager articleCacheManager;
 
@@ -127,8 +128,8 @@ public class ArticleQueryManager {
         List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
                 .select(Article::getId, Article::getTitle, Article::getSummary)
                 .eq(Article::getStatus, BizStatus.Article.PUBLISHED));
-        Map<String, Object> extraMaps = articleAssembler.queryBaseArticleExtraMaps(articles);
-        return articleConvert.entitiesToSearchVos(articles, extraMaps);
+        ArticleExtraContext context = articleContextBuilder.queryBaseArticleExtraContext(articles);
+        return articleConvert.entitiesToSearchVos(articles, context);
     }
 
     public ArticleDetailVO getArticleDetail(Long id) {
@@ -227,8 +228,8 @@ public class ArticleQueryManager {
         if (article == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_ARTICLE_NOT_EXIST);
         }
-        Map<String, Object> extraMaps = articleAssembler.queryArticleExtraMaps(article);
-        return articleConvert.entityToAdminVo(article, extraMaps);
+        ArticleExtraContext context = articleContextBuilder.queryArticleExtraContext(article); // 修改此处
+        return articleConvert.entityToAdminVo(article, context);
     }
 
     @SuppressWarnings("unchecked")
@@ -392,8 +393,8 @@ public class ArticleQueryManager {
         // 同步 Redis 中的最新浏览量到文章实体中
         articleCacheManager.syncViewCount(articles, Article::getId, Article::setViewCount);
 
-        Map<String, Object> extraMaps = articleAssembler.batchQueryArticleExtraMaps(articles);
-        List<ArticleCardVO> vos = articleConvert.entitiesToListVos(articles, extraMaps);
+        ArticleExtraContext context = articleContextBuilder.batchQueryArticleExtraContext(articles); // 修改此处
+        List<ArticleCardVO> vos = articleConvert.entitiesToListVos(articles, context);
         IPage<ArticleCardVO> voiPage = articleIPage.convert(article -> null);
         voiPage.setRecords(vos);
         if (isFirstPageHome) {
@@ -427,8 +428,8 @@ public class ArticleQueryManager {
         // 同步 Redis 中的最新浏览量到文章实体中
         articleCacheManager.syncViewCount(articles, Article::getId, Article::setViewCount);
 
-        Map<String, Object> extraMaps = articleAssembler.batchQueryArticleExtraMaps(articles);
-        List<AdminArticleVO> adminVos = articleConvert.entitiesToAdminVos(articles, extraMaps);
+        ArticleExtraContext context = articleContextBuilder.batchQueryArticleExtraContext(articles); // 修改此处
+        List<AdminArticleVO> adminVos = articleConvert.entitiesToAdminVos(articles, context);
         IPage<AdminArticleVO> adminVOIPage = articleIPage.convert(article -> null);
         adminVOIPage.setRecords(adminVos);
         return adminVOIPage;

@@ -39,7 +39,7 @@ public class MailService {
      * @param model 模板数据模型
      */
     @Async // 异步发送，防止发邮件的网络延迟卡住用户注册
-    public void sendHtmlMail(String to, String subject, Map<String, Object> model) {
+    public void sendHtmlMail(String to, String subject, String templateName, Map<String, Object> model) {
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -48,7 +48,7 @@ public class MailService {
             helper.setSubject(subject);
 
             // 获取 FreeMarker 模板
-            Template template = freeMarkerConfigurer.getConfiguration().getTemplate("register_code.ftl");
+            Template template = freeMarkerConfigurer.getConfiguration().getTemplate(templateName);
             // 将数据模型注入模板，生成 HTML 字符串
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 

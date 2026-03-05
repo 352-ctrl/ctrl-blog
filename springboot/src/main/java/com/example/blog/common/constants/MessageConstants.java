@@ -69,16 +69,6 @@ public final class MessageConstants {
      */
     public static final String MSG_BATCH_DELETE_FAILED = "批量删除失败";
 
-    /**
-     * IP解析：未知位置
-     */
-    public static final String MSG_UNKNOWN_LOCATION = "未知位置";
-
-    /**
-     * IP解析：内网IP
-     */
-    public static final String MSG_LOCAL_IP = "内网IP";
-
 
     /* ============================== 2. 认证与授权消息 ============================== */
 
@@ -114,22 +104,7 @@ public final class MessageConstants {
      * 账号锁定提示 (包含占位符 %d)
      */
     public static final String MSG_LOGIN_LOCKED = "密码错误次数过多，账号已被锁定，请 %d 分钟后再试";
-    /**
-     * 注册邮件标题
-     */
-    public static final String MSG_EMAIL_SUBJECT_REGISTER = "【您的博客】注册验证码";
-    /**
-     * 忘记密码邮件标题
-     */
-    public static final String MSG_EMAIL_SUBJECT_RESET = "找回密码验证码";
-    /**
-     * 换绑邮箱邮件标题 (新增)
-     */
-    public static final String MSG_EMAIL_SUBJECT_BIND = "【您的博客】换绑邮箱验证码";
-    /**
-     * 换绑邮箱正文小标题 (新增)
-     */
-    public static final String TITLE_EMAIL_BIND = "换绑邮箱验证码";
+
     /**
      * 验证码已过期
      */
@@ -146,6 +121,16 @@ public final class MessageConstants {
      * 账号封禁
      */
     public static final String MSG_ACCOUNT_BANNED = "账号已被封禁，请联系管理员";
+
+    /**
+     * 账号永久封禁提示 (带1个占位符：原因)
+     */
+    public static final String MSG_ACCOUNT_BANNED_PERMANENT = "您的账号存在严重违规，已被永久封禁。原因：%s";
+
+    /**
+     * 账号限期封禁提示 (带2个占位符：时间, 原因)
+     */
+    public static final String MSG_ACCOUNT_BANNED_TEMPORARY = "您的账号因违规被封禁，解封时间：%s。原因：%s";
 
 
     /* ============================== 3. 用户与账号消息 ============================== */
@@ -182,6 +167,11 @@ public final class MessageConstants {
      * 删除用户：无法删除超级管理员
      */
     public static final String MSG_CANNOT_DELETE_ADMIN = "无法删除系统超级管理员";
+
+    /**
+     * 账号封禁默认原因
+     */
+    public static final String MSG_DEFAULT_BAN_REASON = "存在违规行为";
 
 
     /* ============================== 4. 内容业务消息 ============================== */
@@ -222,6 +212,11 @@ public final class MessageConstants {
      * 评论不存在
      */
     public static final String MSG_COMMENT_NOT_EXIST = "评论不存在";
+
+    /**
+     * 原评论已删除 (用于楼中楼引用内容的UI展示占位)
+     */
+    public static final String MSG_ORIGINAL_COMMENT_DELETED = "原评论已删除";
 
     /**
      * 公告不存在
@@ -284,19 +279,7 @@ public final class MessageConstants {
      */
     public static final String MSG_FAVORITE_NOT_FOUND = "未找到收藏记录，无法取消";
 
-    /* ============================== 7. 日志专属提示消息 ============================== */
-    /** 日志：登录成功 */
-    public static final String LOG_LOGIN_SUCCESS = "登录成功";
-    /** 日志：密码错误 */
-    public static final String LOG_LOGIN_PWD_ERROR = "密码错误";
-    /** 日志：账号被锁定 */
-    public static final String LOG_LOGIN_LOCKED = "账号被锁定，限制登录";
-    /** 日志：账号已封禁 */
-    public static final String LOG_LOGIN_BANNED = "账号已被封禁";
-    /** 日志：注册并自动登录成功 */
-    public static final String LOG_REGISTER_AND_LOGIN_SUCCESS = "注册并自动登录成功";
-
-    /* ============================== 8. 防越权专属提示消息 ============================== */
+    /* ============================== 7. 防越权专属提示消息 ============================== */
 
     /** 越权：禁止操作超级管理员 */
     public static final String MSG_CANNOT_OPERATE_SUPER_ADMIN = "越权操作：禁止修改或删除超级管理员";
@@ -309,7 +292,7 @@ public final class MessageConstants {
     /** 越权：禁止修改自己的角色权限 */
     public static final String MSG_CANNOT_CHANGE_OWN_ROLE = "安全限制：禁止修改自身的角色权限";
 
-    /* ============================== 9. 消息中心提示消息 ============================== */
+    /* ============================== 8. 消息中心提示消息 ============================== */
 
     /**
      * 消息不存在或无权操作
@@ -339,4 +322,60 @@ public final class MessageConstants {
     /** 消息：文章下架 (带占位符) */
     public static final String TITLE_ARTICLE_DELETE = "文章下架通知";
     public static final String CONTENT_ARTICLE_DELETE = "您发布的文章《%s》因违反社区规定或管理员操作已被删除。";
+
+    /* ============================== 9. 反馈与举报业务消息 ============================== */
+
+    /**
+     * 反馈已完结，禁止修改
+     */
+    public static final String MSG_FEEDBACK_ALREADY_TERMINATED = "该反馈已处于完结状态，无法再次修改";
+
+    /**
+     * 反馈记录不存在
+     */
+    public static final String MSG_FEEDBACK_NOT_EXIST = "反馈记录不存在";
+
+    /**
+     * 举报记录不存在
+     */
+    public static final String MSG_REPORT_NOT_EXIST = "举报记录不存在";
+
+    /**
+     * 反馈处理：默认已解决回复语
+     */
+    public static final String MSG_FEEDBACK_REPLY_RESOLVED = "您的反馈我们已处理完毕，感谢您的支持。";
+
+    /**
+     * 反馈处理：默认已驳回回复语
+     */
+    public static final String MSG_FEEDBACK_REPLY_REJECTED = "抱歉，您的反馈经评估暂无法处理或不予采纳。";
+
+    /**
+     * 申诉邮箱不存在或账号状态异常
+     */
+    public static final String MSG_APPEAL_EMAIL_INVALID = "该邮箱不存在或账号未处于封禁状态，请核实后重新提交";
+
+    /**
+     * 反馈处理：封禁申诉未找到对应邮箱账号
+     */
+    public static final String MSG_APPEAL_EMAIL_NOT_FOUND = "未找到该申诉邮箱关联的账号，无法自动解封";
+
+    /* ============================== 10. 站内信通知专项消息 ============================== */
+    /** 消息标题：反馈回复 */
+    public static final String TITLE_FEEDBACK_REPLY = "您的反馈已收到回复";
+    /** 消息内容：反馈回复 (带占位符) */
+    public static final String CONTENT_FEEDBACK_REPLY = "您提交的反馈【%s】处理状态已更新为：%s。管理员回复：%s";
+
+    /** 消息标题：举报处理结果 (发给举报人) */
+    public static final String TITLE_REPORT_RESULT = "您的举报处理结果";
+    /** 消息内容：举报属实 (发给举报人) */
+    public static final String CONTENT_REPORT_VALID = "您举报的违规内容已核实并处理，感谢您为维护社区环境作出的贡献。处理备注：%s";
+    /** 消息内容：举报驳回 (发给举报人) */
+    public static final String CONTENT_REPORT_INVALID = "抱歉，您提交的举报经审核未发现明显违规。处理备注：%s";
+
+    /** 消息标题：系统违规警告 (发给被举报人) */
+    public static final String TITLE_SYSTEM_WARNING = "系统违规处罚通知";
+    /** 消息内容：违规警告 (发给被举报人) */
+    public static final String CONTENT_SYSTEM_WARNING = "您发布的%s存在违规行为已被处理。原因：%s。请自觉遵守社区规范，多次违规将面临封号处罚。";
+
 }

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.example.blog.bo.CommentExtraContext;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.convert.CommentConvert;
@@ -14,11 +15,11 @@ import com.example.blog.dto.user.UserPayloadDTO;
 import com.example.blog.entity.Article;
 import com.example.blog.entity.Comment;
 import com.example.blog.entity.User;
+import com.example.blog.manager.builder.CommentContextBuilder;
 import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.mapper.CommentMapper;
 import com.example.blog.service.CommentLikeService;
 import com.example.blog.service.UserService;
-import com.example.blog.utils.CommentAssembler;
 import com.example.blog.utils.UserContext;
 import com.example.blog.vo.comment.AdminCommentVO;
 import com.example.blog.vo.comment.CommentVO;
@@ -49,24 +50,11 @@ public class CommentQueryManager {
     private CommentLikeService commentLikeService;
 
     @Resource
-    private CommentAssembler commentAssembler;
+    private CommentContextBuilder commentContextBuilder;
 
     @Resource
     private CommentConvert commentConvert;
 
-    /**
-     * 批量获取评论关联的附加信息（用户、文章）
-     */
-    private Map<String, Object> getCommentExtraInfo(List<Comment> comments) {
-        if (CollUtil.isEmpty(comments)) {
-            return Collections.emptyMap();
-        }
-        return commentAssembler.batchQueryCommentExtraMaps(comments);
-    }
-
-    /**
-     * 根据昵称查询用户ID列表
-     */
     private List<Long> getUserIdListByNickname(String userNickname) {
         if (StrUtil.isBlank(userNickname)) {
             return Collections.emptyList();
@@ -82,9 +70,6 @@ public class CommentQueryManager {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 根据标题查询文章ID列表
-     */
     private List<Long> getArticleIdListByTitle(String articleTitle) {
         if (StrUtil.isBlank(articleTitle)) {
             return Collections.emptyList();
@@ -100,9 +85,6 @@ public class CommentQueryManager {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 填充点赞状态
-     */
     private void fillLikeStatus(List<CommentVO> vos) {
         if (CollUtil.isEmpty(vos)) return;
 
@@ -122,9 +104,6 @@ public class CommentQueryManager {
         }
     }
 
-    /**
-     * 组装树形结构并封装结果
-     */
     private IPage<CommentVO> buildCommentTree(List<CommentVO> allVOs, List<Long> parentIds, Page<Comment> page) {
         if (CollUtil.isEmpty(allVOs)) {
             Page<CommentVO> emptyPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
@@ -196,8 +175,8 @@ public class CommentQueryManager {
         List<Comment> allComments = new ArrayList<>(parentPage.getRecords());
         allComments.addAll(childComments);
 
-        Map<String, Object> extraMaps = getCommentExtraInfo(allComments);
-        List<CommentVO> allCommentVOs = commentConvert.entitiesToFrontVos(allComments, extraMaps);
+        CommentExtraContext context = commentContextBuilder.buildExtraContext(allComments);
+        List<CommentVO> allCommentVOs = commentConvert.entitiesToFrontVos(allComments, context);
 
         fillLikeStatus(allCommentVOs);
 
@@ -238,8 +217,8 @@ public class CommentQueryManager {
             return commentPage.convert(c -> null);
         }
 
-        Map<String, Object> extraMaps = getCommentExtraInfo(records);
-        List<AdminCommentVO> adminVos = commentConvert.entitiesToAdminVos(records, extraMaps);
+        CommentExtraContext context = commentContextBuilder.buildExtraContext(records);
+        List<AdminCommentVO> adminVos = commentConvert.entitiesToAdminVos(records, context);
 
         Page<AdminCommentVO> resultPage = new Page<>();
         resultPage.setCurrent(page.getCurrent());

@@ -17,6 +17,9 @@ public enum ResultCode {
     PARAM_ERROR(400, "参数错误"),
     UNAUTHORIZED(401, "未授权，请登录"),
     FORBIDDEN(403, "拒绝访问"),
+    /* 业务特定错误码 */
+    ACCOUNT_BANNED(4031, "账号被封禁"),
+    ACCOUNT_LOCKED(4032, "账号被锁定"),
     NOT_FOUND(404, "资源不存在"),
     METHOD_NOT_ALLOWED(405, "请求方法不支持"),
     CONFLICT(409, "资源冲突"),

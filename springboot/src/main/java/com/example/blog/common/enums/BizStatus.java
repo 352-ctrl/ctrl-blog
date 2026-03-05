@@ -337,4 +337,138 @@ public final class BizStatus {
         @Override
         public String getValue() { return code; }
     }
+
+    /* ============================== 9. 反馈与举报业务 ============================== */
+
+    /**
+     * 意见反馈类型
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum FeedbackType implements BaseEnum<Integer> {
+        ADVICE(0, "意见建议"),
+        BUG(1, "BUG反馈"),
+        APPEAL(2, "封禁申诉"),
+        OTHER(3, "其他");
+
+        @EnumValue
+        private final Integer code;
+        @JsonValue
+        private final String desc;
+
+        @Override
+        public Integer getValue() { return code; }
+    }
+
+    /**
+     * 意见反馈处理状态
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum FeedbackStatus implements BaseEnum<Integer> {
+        PENDING(0, "待处理"),
+        PROCESSING(1, "处理中"),
+        RESOLVED(2, "已解决"),
+        REJECTED(3, "已驳回");
+
+        @EnumValue
+        private final Integer code;
+        @JsonValue
+        private final String desc;
+
+        @Override
+        public Integer getValue() { return code; }
+
+        public static FeedbackStatus getByCode(Integer code) {
+            if (code == null) {
+                return null;
+            }
+            return Arrays.stream(values())
+                    .filter(e -> e.getValue().equals(code))
+                    .findFirst()
+                    .orElse(null);
+        }
+    }
+
+    /**
+     * 举报目标类型
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum ReportTargetType implements BaseEnum<String> {
+        COMMENT("COMMENT", "评论"),
+        ARTICLE("ARTICLE", "文章"),
+        USER("USER", "用户");
+
+        @EnumValue
+        @JsonValue // String 类型的枚举，通常将 Code 返回给前端
+        private final String code;
+        private final String desc;
+
+        @Override
+        public String getValue() { return code; }
+    }
+
+    /**
+     * 举报处理状态
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum ReportStatus implements BaseEnum<Integer> {
+        PENDING(0, "待处理"),
+        VALID(1, "举报属实已处罚"),
+        INVALID(2, "驳回/恶意举报");
+
+        @EnumValue
+        private final Integer code;
+        @JsonValue // Integer 类型的枚举，按你当前系统规范，将 Desc 返回给前端展示
+        private final String desc;
+
+        @Override
+        public Integer getValue() { return code; }
+
+        public static ReportStatus getByCode(Integer code) {
+            if (code == null) {
+                return null;
+            }
+            return Arrays.stream(values())
+                    .filter(e -> e.getValue().equals(code))
+                    .findFirst()
+                    .orElse(null);
+        }
+    }
+
+    /**
+     * 举报原因枚举 (包含所有场景的聚合集合)
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum ReportReason implements BaseEnum<String> {
+        // --- 通用违规 ---
+        SPAM("SPAM", "垃圾广告"),
+        PORN("PORN", "色情低俗"),
+        ILLEGAL("ILLEGAL", "违法违规"),
+
+        // --- 偏向评论/互动的违规 ---
+        ABUSE("ABUSE", "人身攻击/引战谩骂"),
+
+        // --- 偏向文章的违规 ---
+        COPYRIGHT("COPYRIGHT", "抄袭/洗稿/侵权"),
+
+        // --- 偏向用户的违规 ---
+        IMPERSONATION("IMPERSONATION", "冒充他人/身份造假"),
+        PROFILE_VIOLATION("PROFILE_VIOLATION", "头像/昵称违规"),
+
+        // --- 兜底 ---
+        OTHER("OTHER", "其他原因");
+
+        @EnumValue
+        @JsonValue
+        private final String code;
+        private final String desc;
+
+        @Override
+        public String getValue() { return code; }
+    }
+
 }

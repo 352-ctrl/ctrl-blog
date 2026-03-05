@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.dto.article.ArticleVisitorDTO;
 import com.example.blog.entity.Article;
-import com.example.blog.event.UserInfoChangedEvent;
+import com.example.blog.event.user.UserInfoChangedEvent;
 import com.example.blog.mapper.ArticleMapper;
 import com.example.blog.utils.RedisUtil;
 import jakarta.annotation.Resource;

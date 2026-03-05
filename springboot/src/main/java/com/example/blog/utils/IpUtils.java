@@ -2,7 +2,6 @@ package com.example.blog.utils;
 
 import cn.hutool.core.util.StrUtil;
 import com.example.blog.common.constants.Constants;
-import com.example.blog.common.constants.MessageConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.lionsoul.ip2region.xdb.Searcher;
@@ -41,7 +40,7 @@ public class IpUtils {
      */
     public static String getCityInfo(String ip) {
         if (isEmptyIp(ip)) {
-            return MessageConstants.MSG_UNKNOWN_LOCATION;
+            return Constants.LOCATION_UNKNOWN;
         }
 
         // 过滤内网 IP (使用常量替换魔法值)
@@ -49,7 +48,7 @@ public class IpUtils {
                 || Constants.IP_LOCAL_V6.equals(ip)
                 || ip.startsWith(Constants.IP_LOCAL_PREFIX_192)
                 || ip.startsWith(Constants.IP_LOCAL_PREFIX_10)) {
-            return MessageConstants.MSG_LOCAL_IP;
+            return Constants.LOCATION_LOCAL_IP;
         }
 
         try {
@@ -66,7 +65,7 @@ public class IpUtils {
         } catch (Exception e) {
             log.error("根据 IP [{}] 获取地理位置失败: {}", ip, e.getMessage());
         }
-        return MessageConstants.MSG_UNKNOWN_LOCATION;
+        return Constants.LOCATION_UNKNOWN;
     }
 
     /**
