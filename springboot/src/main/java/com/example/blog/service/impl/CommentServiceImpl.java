@@ -18,7 +18,7 @@ import com.example.blog.entity.Article;
 import com.example.blog.entity.Comment;
 import com.example.blog.entity.CommentLike;
 import com.example.blog.entity.User;
-import com.example.blog.event.InteractiveMessageEvent;
+import com.example.blog.event.interaction.InteractiveMessageEvent;
 import com.example.blog.exception.CustomerException;
 import com.example.blog.manager.CommentQueryManager;
 import com.example.blog.mapper.ArticleMapper;
@@ -119,7 +119,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         if (!parentId.equals(Constants.COMMENT_ROOT_PARENT_ID)) {
             Comment parentComment = this.getById(parentId);
             if (parentComment == null) {
-                throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_COMMENT_NOT_EXIST);
+                throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_ORIGINAL_COMMENT_DELETED);
             }
             // 如果父评论也是子评论（说明当前是回复子评论）
             if (Objects.equals(parentComment.getParentId(), Constants.COMMENT_ROOT_PARENT_ID)) {

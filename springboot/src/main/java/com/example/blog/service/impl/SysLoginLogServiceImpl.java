@@ -10,7 +10,7 @@ import com.example.blog.common.constants.Constants;
 import com.example.blog.convert.SysLoginLogConvert;
 import com.example.blog.dto.SysLoginLogQueryDTO;
 import com.example.blog.entity.SysLoginLog;
-import com.example.blog.event.LoginLogEvent;
+import com.example.blog.event.system.LoginLogEvent;
 import com.example.blog.mapper.SysLoginLogMapper;
 import com.example.blog.service.SysLoginLogService;
 import com.example.blog.utils.IpUtils;

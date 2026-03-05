@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
@@ -416,8 +417,8 @@ public class UserProfileServiceImpl extends ServiceImpl<UserMapper, User> implem
         // 5. 异步发送邮件
         Map<String, Object> model = new java.util.HashMap<>();
         model.put("code", code);
-        model.put("title", MessageConstants.TITLE_EMAIL_BIND);
-        mailService.sendHtmlMail(emailRequestDTO.getEmail(), MessageConstants.MSG_EMAIL_SUBJECT_BIND, model);
+        model.put("title", Constants.EMAIL_TITLE_BIND);
+        mailService.sendHtmlMail(emailRequestDTO.getEmail(), Constants.EMAIL_SUBJECT_BIND, Constants.TEMPLATE_REGISTER_CODE, model);
     }
 
     @Override
