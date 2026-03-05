@@ -8,8 +8,7 @@
       @select="handleSelect"
   >
     <div v-if="showLogo" class="sidebar-logo-container">
-      <img src="../../../assets/images/logo.png" class="logo-img" alt="logo">
-      <span v-if="!isCollapse" class="logo-text">个人网站</span>
+      <AppLogo/>
     </div>
 
     <template v-for="item in menuRoutes" :key="item.path">
@@ -123,46 +122,11 @@ const menuRoutes = computed(() => {
 .sidebar-menu {
   border-right: none;
   background-color: transparent;
-  height: 100%; /* 确保占满父容器高度 */
-  overflow-y: auto; /* 内容超出高度时允许纵向滚动 */
-  overflow-x: hidden; /* 防止横向抖动 */
-
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
 }
 
 /* WebKit 内核浏览器 (Chrome, Safari, Edge) 隐藏滚动条 */
 .sidebar-menu::-webkit-scrollbar {
   display: none;
-}
-
-.sidebar-logo-container {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-
-  background-color: var(--el-bg-color);
-
-  height: 60px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  overflow: hidden;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.logo-img {
-  height: 32px; /* 稍微缩小一点 Logo 让其看起来更精致 */
-  border-radius: 50%;
-  padding: 0 5px;
-}
-
-.logo-text {
-  font-weight: 600;
-  font-size: 16px;
-  white-space: nowrap;
-  margin-left: 5px;
-  color: var(--el-text-color-primary); /* 适配暗黑模式字体颜色 */
 }
 
 /* ====================================

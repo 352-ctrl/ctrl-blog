@@ -5,8 +5,7 @@
       <el-drawer v-model="drawer" direction="ltr" :show-close="false" class="hide-md-up" :size="250">
         <template #header>
           <div class="drawer-header">
-            <img src="../../assets/images/logo.png" class="logo-img" alt="logo">
-            <span class="logo-text">个人网站</span>
+            <AppLogo/>
           </div>
         </template>
         <template #default>
@@ -15,7 +14,13 @@
       </el-drawer>
 
       <el-aside class="custom-aside hide-md-down" :style="{ width: isCollapse ? '64px' : '250px' }">
-        <AdminSidebar :is-collapse="isCollapse" :show-logo="true" />
+        <div class="aside-logo-container">
+          <AppLogo :is-collapse="isCollapse" />
+        </div>
+
+        <el-scrollbar class="aside-menu-scrollbar">
+          <AdminSidebar :is-collapse="isCollapse" :show-logo="false" />
+        </el-scrollbar>
       </el-aside>
 
       <el-container class="main-container">
@@ -147,12 +152,6 @@ const logout = () => {
   margin-right: 10px;
 }
 
-.logo-text {
-  font-weight: bold;
-  white-space: nowrap;
-  color: var(--el-text-color-primary); /* 适配暗黑模式字体 */
-}
-
 /* ====================================
    右侧区域 (Container & Header)
    ==================================== */
@@ -212,7 +211,6 @@ const logout = () => {
 .page-container {
   flex: 1;
   overflow-y: auto; /* 内容超出时显示滚动条 */
-  /* ✨ 主体内容容器：使用最底层的 page 背景色（白天浅灰，暗夜极黑） */
   background-color: var(--el-bg-color-page);
   padding: 15px; /* 可以给页面统一加内边距，根据需要调整 */
   margin: 0 !important;
@@ -248,5 +246,26 @@ const logout = () => {
 /* 修正菜单层级缩进 */
 :deep(.el-menu--inline .el-menu-item) {
   padding-left: 48px !important;
+}
+
+/* ====================================
+   侧边栏结构分离的专属容器
+   ==================================== */
+.aside-logo-container {
+  height: 60px; /* 与 Header 高度保持一致 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.aside-menu-scrollbar {
+  height: calc(100vh - 60px);
+}
+
+.aside-menu-scrollbar :deep(.el-scrollbar__bar) {
+  display: none !important;
 }
 </style>

@@ -1,7 +1,7 @@
 <html>
 <body>
 <div style="border: 1px solid #ddd; padding: 20px; max-width: 600px;">
-    <h2 style="color: #409EFF;">【您的博客】${title}</h2>
+    <h2 style="color: #409EFF;">【CtrlBlog】${title}</h2>
     <p>您好！感谢注册我们的博客系统。</p>
     <p>您的验证码为：<span style="color: #ff4500; font-size: 24px; font-weight: bold;">${code}</span></p>
     <p>该验证码在 5 分钟内有效，请勿泄露给他人。</p>

@@ -13,5 +13,13 @@ onMounted(() => {
   if (userStore.token) {
     userStore.fetchUserInfo()
   }
+
+  window.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      document.title = '404 Not Found - 精神出走中...';
+    } else {
+      document.title = '200 OK - 重新连接成功！';
+    }
+  });
 })
 </script>

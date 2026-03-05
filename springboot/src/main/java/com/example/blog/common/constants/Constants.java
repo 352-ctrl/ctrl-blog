@@ -86,12 +86,12 @@ public final class Constants {
     public static final String TEMPLATE_FEEDBACK_ADMIN = "feedback_admin_notice.ftl";
     public static final String TEMPLATE_FEEDBACK_REPLY = "feedback_reply.ftl";
 
-    public static final String EMAIL_SUBJECT_REGISTER = "【您的博客】注册验证码";
+    public static final String EMAIL_SUBJECT_REGISTER = "【CtrlBlog】注册验证码";
     public static final String EMAIL_SUBJECT_RESET = "找回密码验证码";
-    public static final String EMAIL_SUBJECT_BIND = "【您的博客】换绑邮箱验证码";
+    public static final String EMAIL_SUBJECT_BIND = "【CtrlBlog】换绑邮箱验证码";
     public static final String EMAIL_TITLE_BIND = "换绑邮箱验证码";
     public static final String EMAIL_SUBJECT_FEEDBACK_ADMIN = "【系统通知】收到新的用户反馈";
-    public static final String EMAIL_SUBJECT_FEEDBACK_REPLY = "【您的博客】您的反馈已收到回复";
+    public static final String EMAIL_SUBJECT_FEEDBACK_REPLY = "【CtrlBlog】您的反馈已收到回复";
 
 
     /* ---------- 分页通用配置 ---------- */

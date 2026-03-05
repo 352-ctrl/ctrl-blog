@@ -9,8 +9,7 @@
         <el-drawer v-model="drawer" direction="ltr" :show-close="false" :size="250">
           <template #header>
             <div class="drawer-header-row">
-              <img src="../../assets/images/logo.png" class="brand-logo" alt="logo">
-              <span class="brand-text">个人网站</span>
+              <AppLogo/>
             </div>
           </template>
           <template #default>
@@ -60,8 +59,7 @@
       </div>
 
       <div class="mobile-brand-center">
-        <img src="../../assets/images/logo.png" class="brand-logo" alt="logo">
-        <span class="brand-text">个人网站</span>
+        <AppLogo/>
       </div>
 
       <div class="header-right-tools mobile-right-tools">
@@ -73,8 +71,7 @@
 
     <el-header class="common-header hide-md-down show-md-up">
       <div class="desktop-logo-wrapper">
-        <img src="../../assets/images/logo.png" class="brand-logo" alt="logo">
-        <span class="brand-text">个人网站</span>
+        <AppLogo/>
       </div>
 
       <div class="desktop-menu-wrapper">
@@ -369,14 +366,6 @@ html.dark .page-scroll-view {
   margin-right: 10px;
 }
 
-.brand-text {
-  font-weight: bold;
-  font-size: 18px;
-  white-space: nowrap;
-  color: var(--el-text-color-primary);
-  transition: color 0.3s;
-}
-
 .header-left-box {
   display: flex;
   align-items: center;
@@ -423,7 +412,7 @@ html.dark .page-scroll-view {
 .desktop-logo-wrapper {
   display: flex;
   align-items: center;
-  padding-right: 40px;
+  padding-right: 20px;
 }
 
 .desktop-menu-wrapper {
