@@ -108,8 +108,8 @@ const goToProfile = () => {
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--el-border-color); /* 适配暗黑模式的边框 */

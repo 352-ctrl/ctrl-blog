@@ -83,36 +83,36 @@
             :ellipsis="false"
         >
           <el-menu-item index="/">
-            <el-icon><HomeFilled /></el-icon>
+            <el-icon><House /></el-icon>
             <span>首页</span>
           </el-menu-item>
 
           <el-sub-menu index="explore" popper-class="auto-width-popper">
             <template #title>
-              <el-icon><Compass /></el-icon>
+              <el-icon><Guide /></el-icon>
               <span>探索</span>
             </template>
             <el-menu-item index="/categories">
-              <el-icon><Folder /></el-icon>
+              <el-icon><FolderOpened /></el-icon>
               <span>分类</span>
             </el-menu-item>
             <el-menu-item index="/tags">
-              <el-icon><CollectionTag /></el-icon>
+              <el-icon><PriceTag /></el-icon>
               <span>标签</span>
             </el-menu-item>
             <el-menu-item index="/archive">
-              <el-icon><Box /></el-icon>
+              <el-icon><TakeawayBox /></el-icon>
               <span>归档</span>
             </el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="more" popper-class="auto-width-popper">
             <template #title>
-              <el-icon><MoreFilled /></el-icon>
+              <el-icon><More /></el-icon>
               <span>更多</span>
             </template>
             <el-menu-item index="/about">
-              <el-icon><InfoFilled /></el-icon>
+              <el-icon><Warning /></el-icon>
               <span>关于本站</span>
             </el-menu-item>
           </el-sub-menu>
@@ -143,7 +143,9 @@
       <ThemeToggle />
     </div>
 
-    <el-backtop target=".page-scroll-view" :right="50" :bottom="50" class="custom-float-btn" />
+    <el-backtop target=".page-scroll-view" :right="50" :bottom="50" class="custom-float-btn">
+      <el-icon><Top /></el-icon>
+    </el-backtop>
 
     <AuthDialog />
 

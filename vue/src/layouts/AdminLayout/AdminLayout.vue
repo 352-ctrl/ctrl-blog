@@ -173,9 +173,15 @@ const logout = () => {
   flex-shrink: 0; /* 防止头部被压缩 */
 }
 
-.header-left, .header-right {
+.header-left {
   display: flex;
   align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* 【修改】：使用 gap 替代 margin，更容易做整体缩放 */
 }
 
 .breadcrumb-nav {
@@ -201,10 +207,6 @@ const logout = () => {
   background-color: transparent !important;
 }
 
-.theme-toggle-btn {
-  margin-right: 15px; /* 距离右侧头像下拉框一定的间距 */
-}
-
 /* ====================================
    下方内容容器 (Main)
    ==================================== */
@@ -222,6 +224,25 @@ const logout = () => {
 @media screen and (max-width: 992px) {
   .common-header {
     padding: 0 10px; /* 移动端减小 Header 的左右内边距 */
+  }
+
+  /* 移动端缩小右侧工具栏（头像、暗黑模式切换等） */
+  .header-right {
+    transform: scale(0.85);
+    transform-origin: right center;
+    gap: 10px; /* 缩小间距 */
+  }
+
+  /* 稍微缩小左侧汉堡菜单图标 */
+  .action-btn {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  /* 手机屏幕极窄时，隐藏面包屑导航，防止与右侧头像重叠挤压 */
+  .breadcrumb-nav {
+    display: none;
   }
 }
 
