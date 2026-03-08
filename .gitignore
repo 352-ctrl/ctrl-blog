@@ -1,16 +1,74 @@
-# Java 忽略
+# ========================================
+# 1. 操作系统相关 (OS Files)
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ========================================
+# 2. IDE / 编辑器相关 (IDE & Editors)
+# ========================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+
+# ========================================
+# 3. 后端：Spring Boot / Java / Maven
+# ========================================
+# 编译与构建输出
 target/
 *.class
+
+# 打包文件
 *.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
-# IDEA 忽略
-.idea/
-files/
-*.iml
+# 日志文件
+*.log
+logs/
 
-# Vue 忽略
+# Maven 包装器 (保留 properties 保证版本一致，忽略 jar 包节省空间)
+.mvn/wrapper/maven-wrapper.jar
+
+# ========================================
+# 4. 前端：Vue / Node.js
+# ========================================
+# 依赖包目录
 node_modules/
+/ctrl-blog-ui/node_modules/
+
+# 生产构建输出
 dist/
+dist-ssr/
+
+# 包管理器日志文件
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+
+# 本地环境变量 (前端防止本地接口地址泄露)
+.env.local
+.env.*.local
+
+# 各种构建/检查工具的缓存
+.eslintcache
+.stylelintcache
+
+# ========================================
+# 5. 业务特定 / 其他临时文件
+# ========================================
+files/
+uploads/
+temp/
