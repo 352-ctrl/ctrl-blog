@@ -107,7 +107,7 @@ file:
   # 这里的 ${user.dir} 会自动被 Spring 替换为当前项目运行的根目录
   upload-path: ${FILE_UPLOAD_PATH:${user.dir}/files/}
   # 访问前缀 (开发环境写 localhost，生产环境改域名)
-  access-path: ${FILE_ACCESS_HOST}/api/files/download/
+  access-path: ${FILE_ACCESS_HOST}/api/v1/files/
 
 management:
   endpoints:

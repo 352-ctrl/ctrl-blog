@@ -31,8 +31,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(
-                        "/api/auth/**",
-                        "/api/files/download/**",
+                        "/api/v1/auth/**",
+                        "/api/v1/files/*.*",
                         "/error",
                         "/actuator",
                         "/captcha/**",
@@ -43,10 +43,10 @@ public class WebConfig implements WebMvcConfigurer {
                 );
 
         registry.addInterceptor(visitInterceptor)
-                .addPathPatterns("/api/front/articles/**")  // 拦截前端路径
+                .addPathPatterns("/api/v1/articles/**")  // 拦截前端路径
                 .excludePathPatterns(
-                        "/api/front/articles/*/view",
-                        "/api/front/articles/search/index"
+                        "/api/v1/articles/*/view",
+                        "/api/v1/articles/search/index"
                 );
     }
 
