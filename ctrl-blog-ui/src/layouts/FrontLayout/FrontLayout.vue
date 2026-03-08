@@ -43,6 +43,11 @@
                 </el-menu-item>
               </el-sub-menu>
 
+              <el-menu-item index="/board">
+                <el-icon><ChatDotRound /></el-icon>
+                <span>留言板</span>
+              </el-menu-item>
+
               <el-sub-menu index="more">
                 <template #title>
                   <el-icon><MoreFilled /></el-icon>
@@ -105,6 +110,11 @@
               <span>归档</span>
             </el-menu-item>
           </el-sub-menu>
+
+          <el-menu-item index="/board">
+            <el-icon><ChatDotRound /></el-icon>
+            <span>留言板</span>
+          </el-menu-item>
 
           <el-sub-menu index="more" popper-class="auto-width-popper">
             <template #title>
@@ -465,6 +475,7 @@ html.dark .page-scroll-view {
   justify-content: center;
   font-size: 20px !important;
   cursor: pointer;
+  z-index: 99 !important;
 }
 
 .custom-float-btn:hover,

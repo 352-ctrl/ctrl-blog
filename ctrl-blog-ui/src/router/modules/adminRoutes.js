@@ -74,6 +74,12 @@ export const adminRoutes = {
                     name: 'AdminNoticeList',
                     component: () => import('@/views/admin/operation/notice/NoticeList.vue'),
                     meta: { title: '公告管理', icon: 'Bell' }
+                },
+                {
+                    path: 'danmakus',
+                    name: 'AdminDanmakuList',
+                    component: () => import('@/views/admin/operation/danmaku/DanmakuList.vue'),
+                    meta: { title: '弹幕管理', icon: 'VideoCamera' }
                 }
             ]
         },

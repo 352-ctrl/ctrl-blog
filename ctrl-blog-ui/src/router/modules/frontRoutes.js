@@ -30,6 +30,12 @@ export const frontRoutes = {
             meta: { title: '标签墙' }
         },
         {
+            path: 'board',
+            name: 'MessageBoard',
+            component: () => import('@/views/front/board/DanmakuBoard.vue'),
+            meta: { title: '留言板', hideSidebar: true }
+        },
+        {
             path: 'post/:id',
             name: 'FrontArticleDetail',
             component: () => import('@/views/front/article/ArticleDetail.vue'),
