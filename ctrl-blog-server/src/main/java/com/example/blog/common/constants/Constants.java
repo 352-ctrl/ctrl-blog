@@ -104,6 +104,12 @@ public final class Constants {
     public static final String DELETE_PREFIX = "#deleted_";
     public static final String DELETED_EMAIL_SUFFIX = "@null.com";
 
+    /* ---------- 默认占位符与兜底配置 ---------- */
+    /**
+     * 用于生成 Gravatar 默认头像的伪造邮箱后缀
+     */
+    public static final String GRAVATAR_DUMMY_DOMAIN = "@blog.com";
+
 
     // ============================== 外部资源与配置 ==============================
 

@@ -235,4 +235,16 @@ public final class RedisConstants {
      * 结构: blog:article:favorite:{articleId} -> Set<UserId>
      */
     public static final String REDIS_ARTICLE_FAVORITE_KEY = "blog:article:favorite:";
+
+    /* ============================== 7. 弹幕与互动 ============================== */
+
+    /**
+     * 弹幕列表缓存 Key
+     */
+    public static final String REDIS_DANMAKU_LIST_KEY = "blog:danmaku:list";
+
+    /**
+     * 弹幕列表缓存时间 (1小时)
+     */
+    public static final long EXPIRE_DANMAKU_LIST = 1L;
 }
