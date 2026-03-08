@@ -4,7 +4,7 @@ import com.example.blog.common.base.BaseConvert;
 import com.example.blog.modules.system.model.dto.SysJobAddDTO;
 import com.example.blog.modules.system.model.dto.SysJobUpdateDTO;
 import com.example.blog.modules.system.model.entity.SysJob;
-import com.example.blog.modules.article.model.convert.BizStatusTransform;
+import com.example.blog.common.base.BizStatusTransform;
 import com.example.blog.modules.system.model.vo.SysJobVO;
 import org.mapstruct.*;
 

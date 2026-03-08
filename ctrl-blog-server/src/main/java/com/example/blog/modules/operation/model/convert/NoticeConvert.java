@@ -5,7 +5,7 @@ import com.example.blog.modules.operation.model.dto.NoticeAddDTO;
 import com.example.blog.modules.operation.model.dto.NoticeUpdateDTO;
 import com.example.blog.modules.operation.model.entity.Notice;
 import com.example.blog.common.utils.MarkdownUtil;
-import com.example.blog.modules.article.model.convert.BizStatusTransform;
+import com.example.blog.common.base.BizStatusTransform;
 import com.example.blog.modules.operation.model.vo.AdminNoticeVO;
 import com.example.blog.modules.operation.model.vo.NoticeVO;
 import org.mapstruct.*;

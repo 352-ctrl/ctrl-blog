@@ -1,4 +1,4 @@
-package com.example.blog.modules.article.model.convert;
+package com.example.blog.common.base;
 
 import com.example.blog.common.enums.BaseEnum;
 import org.mapstruct.Mapper;

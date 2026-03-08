@@ -6,7 +6,7 @@ import com.example.blog.modules.user.model.dto.UserRegisterDTO;
 import com.example.blog.modules.user.model.dto.UserUpdateDTO;
 import com.example.blog.modules.user.model.entity.User;
 import com.example.blog.core.security.PasswordEncoderUtil;
-import com.example.blog.modules.article.model.convert.BizStatusTransform;
+import com.example.blog.common.base.BizStatusTransform;
 import com.example.blog.modules.user.model.vo.UserVO;
 import org.mapstruct.*;
 
