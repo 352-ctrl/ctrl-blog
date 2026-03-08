@@ -36,6 +36,12 @@ export const frontRoutes = {
             meta: { title: '文章详情' }
         },
         {
+            path: 'about',
+            name: 'FrontAbout',
+            component: () => import('@/views/front/about/About.vue'),
+            meta: { title: '关于我', hideSidebar: true }
+        },
+        {
             path: 'user',
             component: () => import('@/layouts/UserLayout/UserLayout.vue'),
             redirect: '/user/dashboard',
