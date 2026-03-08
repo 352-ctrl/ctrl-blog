@@ -1,6 +1,7 @@
 import axios from 'axios'
 import {ElMessage} from "element-plus";
 import router from "@/router/index.js";
+import {useUserStore} from "@/store/user.js";
 
 // 添加全局标志位，防止重复显示登录提示
 let isShowingLoginMessage = false
@@ -40,35 +41,7 @@ request.interceptors.response.use(
 
             // 1. 处理 401 登录过期
             if (res.code === 401 || res.code === 4031 || res.code === 4032) {
-                if (!isShowingLoginMessage) {
-                    isShowingLoginMessage = true
-
-                    ElMessage({
-                        message: res.msg || '登录已过期，请重新登录',
-                        type: 'error',
-                        duration: 2000,
-                        onClose: () => {
-                            // 重置标志位，允许下次再显示
-                            isShowingLoginMessage = false
-                        }
-                    })
-
-                    localStorage.removeItem('token')
-                    localStorage.removeItem('userInfo')
-
-                    // 判断当前页面是否必须登录
-                    const currentRoute = router.currentRoute.value;
-                    // 使用 matched 兼容嵌套路由的 meta 继承
-                    const isRequiresAuth = currentRoute.matched.some(record => record.meta.requiresAuth);
-
-                    if (isRequiresAuth) {
-                        // 必须登录的页面（如后台、消息中心），将其踢回主页（或者登录页）
-                        router.push("/")
-                    } else {
-                        // 如果是前台无需登录的页面，刷新页面让其变为游客状态
-                        window.location.reload();
-                    }
-                }
+                handleUnauthorized();
             }
             // 2. 处理 HTTP 权限不足
             else if (res.code === 403) {
@@ -92,15 +65,24 @@ request.interceptors.response.use(
         // ================= 全局 HTTP 状态码拦截 =================
         let errorMsg = '网络请求异常';
         if (error.response) {
-            if (error.response.status === 404) {
+            // 获取 HTTP 真实状态码
+            const status = error.response.status;
+
+            if (status === 401) {
+                handleUnauthorized();
+                return Promise.reject(error);
+            } else if (status === 404) {
                 errorMsg = '未找到请求接口';
-            } else if (error.response.status === 500) {
+            } else if (status === 500) {
                 errorMsg = '系统异常，请联系管理员';
-            } else if (error.response.status === 403) {
+            } else if (status === 403) {
                 errorMsg = '权限不足';
             } else {
-                errorMsg = error.message;
+                errorMsg = error.response.data?.msg || error.message;
             }
+        } else {
+            // 连 error.response 都没有，说明是网络断开或后端没启动 (ERR_CONNECTION_REFUSED)
+            errorMsg = '无法连接到服务器，请检查网络或后端服务是否启动';
         }
 
         ElMessage({
@@ -113,5 +95,31 @@ request.interceptors.response.use(
     }
 )
 
+function handleUnauthorized() {
+    if (!isShowingLoginMessage) {
+        isShowingLoginMessage = true
 
+        ElMessage({
+            message: '登录已过期，请重新登录',
+            type: 'error',
+            duration: 2000,
+            onClose: () => {
+                isShowingLoginMessage = false
+            }
+        })
+
+        const userStore = useUserStore();
+        userStore.clearUserData();
+
+        // 判断当前页面是否必须登录
+        const currentRoute = router.currentRoute.value;
+        const isRequiresAuth = currentRoute.matched.some(record => record.meta.requiresAuth);
+
+        if (isRequiresAuth) {
+            router.push("/")
+        } else {
+            userStore.openAuthDialog('login');
+        }
+    }
+}
 export default request
