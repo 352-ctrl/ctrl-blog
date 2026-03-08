@@ -1,5 +1,5 @@
 <template>
-  <div class="ctrl-blog-logo" :class="{ 'is-collapse': isCollapse }" :style="{ '--logo-size': size + 'px' }" @click="goToHome">
+  <div class="ctrl-blog-logo" :class="{ 'is-collapse': isCollapse }" @click="goToHome">
     <svg
         class="logo-icon"
         viewBox="0 0 100 100"
@@ -45,11 +45,9 @@ const goToHome = () => {
 </script>
 
 <style scoped>
-/* 使用 CSS 变量控制整体大小
-  CSS 变量的值由 Props 动态传入
-*/
+/* 使用 Vue 3 的 v-bind 特性动态绑定 size 属性 */
 .ctrl-blog-logo {
-  --logo-height: var(--logo-size);
+  --logo-height: v-bind('size + "px"');
 
   display: inline-flex;
   align-items: center; /* 垂直居中对齐，比 baseline 更稳重 */

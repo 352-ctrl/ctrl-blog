@@ -19,7 +19,7 @@
                 :disabled="isNicknameTooltipDisabled"
             >
               <template #content>
-                <div style="max-width: 200px; word-wrap: break-word;">
+                <div class="tooltip-nickname-content">
                   {{ userStore.userInfo?.nickname || '未命名用户' }}
                 </div>
               </template>
@@ -36,7 +36,7 @@
                 :disabled="isBioTooltipDisabled"
             >
               <template #content>
-                <div style="max-width: 250px; line-height: 1.6; word-wrap: break-word;">
+                <div class="tooltip-bio-content">
                   {{ userStore.userInfo?.bio || '这个人很懒，什么都没写~' }}
                 </div>
               </template>
@@ -157,6 +157,17 @@ const formatDate = (dateString) => {
 </script>
 
 <style scoped>
+.tooltip-nickname-content {
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+.tooltip-bio-content {
+  max-width: 250px;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
 .user-center-container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
 .user-info-card { border: none; border-radius: 12px; margin-bottom: 20px; background-color: var(--el-bg-color-overlay); }
 .user-profile-header { display: flex; flex-direction: column; align-items: center; padding: 10px 0; }

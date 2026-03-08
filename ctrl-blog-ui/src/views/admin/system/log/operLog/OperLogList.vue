@@ -45,7 +45,7 @@
           <el-row><el-form-item label="返回结果："><span class="expand-value-box">{{ row.result || '无' }}</span></el-form-item></el-row>
           <el-row v-if="row.status === 0 && row.errorMsg">
             <el-form-item label="异常信息：">
-              <span class="expand-value-box" style="color: var(--el-color-danger); border-color: var(--el-color-danger-light-7); background-color: var(--el-color-danger-light-9);">
+              <span class="expand-value-box error-msg-box">
                 {{ row.errorMsg }}
               </span>
             </el-form-item>
@@ -126,3 +126,12 @@ const columns = reactive([
   { prop: 'createTime', label: '操作时间', minWidth: '160px' }
 ]);
 </script>
+
+<style scoped>
+/* 异常信息的高亮警告样式 */
+.error-msg-box {
+  color: var(--el-color-danger);
+  border-color: var(--el-color-danger-light-7);
+  background-color: var(--el-color-danger-light-9);
+}
+</style>

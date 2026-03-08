@@ -15,17 +15,23 @@
       <AdminTable :table-data="tableData" :columns="feedbackColumns" :expandable="true" v-model:selectedIds="selectedIds" :delete-api="deleteFeedbackApi" delete-tip="确定删除该反馈吗？" @delete-success="loadData" @edit="handleProcess">
         <template #expand="{ row }">
           <el-row><el-form-item label="反馈内容："><span class="expand-value-box">{{ row.content || '无内容' }}</span></el-form-item></el-row>
-          <el-row v-if="row.adminReply"><el-form-item label="管理回复："><span class="expand-value-box" style="background-color: var(--el-color-primary-light-9); border-color: var(--el-color-primary-light-7);">{{ row.adminReply }}</span></el-form-item></el-row>
+          <el-row v-if="row.adminReply">
+            <el-form-item label="管理回复：">
+              <span class="expand-value-box admin-reply-box">{{ row.adminReply }}</span>
+            </el-form-item>
+          </el-row>
         </template>
       </AdminTable>
       <AdminPagination v-model:current-page="query.pageNum" v-model:page-size="query.pageSize" :total="total" @change="handlePageChange" />
     </div>
 
     <el-dialog v-model="dialog.visible.value" title="处理反馈" class="dialog-lg-down" width="800px">
-      <div style="background-color: #f5f7fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-        <p style="margin: 0 0 10px 0;"><strong>反馈内容：</strong></p>
-        <p style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ dialog.rowData.value.content }}</p>
-        <p v-if="dialog.rowData.value.contactEmail" style="margin: 10px 0 0 0; font-size: 12px; color: #666;"><strong>联系邮箱：</strong> {{ dialog.rowData.value.contactEmail }}</p>
+      <div class="feedback-info-container">
+        <p class="info-label"><strong>反馈内容：</strong></p>
+        <p class="info-content">{{ dialog.rowData.value.content }}</p>
+        <p v-if="dialog.rowData.value.contactEmail" class="contact-email-text">
+          <strong>联系邮箱：</strong> {{ dialog.rowData.value.contactEmail }}
+        </p>
       </div>
 
       <el-form ref="processFormRef" :model="dialog.rowData.value" :rules="processRules" label-width="100px">
@@ -61,7 +67,6 @@ const processFormRef = ref(null);
 const selectedIds = ref([]);
 const processRules = { status: [{ required: true, message: '请选择处理状态', trigger: 'change' }] };
 
-// Hooks 集成
 const { loading, list: tableData, total, query, loadData, handlePageChange, resetQuery } = useTable(getFeedbackPage, { type: null, status: null });
 const dialog = useDialog();
 const { loading: submitLoading, execute: execProcess } = useRequest(processFeedback, { successMsg: '处理成功' });
@@ -102,11 +107,31 @@ const feedbackColumns = reactive([
 </script>
 
 <style scoped>
-.truncate-text {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.admin-reply-box {
+  background-color: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary-light-7);
+}
+
+.feedback-info-container {
+  background-color: var(--el-fill-color-light); /* 适配暗黑模式 */
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.info-label {
+  margin: 0 0 10px 0;
+}
+
+.info-content {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.contact-email-text {
+  margin: 10px 0 0 0;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
 }
 </style>

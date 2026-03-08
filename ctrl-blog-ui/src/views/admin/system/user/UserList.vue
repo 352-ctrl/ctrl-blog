@@ -12,13 +12,17 @@
     <div class="card" v-loading="loading">
       <AdminTable :table-data="tableData" :columns="userColumns" :expandable="true" v-model:selectedIds="selectedIds" :delete-api="deleteUserApi" delete-tip="确定删除该用户吗？" :action-width="190" @edit="handleEdit" @delete-success="loadData">
         <template #expand="{ row }">
-          <el-row><el-form-item label="个人简介："><span class="expand-value-box">{{ row.bio || '该用户很懒，什么都没写~' }}</span></el-form-item></el-row>
+          <el-row>
+            <el-form-item label="个人简介："><span class="expand-value-box">{{ row.bio || '该用户很懒，什么都没写~' }}</span></el-form-item>
+          </el-row>
           <el-row v-if="row.status === 1 || row.disableReason || row.disableEndTime">
             <el-form-item label="封禁详情：">
               <div class="expand-value-box ban-box">
                 <div class="ban-item">
                   <span class="ban-label">解封时间：</span>
-                  <span class="ban-text" :style="{ fontWeight: row.disableEndTime?.startsWith('2099') ? 'bold' : 'normal' }">{{ !row.disableEndTime ? '未设置 (需手动解封)' : (row.disableEndTime.startsWith('2099') ? '永久封禁' : row.disableEndTime) }}</span>
+                  <span class="ban-text" :class="{ 'is-bold': row.disableEndTime?.startsWith('2099') }">
+                    {{ !row.disableEndTime ? '未设置 (需手动解封)' : (row.disableEndTime.startsWith('2099') ? '永久封禁' : row.disableEndTime) }}
+                  </span>
                 </div>
                 <div class="ban-item"><span class="ban-label">处罚原因：</span><span class="ban-text">{{ row.disableReason || '未填写具体原因' }}</span></div>
               </div>
@@ -38,7 +42,7 @@
         <el-form-item label="昵称" prop="nickname"><el-input v-model="dialog.rowData.value.nickname" autocomplete="off" placeholder="请输入昵称" /></el-form-item>
         <el-form-item label="密码" prop="password" v-if="!dialog.rowData.value.id"><el-input v-model="dialog.rowData.value.password" type="password" show-password autocomplete="off" placeholder="请输入密码" /></el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-select v-model="dialog.rowData.value.role" placeholder="请选择角色" style="width: 100%">
+          <el-select v-model="dialog.rowData.value.role" placeholder="请选择角色" class="full-width-input">
             <el-option label="超级管理员" value="SUPER_ADMIN" disabled />
             <el-option label="管理员" value="ADMIN" />
             <el-option label="普通用户" value="USER" />
@@ -52,8 +56,8 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="解封时间" prop="disableEndTime" v-if="dialog.rowData.value.status === 1">
-          <el-date-picker v-model="dialog.rowData.value.disableEndTime" type="datetime" placeholder="请选择自动解封时间" format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" clearable />
-          <div style="font-size: 12px; color: #909399; margin-top: 4px; line-height: 1.4;">留空代表无限期封禁(需手动解封)；选择未来的时间，系统将在该时间自动解封。</div>
+          <el-date-picker v-model="dialog.rowData.value.disableEndTime" type="datetime" placeholder="请选择自动解封时间" format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" class="full-width-input" clearable />
+          <div class="form-tip-text">留空代表无限期封禁(需手动解封)；选择未来的时间，系统将在该时间自动解封。</div>
         </el-form-item>
         <el-form-item label="封禁原因" prop="disableReason" v-if="dialog.rowData.value.status === 1"><el-input v-model="dialog.rowData.value.disableReason" type="textarea" :rows="2" maxlength="255" show-word-limit placeholder="请输入封禁原因" /></el-form-item>
         <el-form-item label="个人简介" prop="bio"><el-input v-model="dialog.rowData.value.bio" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="请输入个人简介" /></el-form-item>
@@ -157,7 +161,6 @@ const customUploadAvatar = async (options) => {
   try {
     const res = await uploadFile(formData);
     if (res.code === 200) {
-      // 成功后将返回的 URL 赋值给表单对象
       dialog.rowData.value.avatar = res.data;
       ElMessage.success('头像上传成功');
       options.onSuccess(res);
@@ -187,16 +190,30 @@ const userColumns = reactive([
 </script>
 
 <style scoped>
+.full-width-input {
+  width: 100%;
+}
+
+.form-tip-text {
+  font-size: 12px;
+  color: var(--el-text-color-secondary, #909399); /* 优先使用 Element Plus 主题变量 */
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.is-bold {
+  font-weight: bold;
+}
+
 /* --- 封禁详情专属警示样式 --- */
 .ban-box {
-  /* 覆盖 expand-value 的默认背景，改为危险色的极浅背景 */
   background-color: var(--el-color-danger-light-9) !important;
   border-color: var(--el-color-danger-light-7) !important;
   color: var(--el-color-danger);
   padding: 10px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px; /* 两行之间增加呼吸感间距 */
+  gap: 8px;
 }
 
 .ban-item {
@@ -229,7 +246,7 @@ const userColumns = reactive([
 .avatar-preview-img, .avatar-placeholder {
   width: 76px;
   height: 76px;
-  border-radius: 50%; /* 圆形头像显示 */
+  border-radius: 50%;
   border: 1px solid var(--el-border-color-lighter);
   flex-shrink: 0;
   box-shadow: var(--el-box-shadow-light);

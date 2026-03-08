@@ -60,7 +60,7 @@
         @closed="resetPasswordForm"
         append-to-body
     >
-      <el-alert title="修改成功后，当前账号会被强制下线，需重新登录。" type="warning" show-icon :closable="false" style="margin-bottom: 20px;" />
+      <el-alert title="修改成功后，当前账号会被强制下线，需重新登录。" type="warning" show-icon :closable="false" class="dialog-alert" />
       <el-form ref="passwordFormRef" :rules="passwordRules" :model="passwordData" label-width="85px" label-position="right">
         <el-form-item label="当前密码" prop="oldPassword"><el-input v-model="passwordData.oldPassword" type="password" show-password placeholder="请输入当前使用的密码" /></el-form-item>
         <el-form-item label="新密码" prop="newPassword"><el-input v-model="passwordData.newPassword" type="password" show-password placeholder="请输入新密码" /></el-form-item>
@@ -82,14 +82,16 @@
         @closed="resetEmailForm"
         append-to-body
     >
-      <el-alert title="换绑邮箱后，下次请使用新邮箱登录当前账号。" type="info" show-icon :closable="false" style="margin-bottom: 20px;" />
+      <el-alert title="换绑邮箱后，下次请使用新邮箱登录当前账号。" type="info" show-icon :closable="false" class="dialog-alert" />
       <el-form ref="emailFormRef" :rules="emailRules" :model="emailData" label-width="85px" label-position="right">
-        <el-form-item label="当前邮箱"><span style="color: var(--el-text-color-primary); font-weight: 500;">{{ userStore.email }}</span></el-form-item>
+        <el-form-item label="当前邮箱">
+          <span class="current-email-text">{{ userStore.email }}</span>
+        </el-form-item>
         <el-form-item label="新邮箱" prop="newEmail"><el-input v-model="emailData.newEmail" placeholder="请输入新邮箱地址" /></el-form-item>
         <el-form-item label="验证码" prop="code">
-          <div style="display: flex; gap: 10px; width: 100%;">
+          <div class="code-input-group">
             <el-input v-model="emailData.code" placeholder="请输入验证码" />
-            <el-button type="primary" :disabled="isSendingCode" @click="sendEmailCode" style="width: 130px;">{{ codeBtnText }}</el-button>
+            <el-button type="primary" :disabled="isSendingCode" @click="sendEmailCode" class="send-code-btn">{{ codeBtnText }}</el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -107,11 +109,10 @@
 
 <script setup>
 import { reactive, ref } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessageBox } from "element-plus";
 import { useUserStore } from '@/store/user.js';
 import { validatePasswordComplexity, validateEmail, validateVerifyCode } from "@/utils/validate.js";
 import { changePassword, sendBindEmailCode, changeEmail, requestAccountDeletion } from "@/api/front/system/userInfo.js";
-// 引入基础请求 Hook
 import { useRequest } from '@/composables/useRequest.js';
 
 const userStore = useUserStore();
@@ -125,7 +126,6 @@ const verifyRef = ref(null);
 const passwordData = reactive({ oldPassword: '', newPassword: '', new2Password: '' });
 const emailData = reactive({ newEmail: '', code: '' });
 
-// 校验规则保持不变
 const validateConfirmPassword = (rule, value, callback) => {
   if (!value) callback(new Error("请再次确认新密码"));
   else if (value !== passwordData.newPassword) callback(new Error("两次输入的密码不一致"));
@@ -141,14 +141,11 @@ const emailRules = {
   code: [{ required: true, validator: validateVerifyCode, trigger: 'blur' }]
 };
 
-// ==================== 使用 useRequest 封装 API 请求 ====================
 const { loading: pwdLoading, execute: execChangePwd } = useRequest(changePassword, { successMsg: '密码修改成功，请重新登录' });
 const { loading: emailLoading, execute: execChangeEmail } = useRequest(changeEmail, { successMsg: '换绑成功，安全起见请重新登录' });
 const { execute: execSendCode } = useRequest(sendBindEmailCode, { successMsg: '验证码发送成功，请前往新邮箱查收' });
 const { execute: execDeleteAccount } = useRequest(requestAccountDeletion, { successMsg: '已进入注销冷静期，即将退出登录' });
 
-
-// ==================== 修改密码逻辑 ====================
 const openPwdDialog = () => pwdDialogVisible.value = true;
 const resetPasswordForm = () => passwordFormRef.value?.resetFields();
 
@@ -162,14 +159,11 @@ const submitPasswordForm = () => {
         });
         pwdDialogVisible.value = false;
         setTimeout(() => userStore.logout(), 1500);
-      } catch (error) {
-        // 请求失败由 useRequest 自动提示，此处仅作为异常捕获，防止阻塞
-      }
+      } catch (error) {}
     }
   });
 };
 
-// ==================== 换绑邮箱逻辑 ====================
 const isSendingCode = ref(false);
 const codeBtnText = ref('获取验证码');
 let codeTimer = null;
@@ -194,7 +188,6 @@ const handleCaptchaSuccess = async (params) => {
 
   try {
     await execSendCode(emailData.newEmail, params.captchaVerification);
-    // 成功后开始倒计时
     let count = 60;
     codeBtnText.value = `${count}s后重新获取`;
     codeTimer = setInterval(() => {
@@ -208,7 +201,6 @@ const handleCaptchaSuccess = async (params) => {
       }
     }, 1000);
   } catch (error) {
-    // 失败时恢复按钮状态
     isSendingCode.value = false;
     codeBtnText.value = '获取验证码';
   }
@@ -226,7 +218,6 @@ const submitEmailForm = () => {
   });
 };
 
-// ==================== 注销账号逻辑 ====================
 const handleCancelAccount = () => {
   ElMessageBox.confirm(
       '申请注销后，您的账号将进入注销冷静期并强制下线。冷静期内再次登录可撤销注销申请。确定要继续吗？',
@@ -242,7 +233,26 @@ const handleCancelAccount = () => {
 </script>
 
 <style scoped>
-/* 继承 UserLayout.vue 的卡片风格 */
+.dialog-alert {
+  margin-bottom: 20px;
+}
+
+.current-email-text {
+  color: var(--el-text-color-primary);
+  font-weight: 500;
+}
+
+.code-input-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.send-code-btn {
+  width: 130px;
+}
+
+/* ==================== 基础容器样式 ==================== */
 .user-page-card {
   border: 1px solid var(--el-border-color-light);
   border-radius: 12px;
@@ -276,7 +286,6 @@ const handleCancelAccount = () => {
   padding: 10px;
 }
 
-/* ==================== 设置列表样式 ==================== */
 .setting-list {
   display: flex;
   flex-direction: column;
@@ -303,14 +312,12 @@ const handleCancelAccount = () => {
 .item-left {
   display: flex;
   align-items: center;
-  /* 稍微缩小一点间距，因为没有圆形背景了 */
   gap: 12px;
 }
 
 .item-icon {
   font-size: 24px;
   color: var(--el-text-color-regular);
-  /* 移除了 background-color, padding, border-radius */
 }
 
 .item-info {
@@ -333,17 +340,12 @@ const handleCancelAccount = () => {
 .highlight-text {
   color: var(--el-color-primary);
   font-weight: 500;
-  background-color: transparent; /* 明确指定透明背景 */
-  padding: 0; /* 确保没有意外的内边距 */
 }
 
-/* 危险操作区特殊样式 */
 .danger-zone .item-icon {
   color: var(--el-color-danger);
-  /* 移除了 background-color */
 }
 
-/* 移动端适配 */
 @media screen and (max-width: 768px) {
   .setting-item {
     flex-direction: column;
@@ -355,12 +357,12 @@ const handleCancelAccount = () => {
     align-self: flex-end;
   }
 }
-/* ==================== 验证码弹窗层级优化 ==================== */
+
 :deep(.mask) {
-  z-index: 9998 !important; /* 验证码的半透明黑底遮罩 */
+  z-index: 9998 !important;
 }
 
 :deep(.verifybox) {
-  z-index: 9999 !important; /* 验证码的主体拼图框 */
+  z-index: 9999 !important;
 }
 </style>

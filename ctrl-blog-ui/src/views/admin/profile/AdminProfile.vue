@@ -59,12 +59,14 @@
               <div class="tab-content">
                 <el-alert title="换绑邮箱后，下次请使用新邮箱登录。" type="info" show-icon :closable="false" class="security-alert" />
                 <el-form ref="emailFormRef" :rules="emailRules" :model="emailData" label-width="80px" label-position="right">
-                  <el-form-item label="当前邮箱"><span style="color: var(--el-text-color-regular); font-weight: 500;">{{ userStore.email }}</span></el-form-item>
+                  <el-form-item label="当前邮箱">
+                    <span class="current-email-text">{{ userStore.email }}</span>
+                  </el-form-item>
                   <el-form-item label="新邮箱" prop="newEmail"><el-input v-model="emailData.newEmail" placeholder="请输入新邮箱地址" /></el-form-item>
                   <el-form-item label="验证码" prop="code">
-                    <div style="display: flex; gap: 10px; width: 100%;">
+                    <div class="code-input-group">
                       <el-input v-model="emailData.code" placeholder="请输入验证码" />
-                      <el-button type="primary" :disabled="isSendingCode" @click="sendEmailCode" style="width: 120px;">{{ codeBtnText }}</el-button>
+                      <el-button type="primary" :disabled="isSendingCode" @click="sendEmailCode" class="send-code-btn">{{ codeBtnText }}</el-button>
                     </div>
                   </el-form-item>
                   <el-form-item>
@@ -100,11 +102,9 @@
 
 <script setup>
 import { onMounted, reactive, ref } from "vue";
-import { ElMessage } from "element-plus";
 import { useUserStore } from '@/store/user.js';
 import { validateNickname, validatePasswordComplexity, validateEmail, validateVerifyCode } from "@/utils/validate.js";
 import { updateProfile, changePassword, sendBindEmailCode, changeEmail } from "@/api/admin/userInfo.js";
-// 引入基础请求 Hook
 import { useRequest } from '@/composables/useRequest.js';
 
 const userStore = useUserStore();
@@ -121,12 +121,10 @@ const data = reactive({
   userForm: { id: '', nickname: '', avatar: '', bio: '' }
 });
 
-// ====== 使用 useRequest 统一管理 API 请求状态 ======
 const { loading: baseLoading, execute: execUpdateProfile } = useRequest(updateProfile, { successMsg: '个人资料已更新' });
 const { loading: pwdLoading, execute: execChangePwd } = useRequest(changePassword, { successMsg: '密码修改成功，安全起见请重新登录' });
 const { loading: emailLoading, execute: execChangeEmail } = useRequest(changeEmail, { successMsg: '换绑成功，安全起见请重新登录' });
 const { execute: execSendCode } = useRequest(sendBindEmailCode, { successMsg: '验证码发送成功，请前往新邮箱查收' });
-
 
 onMounted(() => {
   initBaseForm();
@@ -148,7 +146,6 @@ const initBaseForm = () => {
   }
 };
 
-// ================= 表单验证规则 =================
 const validateConfirmPassword = (rule, value, callback) => {
   if (!value) callback(new Error("请再次确认新密码"));
   else if (value !== passwordData.newPassword) callback(new Error("两次输入的密码不一致"));
@@ -165,19 +162,17 @@ const emailRules = {
   code: [{ required: true, validator: validateVerifyCode, trigger: 'blur' }]
 }
 
-// ================= 提交基本信息 =================
 const submitBaseForm = () => {
   baseFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
         await execUpdateProfile(data.userForm);
-        await userStore.fetchUserInfo(); // 刷新全局状态
+        await userStore.fetchUserInfo();
       } catch (error) {}
     }
   });
 };
 
-// ================= 换绑邮箱逻辑 =================
 const isSendingCode = ref(false);
 const codeBtnText = ref('获取验证码');
 let codeTimer = null;
@@ -223,7 +218,6 @@ const submitEmailForm = () => {
   });
 }
 
-// ================= 修改密码逻辑 =================
 const submitPasswordForm = () => {
   passwordFormRef.value.validate(async (valid) => {
     if (valid) {
@@ -244,11 +238,28 @@ const resetPasswordForm = () => {
 </script>
 
 <style scoped>
+.current-email-text {
+  color: var(--el-text-color-regular);
+  font-weight: 500;
+}
+
+.code-input-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.send-code-btn {
+  width: 120px;
+}
+
+/* ====================================
+   基础布局样式
+   ==================================== */
 .admin-profile-container {
   padding: 0;
 }
 
-/* 卡片通用基础样式 */
 .profile-card, .settings-card {
   border-radius: 4px;
   background-color: var(--el-bg-color-overlay);
@@ -256,7 +267,6 @@ const resetPasswordForm = () => {
   margin-bottom: 20px;
 }
 
-/* 头部样式 */
 .card-header {
   display: flex;
   align-items: center;
@@ -277,9 +287,6 @@ const resetPasswordForm = () => {
   padding: 20px;
 }
 
-/* ==========================================
- * 左侧：个人信息区域
- * ========================================== */
 .avatar-wrapper {
   display: flex;
   flex-direction: column;
@@ -324,16 +331,13 @@ const resetPasswordForm = () => {
   font-weight: 500;
 }
 
-/* ==========================================
- * 右侧：设置面板区域
- * ========================================== */
 .settings-tabs {
   width: 100%;
 }
 
 .tab-content {
   padding: 20px 10px 10px 10px;
-  max-width: 500px; /* 限制表单最大宽度，防止在宽屏下过长 */
+  max-width: 500px;
 }
 
 .security-alert {

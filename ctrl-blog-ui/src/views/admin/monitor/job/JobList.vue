@@ -26,7 +26,7 @@
           <el-col :sm="24" :md="12"><el-form-item label="任务名称" prop="jobName"><el-input v-model="dialog.rowData.value.jobName" autocomplete="off" placeholder="请输入任务名称" /></el-form-item></el-col>
           <el-col :sm="24" :md="12">
             <el-form-item label="任务分组" prop="jobGroup">
-              <el-select v-model="dialog.rowData.value.jobGroup" placeholder="请选择分组" style="width: 100%;">
+              <el-select v-model="dialog.rowData.value.jobGroup" placeholder="请选择分组" class="full-width">
                 <el-option v-for="item in JobGroupOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
@@ -35,7 +35,7 @@
           <el-col :span="24">
             <el-form-item label="cron表达式" prop="cronExpression">
               <el-input v-model="dialog.rowData.value.cronExpression" placeholder="请输入cron表达式" clearable>
-                <template #append><el-button type="primary" @click="showCron = true"><el-icon style="margin-right: 5px"><Clock /></el-icon>生成表达式</el-button></template>
+                <template #append><el-button type="primary" @click="showCron = true"><el-icon class="btn-icon"><Clock /></el-icon>生成表达式</el-button></template>
               </el-input>
             </el-form-item>
           </el-col>
@@ -147,3 +147,15 @@ const JobColumns = reactive([
   { type: 'switch', prop: 'status', label: '状态' }
 ]);
 </script>
+
+<style scoped>
+/* 宽度撑满父容器 */
+.full-width {
+  width: 100%;
+}
+
+/* 按钮内图标的右侧间距 */
+.btn-icon {
+  margin-right: 5px;
+}
+</style>

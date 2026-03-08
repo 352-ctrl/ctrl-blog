@@ -47,7 +47,7 @@
             </span>
           </el-button>
 
-          <el-dropdown trigger="hover" placement="bottom" @command="handleCommand" style="margin-left: auto;">
+          <el-dropdown trigger="hover" placement="bottom" @command="handleCommand" class="more-dropdown">
             <el-button text size="small" class="more-btn">
               <el-icon size="14"><MoreFilled /></el-icon>
             </el-button>
@@ -220,6 +220,7 @@ const handleCommand = async (command) => {
 .expand-control { margin-top: 8px; font-size: 12px; color: var(--el-text-color-placeholder); }
 .expand-btn { cursor: pointer; display: inline-block; padding: 2px 0; transition: all 0.2s; }
 .expand-btn:hover { color: var(--el-color-primary); }
+.more-dropdown { margin-left: auto; }
 .more-btn {
   padding: 0 4px;
   height: auto;

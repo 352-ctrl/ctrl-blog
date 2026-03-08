@@ -9,9 +9,14 @@
 
     <el-row :gutter="20" class="stat-cards-row">
       <el-col :xs="12" :sm="8" v-for="(stat, index) in statData" :key="index">
-        <el-card class="stat-card" shadow="hover" @click="navigateTo(stat.route)">
-          <div class="stat-icon-wrapper" :style="{ backgroundColor: stat.bgColor }">
-            <el-icon :style="{ color: stat.color }"><component :is="stat.icon" /></el-icon>
+        <el-card
+            class="stat-card"
+            shadow="hover"
+            @click="navigateTo(stat.route)"
+            :style="{ '--icon-color': stat.color, '--icon-bg': stat.bgColor }"
+        >
+          <div class="stat-icon-wrapper">
+            <el-icon><component :is="stat.icon" /></el-icon>
           </div>
           <div class="stat-info">
             <div class="stat-value">{{ stat.value }}</div>
@@ -179,6 +184,8 @@ onMounted(() => {
   align-items: center;
   gap: 20px;
 }
+
+/* 提取行内样式：使用传入的 CSS 变量控制颜色 */
 .stat-icon-wrapper {
   width: 60px;
   height: 60px;
@@ -187,7 +194,13 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   font-size: 28px;
+  background-color: var(--icon-bg); /* CSS 变量 */
 }
+
+.stat-icon-wrapper .el-icon {
+  color: var(--icon-color); /* CSS 变量 */
+}
+
 .stat-value {
   font-family: 'SmileySans', sans-serif;
   font-size: 32px;
@@ -208,7 +221,6 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-/* 强制重置 header 边距，确保内部能完美对齐 */
 :deep(.activity-card .el-card__header) {
   padding: 16px 20px;
   border-bottom: 1px solid var(--el-border-color-lighter);
@@ -234,7 +246,6 @@ onMounted(() => {
   color: var(--el-text-color-primary);
 }
 
-/* 查看全部链接样式 */
 .view-all-link {
   display: inline-flex;
   align-items: center;
@@ -256,14 +267,12 @@ onMounted(() => {
 }
 
 .view-all-link:hover .link-icon {
-  transform: translateX(3px); /* Hover时有一个向右滑动指引的小动画 */
+  transform: translateX(3px);
 }
 
-/* 颜色辅助类 */
 .color-warning { color: #e6a23c; }
 .color-danger { color: #f56c6c; }
 
-/* 列表缩减间距 */
 .mini-list {
   margin: -10px 0;
 }

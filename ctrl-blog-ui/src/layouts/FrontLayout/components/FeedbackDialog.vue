@@ -2,12 +2,21 @@
   <el-button circle @click="openDialog" icon="ChatDotRound" title="意见反馈" class="feedback-btn" />
 
   <el-dialog v-model="dialogVisible" title="意见反馈" width="500px" class="dialog-md-down" destroy-on-close append-to-body>
-    <el-alert title="欢迎提出宝贵的意见或BUG，如果您留下了有效的邮箱，我们会将处理结果发送给您。" type="info" show-icon :closable="false" style="margin-bottom: 20px;" />
+    <el-alert
+        title="欢迎提出宝贵的意见或BUG，如果您留下了有效的邮箱，我们会将处理结果发送给您。"
+        type="info"
+        show-icon
+        :closable="false"
+        class="feedback-alert"
+    />
 
     <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
       <el-form-item label="反馈类型" prop="type">
-        <el-select v-model="form.type" placeholder="请选择反馈类型" style="width: 100%;">
-          <el-option label="意见建议" :value="0" /><el-option label="BUG反馈" :value="1" /><el-option label="封禁申诉" :value="2" /><el-option label="其他" :value="3" />
+        <el-select v-model="form.type" placeholder="请选择反馈类型" class="full-width-select">
+          <el-option label="意见建议" :value="0" />
+          <el-option label="BUG反馈" :value="1" />
+          <el-option label="封禁申诉" :value="2" />
+          <el-option label="其他" :value="3" />
         </el-select>
       </el-form-item>
 
@@ -35,7 +44,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { addFeedback } from '@/api/front/interaction/feedback.js'
 import { validateEmail } from '@/utils/validate.js'
 import Verify from "@/components/common/Verify/Verify.vue";
-// 引入 Hook
 import { useRequest } from "@/composables/useRequest.js";
 
 const route = useRoute()
@@ -48,7 +56,6 @@ const verifyRef = ref(null)
 const form = reactive({ type: null, content: '', contactEmail: '' })
 
 // ======= Hooks 接入 =======
-// 自动接管 loading 和 成功/失败提示
 const { loading, execute: execFeedback } = useRequest(addFeedback, { successMsg: '反馈提交成功，感谢您的支持！' });
 
 const validateOptionalEmail = (rule, value, callback) => {
@@ -94,18 +101,24 @@ const submitForm = () => {
   })
 }
 
-// 真正提交：滑块验证成功后的回调
 const onVerifySuccess = async (params) => {
   try {
     const submitData = { ...form }
-    // 传递表单数据和验证码参数
     await execFeedback(submitData, params.captchaVerification)
     dialogVisible.value = false
-  } catch (error) {} // 错误已由 Hook 捕获并提示
+  } catch (error) {}
 }
 </script>
 
 <style scoped>
+.feedback-alert {
+  margin-bottom: 20px;
+}
+
+.full-width-select {
+  width: 100%;
+}
+
 .feedback-btn {
   width: 100%;
   height: 100%;

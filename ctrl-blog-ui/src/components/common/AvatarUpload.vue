@@ -2,7 +2,6 @@
   <div class="img-cropper-component">
     <div
         class="avatar-trigger"
-        :style="{ width: size + 'px', height: size + 'px' }"
         @click="openDialog"
     >
       <el-avatar :size="size" :src="modelValue" shape="circle" />
@@ -211,6 +210,10 @@ const uploadImg = () => {
    1. 外部触发器样式 (头像预览图)
    ========================================= */
 .avatar-trigger {
+  /* 使用 Vue 3 的 v-bind 特性将 JavaScript 变量动态绑定到 CSS */
+  width: v-bind('size + "px"');
+  height: v-bind('size + "px"');
+
   position: relative;
   display: inline-block;
   cursor: pointer;

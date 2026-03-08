@@ -16,20 +16,26 @@
         <template #expand="{ row }">
           <el-row><el-form-item label="目标内容："><span class="expand-value-box">{{ row.targetSummary || '无内容摘要' }}</span></el-form-item></el-row>
           <el-row><el-form-item label="详细说明："><span class="expand-value-box">{{ row.content || '未填写详细说明' }}</span></el-form-item></el-row>
-          <el-row v-if="row.status !== 0"><el-form-item label="处理备注："><span class="expand-value-box" style="background-color: var(--el-color-info-light-9);">{{ row.adminNote || '无内部处理备注' }}</span></el-form-item></el-row>
+          <el-row v-if="row.status !== 0">
+            <el-form-item label="处理备注：">
+              <span class="expand-value-box admin-note-box">{{ row.adminNote || '无内部处理备注' }}</span>
+            </el-form-item>
+          </el-row>
         </template>
       </AdminTable>
       <AdminPagination v-model:current-page="query.pageNum" v-model:page-size="query.pageSize" :total="total" @change="handlePageChange" />
     </div>
 
     <el-dialog v-model="dialog.visible.value" title="审核举报" class="dialog-md-down" width="600px">
-      <div style="background-color: #f5f7fa; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+      <div class="report-info-container">
         <el-descriptions :column="1" border size="small">
           <el-descriptions-item label="举报目标">
             <el-tag size="small" :type="getTargetTypeColor(dialog.rowData.value.targetType)">{{ getTargetTypeText(dialog.rowData.value.targetType) }}</el-tag>
-            <span style="margin-left: 10px; font-size: 12px; color: #999;">ID: {{ dialog.rowData.value.targetId }}</span>
+            <span class="target-id-text">ID: {{ dialog.rowData.value.targetId }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="目标内容"><span style="color: #f56c6c;">{{ dialog.rowData.value.targetSummary || '无摘要内容' }}</span></el-descriptions-item>
+          <el-descriptions-item label="目标内容">
+            <span class="highlight-danger">{{ dialog.rowData.value.targetSummary || '无摘要内容' }}</span>
+          </el-descriptions-item>
           <el-descriptions-item label="举报原因"><strong>{{ dialog.rowData.value.reason }}</strong></el-descriptions-item>
           <el-descriptions-item label="详细说明">{{ dialog.rowData.value.content || '未填写详细说明' }}</el-descriptions-item>
         </el-descriptions>
@@ -42,7 +48,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="封禁时间" prop="disableDays" v-if="dialog.rowData.value.status === 1 && dialog.rowData.value.targetType === 'USER'">
-          <el-select v-model="dialog.rowData.value.disableDays" placeholder="请选择封禁时长" style="width: 100%;">
+          <el-select v-model="dialog.rowData.value.disableDays" placeholder="请选择封禁时长" class="full-width-select">
             <el-option label="不封禁 (仅警告)" :value="0" /><el-option label="封禁 1 天" :value="1" /><el-option label="封禁 3 天" :value="3" /><el-option label="封禁 7 天" :value="7" /><el-option label="封禁 30 天" :value="30" /><el-option label="永久封禁" :value="-1" />
           </el-select>
         </el-form-item>
@@ -71,7 +77,6 @@ const processFormRef = ref(null);
 const selectedIds = ref([]);
 const REASON_DICT = { SPAM: '垃圾广告', PORN: '色情低俗', ILLEGAL: '违法违规', ABUSE: '人身攻击/引战谩骂', COPYRIGHT: '抄袭/洗稿/侵权', IMPERSONATION: '冒充他人/身份造假', PROFILE_VIOLATION: '头像/昵称违规', OTHER: '其他原因' };
 
-// 包装 API 请求，处理字典映射
 const fetchApi = async (params) => {
   const res = await getReportPage(params);
   if (res.code === 200) {
@@ -80,7 +85,6 @@ const fetchApi = async (params) => {
   return res;
 };
 
-// Hooks 集成
 const { loading, list: tableData, total, query, loadData, handlePageChange, resetQuery } = useTable(fetchApi, { targetType: null, status: null });
 const dialog = useDialog();
 const { loading: submitLoading, execute: execProcess } = useRequest(processReport, { successMsg: '处理成功' });
@@ -99,7 +103,6 @@ const handleProcess = (row) => {
     ElMessage.warning('该举报已审核完毕，不可重复处理');
     return;
   }
-  // 打开弹窗并赋予表单默认值
   dialog.openDialog('审核举报', 'edit', { ...row, status: 1, disableDays: 7, adminNote: row.adminNote || '' });
   processFormRef.value?.clearValidate();
 };
@@ -107,7 +110,6 @@ const handleProcess = (row) => {
 const submitProcessForm = () => {
   processFormRef.value.validate(async (valid) => {
     if (valid) {
-      // 提取需要的字段提交
       const { id, status, adminNote, disableDays } = dialog.rowData.value;
       await execProcess({ id, status, adminNote, disableDays });
       dialog.closeDialog();
@@ -132,3 +134,30 @@ const reportColumns = reactive([
   { prop: 'createTime', label: '提交时间', minWidth: '160px' }
 ]);
 </script>
+
+<style scoped>
+.admin-note-box {
+  background-color: var(--el-color-info-light-9) !important;
+}
+
+.report-info-container {
+  background-color: var(--el-fill-color-light); /* 适配暗黑模式，替换固定的 #f5f7fa */
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.target-id-text {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary); /* 适配暗黑模式 */
+}
+
+.highlight-danger {
+  color: var(--el-color-danger);
+}
+
+.full-width-select {
+  width: 100%;
+}
+</style>

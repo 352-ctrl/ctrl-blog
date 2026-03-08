@@ -77,7 +77,7 @@
                 :nickname="msg.fromUserNickname"
                 :bio="msg.fromUserBio"
             >
-              <el-avatar :src="msg.fromUserAvatar" :size="45" style="cursor: pointer;">
+              <el-avatar :src="msg.fromUserAvatar" :size="45" class="user-avatar">
                 <el-icon><UserFilled /></el-icon>
               </el-avatar>
             </UserInfoPopover>
@@ -111,7 +111,6 @@ import { useTable } from '@/composables/useTable.js'
 const router = useRouter()
 const activeTab = ref('ALL')
 
-// 使用 useTable，替换手动处理的 loading 和 data
 const {
   loading,
   list: allMessageList,
@@ -148,7 +147,6 @@ const calculateUnread = () => {
   unreadMap.LIKE = like;
 }
 
-// 组合加载数据和计算未读数
 const fetchMessagesAndCalc = async () => {
   await loadData()
   calculateUnread()
@@ -162,7 +160,6 @@ const handleMessageClick = async (msg) => {
   if (msg.isRead === 0 || msg.isRead === 'UNREAD') {
     try {
       await markMessageAsRead(msg.id)
-      // 消掉红点
       msg.isRead = 1
       calculateUnread()
       window.dispatchEvent(new CustomEvent('update-unread-count'))
@@ -189,7 +186,7 @@ const handleMarkAllRead = async () => {
     const res = await markAllAsRead(typeParam)
     if (res.code === 200) {
       ElMessage.success('已全部标记为已读')
-      await fetchMessagesAndCalc() // 重新获取并计算
+      await fetchMessagesAndCalc()
       window.dispatchEvent(new CustomEvent('update-unread-count'))
     }
   } catch (error) {
@@ -238,7 +235,7 @@ const handleMarkAllRead = async () => {
 }
 
 /* ==================================
-   专属：消息列表样式 (改造为卡片悬浮)
+   专属：消息列表样式
    ================================== */
 .message-list {
   margin-top: 15px;
@@ -253,14 +250,12 @@ const handleMarkAllRead = async () => {
   padding: 16px 20px;
   background-color: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-light);
-  border-radius: 8px; /* 添加圆角 */
+  border-radius: 8px;
   cursor: pointer;
-  /* 添加交互动画 */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
 }
 
-/* 悬浮与点击特效 */
 .message-item:hover {
   transform: translateY(-2px);
   box-shadow: var(--el-box-shadow-light);
@@ -271,7 +266,6 @@ const handleMarkAllRead = async () => {
   transition: transform 0.1s ease;
 }
 
-/* 未读消息加上淡淡的主题色背景 */
 .message-item.is-unread {
   background-color: var(--el-color-primary-light-9);
   border-color: var(--el-color-primary-light-5);
@@ -284,6 +278,12 @@ html.dark .message-item.is-unread {
   margin-right: 15px;
   flex-shrink: 0;
 }
+
+/* 提取自行内样式 */
+.user-avatar {
+  cursor: pointer;
+}
+
 .system-avatar {
   background: linear-gradient(135deg, var(--el-color-danger), #ff8a80);
   color: white;
@@ -329,7 +329,7 @@ html.dark .message-item.is-unread {
 }
 
 .unread-dot {
-  position: absolute; /* 修复点可能飞出去的问题 */
+  position: absolute;
   right: 16px;
   top: 24px;
   width: 8px;

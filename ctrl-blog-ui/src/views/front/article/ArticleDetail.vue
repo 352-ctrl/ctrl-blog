@@ -11,7 +11,7 @@
               :nickname="article.userNickname"
               :bio="article.userBio"
           >
-            <el-avatar :size="35" :src="article.userAvatar" style="cursor: pointer;" />
+            <el-avatar :size="35" :src="article.userAvatar" class="meta-avatar" />
           </UserInfoPopover>
         </div>
         <div class="meta-author-info">
@@ -29,12 +29,38 @@
       </div>
 
       <div v-if="article.summary" class="summary-wrapper">
+        <div v-if="article.isAiSummary === 1" class="ai-summary">
+          <div class="ai-header">
+            <el-icon class="ai-icon"><MagicStick /></el-icon>
+            <span class="ai-label">AI 智能摘要</span>
+          </div>
+          <div class="ai-content">
+            {{ article.summary }}
+          </div>
+        </div>
+
+        <div v-else class="normal-summary">
+          <div class="normal-header">
+            <el-icon><Collection /></el-icon>
+            <span class="normal-summary-text">摘要</span>
+          </div>
+          <div class="normal-content">
+            {{ article.summary }}
+          </div>
+        </div>
       </div>
 
       <div class="article-content" v-html="sanitizeHtml(article.contentHtml)"></div>
 
       <div v-if="article.tags?.length > 0" class="article-tags">
-        <el-tag v-for="tag in article.tags" :key="tag.id" @click="handleTagClick(tag.id)"># {{ tag.name }}</el-tag>
+        <el-tag
+            v-for="tag in article.tags"
+            :key="tag.id"
+            class="tag-item"
+            @click="handleTagClick(tag.id)"
+        >
+          # {{ tag.name }}
+        </el-tag>
       </div>
     </template>
   </el-card>
@@ -72,15 +98,11 @@ const route = useRoute();
 const router = useRouter();
 const articleId = route.params.id;
 
-// 1. 获取详情
 const { loading, data: article, execute: fetchArticle } = useRequest(getArticleById);
-
-// 2. 阅读量递增逻辑
 const { execute: updateView } = useRequest(incrementArticleView);
 let viewTimer = null;
 
 onMounted(async () => {
-  // 获取文章详情，失败则跳 404
   try {
     await fetchArticle(articleId);
     if (!article.value) throw new Error();
@@ -89,7 +111,6 @@ onMounted(async () => {
     return;
   }
 
-  // 延迟 5 秒发送增加阅读量请求
   viewTimer = setTimeout(async () => {
     try {
       await updateView(articleId);
@@ -134,7 +155,7 @@ const handleCommentSuccess = () => {
   font-size: 40px;
   text-align: center;
   padding-bottom: 20px;
-  color: var(--el-text-color-primary); /* 适配暗黑标题 */
+  color: var(--el-text-color-primary);
 }
 
 .flex-spacer {
@@ -146,18 +167,23 @@ const handleCommentSuccess = () => {
 }
 
 /* ====================================
-   元数据区域 (作者、时间、阅读量)
+   元数据区域
    ==================================== */
 .article-meta {
   display: flex;
   align-items: center;
   padding-bottom: 20px;
-  border-bottom: 1px solid var(--el-border-color-lighter); /* 适配分割线 */
+  border-bottom: 1px solid var(--el-border-color-lighter);
   margin-bottom: 20px;
 }
 
 .avatar-box {
   margin-right: 10px;
+}
+
+/* 提取的行内样式类 */
+.meta-avatar {
+  cursor: pointer;
 }
 
 .meta-author-info {
@@ -175,7 +201,7 @@ const handleCommentSuccess = () => {
   display: flex;
   align-items: center;
   font-size: 13px;
-  color: var(--el-text-color-secondary); /* 适配暗黑次级文本 */
+  color: var(--el-text-color-secondary);
   margin-top: 2px;
 }
 
@@ -186,7 +212,7 @@ const handleCommentSuccess = () => {
 .meta-view-count {
   display: flex;
   align-items: center;
-  color: var(--el-text-color-regular); /* 适配暗黑常规文本 */
+  color: var(--el-text-color-regular);
   font-size: 14px;
 }
 
@@ -196,13 +222,12 @@ const handleCommentSuccess = () => {
 }
 
 /* ====================================
-   摘要区域 (AI 摘要 & 普通摘要)
+   摘要区域
    ==================================== */
 .summary-wrapper {
   margin-bottom: 25px;
 }
 
-/* AI 摘要样式 */
 .ai-summary {
   font-family: 'SmileySans', sans-serif;
   background-color: var(--el-color-primary-light-9);
@@ -215,7 +240,7 @@ const handleCommentSuccess = () => {
 .ai-header {
   display: flex;
   align-items: center;
-  color: var(--el-color-primary); /* 品牌主色 */
+  color: var(--el-color-primary);
   font-weight: bold;
   margin-bottom: 8px;
   font-size: 14px;
@@ -234,9 +259,7 @@ const handleCommentSuccess = () => {
   text-align: justify;
 }
 
-/* 普通摘要样式 */
 .normal-summary {
-  /* fill-color-light 在明亮是浅灰，暗黑是深灰 */
   background-color: var(--el-fill-color-light);
   border-left: 4px solid var(--el-border-color-dark);
   padding: 15px;
@@ -267,18 +290,16 @@ const handleCommentSuccess = () => {
 .article-content {
   font-size: 16px;
   line-height: 1.8;
-  color: var(--el-text-color-primary); /* 适配暗黑模式正文内容 */
+  color: var(--el-text-color-primary);
   overflow-wrap: break-word;
 }
 
-/* 深度选择器处理 v-html 内部样式 */
 :deep(.article-content img) {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
 }
 
-/* 对于 v-html 中的其他原生标签做一下基础暗黑适配 */
 :deep(.article-content h1),
 :deep(.article-content h2),
 :deep(.article-content h3),
@@ -310,7 +331,7 @@ const handleCommentSuccess = () => {
   background-color: var(--el-fill-color);
   padding: 2px 4px;
   border-radius: 4px;
-  color: var(--el-color-danger); /* 类似 GitHub 的代码高亮色 */
+  color: var(--el-color-danger);
 }
 
 /* ====================================
@@ -327,7 +348,7 @@ const handleCommentSuccess = () => {
 }
 
 /* ====================================
-   动画
+   动画与响应式
    ==================================== */
 @keyframes pulse {
   0% { transform: scale(1); opacity: 1; }
@@ -337,7 +358,6 @@ const handleCommentSuccess = () => {
 
 @media screen and (max-width: 992px) {
   .comment-container {
-    /* 60px (底部栏高度) + 15px (额外间距) + iOS安全区 */
     padding-bottom: calc(75px + env(safe-area-inset-bottom));
   }
 }

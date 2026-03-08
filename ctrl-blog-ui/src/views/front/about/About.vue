@@ -45,11 +45,11 @@
           技术栈 & 兴趣
         </h3>
         <div class="tech-tags">
-          <el-tag class="custom-tech-tag" style="--tag-color: #41b883">Vue 3</el-tag>
-          <el-tag class="custom-tech-tag" style="--tag-color: #6db33f">Spring Boot</el-tag>
-          <el-tag class="custom-tech-tag" style="--tag-color: #409eff">Element Plus</el-tag>
-          <el-tag class="custom-tech-tag" style="--tag-color: #00758f">MySQL</el-tag>
-          <el-tag class="custom-tech-tag" style="--tag-color: #d82c20">Redis</el-tag>
+          <el-tag class="custom-tech-tag is-vue">Vue 3</el-tag>
+          <el-tag class="custom-tech-tag is-spring">Spring Boot</el-tag>
+          <el-tag class="custom-tech-tag is-element">Element Plus</el-tag>
+          <el-tag class="custom-tech-tag is-mysql">MySQL</el-tag>
+          <el-tag class="custom-tech-tag is-redis">Redis</el-tag>
         </div>
         <p class="section-text">
           目前主要专注于前后端全栈开发。喜欢折腾新鲜的架构和好玩的轮子，致力于写出优雅且易维护的代码。
@@ -78,7 +78,6 @@ import { useRequest } from "@/composables/useRequest.js";
 
 const webmaster = ref({});
 
-// 复用站长信息接口获取数据
 const { loading, execute: fetchWebmasterInfo } = useRequest(getWebmasterInfo);
 
 onMounted(async () => {
@@ -104,7 +103,7 @@ onMounted(async () => {
   background-color: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color-light);
   min-height: 500px;
-  /* 增加主页面卡片的内边距，使其更显大气 */
+
   :deep(.el-card__body) {
     padding: 40px 50px;
   }
@@ -138,7 +137,7 @@ onMounted(async () => {
 }
 
 /* ====================================
-   个人资料展示区 (横向排版设计)
+   个人资料展示区
    ==================================== */
 .profile-section {
   display: flex;
@@ -151,11 +150,10 @@ onMounted(async () => {
   flex-shrink: 0;
 
   .author-avatar {
-    border: 4px solid var(--el-bg-color); /* 形成内外边框差 */
+    border: 4px solid var(--el-bg-color);
     box-shadow: 0 0 0 2px var(--el-border-color-lighter), var(--el-box-shadow-light);
     transition: transform 0.4s ease, box-shadow 0.4s ease;
 
-    /* 区分 WebmasterCard 的旋转，这里采用上浮发光效果 */
     &:hover {
       transform: translateY(-5px) scale(1.02);
       box-shadow: 0 0 0 2px var(--el-color-primary-light-5), 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -186,7 +184,6 @@ onMounted(async () => {
   }
 }
 
-/* 幽灵按钮设计，显得更轻盈高级 */
 .social-links {
   display: flex;
 
@@ -229,7 +226,6 @@ onMounted(async () => {
 .content-section {
   margin-bottom: 35px;
 
-  /* 带有左侧修饰条的标题，看起来像正规文档区块 */
   .section-title {
     display: flex;
     align-items: center;
@@ -280,7 +276,7 @@ onMounted(async () => {
 }
 
 /* ====================================
-   技术栈标签 (明暗自适应高亮版)
+   技术栈标签
    ==================================== */
 .tech-tags {
   display: flex;
@@ -295,8 +291,8 @@ onMounted(async () => {
     font-weight: bold;
     border-radius: 6px;
     background-color: var(--el-fill-color-blank);
-    color: var(--tag-color);
-    border: 1px solid var(--tag-color);
+    color: var(--tag-color, var(--el-text-color-regular));
+    border: 1px solid var(--tag-color, var(--el-border-color));
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: default;
 
@@ -306,6 +302,12 @@ onMounted(async () => {
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
+
+    &.is-vue { --tag-color: #41b883; }
+    &.is-spring { --tag-color: #6db33f; }
+    &.is-element { --tag-color: #409eff; }
+    &.is-mysql { --tag-color: #00758f; }
+    &.is-redis { --tag-color: #d82c20; }
   }
 }
 
@@ -323,7 +325,6 @@ onMounted(async () => {
     font-size: 22px;
   }
 
-  /* 移动端恢复垂直居中排版 */
   .profile-section {
     flex-direction: column;
     text-align: center;

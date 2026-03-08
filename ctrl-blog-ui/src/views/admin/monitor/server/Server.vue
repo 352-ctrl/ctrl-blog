@@ -51,7 +51,7 @@
       <el-col :span="24">
         <el-card class="monitor-card card" shadow="never">
           <template #header><div class="card-header"><el-icon><Files /></el-icon> <span>磁盘状态</span></div></template>
-          <el-table :data="[info.disk]" border style="width: 100%">
+          <el-table :data="[info.disk]" border class="disk-table">
             <el-table-column label="盘符路径" align="center"><template #default>/</template></el-table-column>
             <el-table-column prop="total" label="总大小" align="center" />
             <el-table-column prop="used" label="已用大小" align="center" />
@@ -206,6 +206,11 @@ onUnmounted(() => clearInterval(timer));
     font-size: 14px;
     word-break: break-all;
   }
+}
+
+/* 磁盘状态表格宽度 */
+.disk-table {
+  width: 100%;
 }
 
 /* 适配移动端表格及网格 */

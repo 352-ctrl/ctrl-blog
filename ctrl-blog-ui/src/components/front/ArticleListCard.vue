@@ -2,7 +2,7 @@
   <el-row v-for="item in articles" :key="item.id" class="article-row">
     <el-col @click="handleCardClick(item.id)">
 
-      <el-card class="article-card" shadow="hover" :body-style="{ padding: '16px 20px' }">
+      <el-card class="article-card" shadow="hover">
         <div class="content-wrapper">
           <div class="image-container">
             <el-image
@@ -127,6 +127,10 @@ const formatTimeAgo = (timeStr) => {
   border-color: var(--el-border-color-light);
 }
 
+:deep(.el-card__body) {
+  padding: 16px 20px;
+}
+
 .article-card:hover {
   transform: translateY(-2px);
 }
@@ -162,35 +166,32 @@ const formatTimeAgo = (timeStr) => {
   overflow: hidden;
 }
 
-/* 优化标题布局，让置顶标签和文字在一行完美对齐 */
 .article-title {
   display: flex;
-  align-items: center; /* 垂直居中 */
-  flex-wrap: wrap; /* 如果标题太长允许换行 */
-  gap: 8px; /* 标签和文字的间距 */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
 .title-text {
   font-family: 'SmileySans', sans-serif;
-  color: var(--el-text-color-primary); /* 替换为 CSS 变量 */
+  color: var(--el-text-color-primary);
   font-weight: 600;
   font-size: 18px;
   line-height: 1.4;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap; /* 保持标题单行显示超出省略 */
+  white-space: nowrap;
 }
 
-/* 置顶标签：取消鼠标交互反馈 */
 .top-tag {
-  cursor: default; /* 保持普通指针 */
+  cursor: default;
   border-radius: 4px;
   padding: 0 6px;
 }
 
-/* 确保置顶标签没有 hover 动画 */
 .top-tag:hover {
   transform: none;
 }
@@ -206,7 +207,7 @@ const formatTimeAgo = (timeStr) => {
 }
 
 .article-summary {
-  color: var(--el-text-color-regular); /* 替换为 CSS 变量 */
+  color: var(--el-text-color-regular);
   font-size: 14px;
   line-height: 1.6;
   flex: 1;
@@ -219,7 +220,7 @@ const formatTimeAgo = (timeStr) => {
 
 .custom-divider {
   margin: 16px 0;
-  border-top-color: var(--el-border-color-lighter); /* 替换为 CSS 变量 */
+  border-top-color: var(--el-border-color-lighter);
 }
 
 /* ==================== 3. 底部元信息区（头像、图标、标签） ==================== */
@@ -228,7 +229,7 @@ const formatTimeAgo = (timeStr) => {
   align-items: center;
   justify-content: space-between;
   font-size: 13px;
-  color: var(--el-text-color-secondary); /* 替换为 CSS 变量 */
+  color: var(--el-text-color-secondary);
 }
 
 .meta-left {
@@ -241,7 +242,7 @@ const formatTimeAgo = (timeStr) => {
 }
 
 .nickname {
-  color: var(--el-text-color-regular); /* 替换为 CSS 变量 */
+  color: var(--el-text-color-regular);
   font-weight: 500;
 }
 

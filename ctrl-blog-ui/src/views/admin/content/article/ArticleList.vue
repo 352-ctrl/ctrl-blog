@@ -27,17 +27,17 @@
           <el-row><el-form-item label="文章摘要："><span class="expand-value-box">{{ row.summary || '暂无摘要' }}</span></el-form-item></el-row>
           <el-row>
             <el-form-item label="文章标签：">
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div class="tag-wrapper">
                 <template v-if="row.tagNames && row.tagNames.length > 0">
                   <el-tag v-for="tag in row.tagNames" :key="tag" size="small">{{ tag }}</el-tag>
                 </template>
-                <span v-else style="color: #909399; font-size: 13px;">无标签</span>
+                <span v-else class="empty-tag-text">无标签</span>
               </div>
             </el-form-item>
           </el-row>
           <el-row>
             <el-form-item label="附加属性：">
-              <div style="display: flex; gap: 10px;">
+              <div class="attr-wrapper">
                 <el-tag size="small" :type="row.isTop === 1 ? 'danger' : 'info'">置顶: {{ row.isTop === 1 ? '是' : '否' }}</el-tag>
                 <el-tag size="small" :type="row.isCarousel === 1 ? 'success' : 'info'">首页轮播: {{ row.isCarousel === 1 ? '是' : '否' }}</el-tag>
                 <el-tag size="small" :type="row.isAiSummary === 1 ? 'primary' : 'info'" v-if="row.summary">摘要来源: {{ row.isAiSummary === 1 ? 'AI 自动生成' : '人工编写' }}</el-tag>
@@ -354,5 +354,22 @@ const articleColumns = reactive([
   font-size: 12px;
   color: var(--el-text-color-secondary);
   line-height: 1.4;
+}
+
+/* --- 展开行样式 --- */
+.tag-wrapper {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.empty-tag-text {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
+.attr-wrapper {
+  display: flex;
+  gap: 10px;
 }
 </style>
