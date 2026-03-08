@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Validated
 @RestController
-@RequestMapping("/api/admin/jobs")
+@RequestMapping("/api/v1/admin/jobs")
 @AuthCheck(role = BizStatus.ROLE_SUPER_ADMIN)
 @Tag(name = "后台定时任务管理")
 public class AdminJobController {

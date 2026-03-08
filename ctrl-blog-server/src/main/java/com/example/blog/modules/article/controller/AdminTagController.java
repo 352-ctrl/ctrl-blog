@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Validated
 @RestController
-@RequestMapping("/api/admin/tags")
+@RequestMapping("/api/v1/admin/tags")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台标签管理")
 public class AdminTagController {

@@ -28,7 +28,7 @@ import java.util.List;
  */
 @RestController
 @Validated
-@RequestMapping("/api/admin/categories")
+@RequestMapping("/api/v1/admin/categories")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台分类管理")
 public class AdminCategoryController {

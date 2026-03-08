@@ -29,7 +29,7 @@ import java.util.List;
  */
 @Validated
 @RestController
-@RequestMapping("/api/admin/users")
+@RequestMapping("/api/v1/admin/profiles")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台用户管理")
 public class AdminUserController {

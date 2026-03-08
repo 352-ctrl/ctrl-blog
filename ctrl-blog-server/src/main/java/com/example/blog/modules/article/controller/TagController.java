@@ -17,7 +17,7 @@ import java.util.List;
  * 提供标签列表、标签云展示等只读接口
  */
 @RestController
-@RequestMapping("/api/front/tags")
+@RequestMapping("/api/v1/tags")
 @Tag(name = "前台标签")
 public class TagController {
 

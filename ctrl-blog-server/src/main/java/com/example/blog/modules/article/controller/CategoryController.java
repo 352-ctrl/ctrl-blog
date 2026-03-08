@@ -17,7 +17,7 @@ import java.util.List;
  * 提供分类列表查询等只读接口
  */
 @RestController
-@RequestMapping("/api/front/categories")
+@RequestMapping("/api/v1/categories")
 @Tag(name = "前台分类")
 public class CategoryController {
 

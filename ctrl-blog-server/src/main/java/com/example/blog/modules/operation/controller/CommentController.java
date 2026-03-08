@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Validated
 @RestController
-@RequestMapping("/api/front/comments")
+@RequestMapping("/api/v1/comments")
 @Tag(name = "前台评论")
 public class CommentController {
 
@@ -78,7 +78,7 @@ public class CommentController {
     /**
      * 点赞评论
      */
-    @PostMapping("/{commentId}/like")
+    @PostMapping("/{commentId}/likes")
     @AuthCheck
     @RateLimit(key = "ip", time = 10, count = 5)
     @Operation(summary = "点赞评论", description = "登录用户对指定评论进行点赞。")
@@ -90,7 +90,7 @@ public class CommentController {
     /**
      * 取消点赞评论
      */
-    @PostMapping("/{commentId}/cancel-like")
+    @DeleteMapping("/{commentId}/likes")
     @AuthCheck
     @RateLimit(key = "ip", time = 10, count = 5)
     @Operation(summary = "取消点赞评论", description = "登录用户取消对指定评论的点赞。")

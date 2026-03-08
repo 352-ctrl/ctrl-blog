@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Validated
 @RestController
-@RequestMapping("/api/admin/notices")
+@RequestMapping("/api/v1/admin/notices")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台公告管理")
 public class AdminNoticeController {

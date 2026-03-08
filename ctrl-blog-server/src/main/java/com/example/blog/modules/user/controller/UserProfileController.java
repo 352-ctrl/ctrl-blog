@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
  * 处理当前登录用户的个人信息查询、修改及安全设置
  */
 @RestController
-@RequestMapping("/api/front/user")
+@RequestMapping("/api/v1/profile")
 @AuthCheck
 @Tag(name = "前台个人中心")
 public class UserProfileController {
@@ -83,7 +83,7 @@ public class UserProfileController {
         return Result.success();
     }
 
-    @PostMapping("/email/code")
+    @PostMapping("/email/verification-codes")
     @VerifyCaptcha
     @RateLimit(key = "ip", time = 60, count = 1)
     @Operation(summary = "发送换绑邮箱验证码", description = "向新邮箱发送验证码，需通过行为验证码校验。")

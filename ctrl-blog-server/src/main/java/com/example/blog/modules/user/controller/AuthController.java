@@ -16,17 +16,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 认证中心控制器
  * 处理用户登录、注册、验证码发送等安全操作
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @Tag(name = "认证中心")
 public class AuthController {
 
@@ -34,9 +31,9 @@ public class AuthController {
     private AuthService authService;
 
     /**
-     * 用户登录
+     * 用户登录 (获取Token)
      */
-    @PostMapping("/login")
+    @PostMapping("/token")
     @RateLimit(key = "ip", time = 60, count = 10)
     @Operation(summary = "用户登录", description = "校验用户名密码。成功后返回 **Token**。<br>后续请求需在 Header 中携带 `Authorization: Bearer {token}`。")
     public Result<UserLoginVO> login(@Valid @RequestBody UserLoginDTO loginDTO) {
@@ -45,9 +42,9 @@ public class AuthController {
     }
 
     /**
-     * 用户注册
+     * 用户注册 (创建账户)
      */
-    @PostMapping("/register")
+    @PostMapping("/accounts")
     @RateLimit(key = "ip", time = 60, count = 5)
     @Operation(summary = "用户注册", description = "新用户注册。系统会自动校验用户名重复性，并加密存储密码。")
     public Result<UserLoginVO> register(@Valid @RequestBody UserRegisterDTO registerDTO) {
@@ -58,7 +55,7 @@ public class AuthController {
     /**
      * 发送注册邮箱验证码
      */
-    @PostMapping("/email/code/register")
+    @PostMapping("/register/verification-codes")
     @VerifyCaptcha
     @RateLimit(key = "ip", time = 60, count = 1)
     @Operation(summary = "发送注册邮箱验证码", description = "用于新用户注册。验证码有效期为 5 分钟，1分钟内防刷限制。")
@@ -70,7 +67,7 @@ public class AuthController {
     /**
      * 发送找回密码邮箱验证码
      */
-    @PostMapping("/email/code/forgot")
+    @PostMapping("/password-reset/verification-codes")
     @VerifyCaptcha
     @RateLimit(key = "ip", time = 60, count = 1)
     @Operation(summary = "发送找回密码邮箱验证码", description = "用于前台用户忘记密码时找回。验证码有效期为 5 分钟，1分钟内防刷限制。")
@@ -80,9 +77,9 @@ public class AuthController {
     }
 
     /**
-     * 通过邮箱验证码重置密码
+     * 通过邮箱验证码重置密码 (更新密码资源)
      */
-    @PostMapping("/password/reset")
+    @PutMapping("/password")
     @RateLimit(key = "ip", time = 60, count = 5)
     @Operation(summary = "通过邮箱验证码重置密码", description = "前台用户忘记密码后，凭借邮箱验证码设置新密码。")
     public Result<Void> resetPasswordByEmail(@Valid @RequestBody UserForgotPwdDTO forgotPwdDTO) {
@@ -91,10 +88,10 @@ public class AuthController {
     }
 
     /**
-     * 退出登录
+     * 退出登录 (销毁Token)
      */
     @Operation(summary = "退出登录")
-    @PostMapping("/logout")
+    @DeleteMapping("/token")
     public Result<Void> logout(HttpServletRequest request) {
         // 从 Header 中获取 token
         String token = request.getHeader(Constants.HEADER_TOKEN);

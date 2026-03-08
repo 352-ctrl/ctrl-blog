@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "前台-站点信息模块")
 @RestController
-@RequestMapping("/api/front/site")
+@RequestMapping("/api/v1/site")
 public class SiteInfoController {
 
     @Resource

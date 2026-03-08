@@ -25,7 +25,7 @@ import java.util.Map;
  * 处理文件的上传（本地/OSS）和下载操作
  */
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/api/v1/files")
 @Tag(name = "文件服务")
 public class FileController {
 
@@ -33,9 +33,9 @@ public class FileController {
     private FileService fileService;
 
     /**
-     * 通用文件上传
+     * 通用文件上传 (POST /api/v1/files)
      */
-    @PostMapping("/upload")
+    @PostMapping
     @AuthCheck
     @RateLimit(key = "ip", time = 60, count = 10)
     @Log(module = "文件服务", type = "上传", desc = "通用文件上传")
@@ -46,20 +46,20 @@ public class FileController {
     }
 
     /**
-     * 文件下载
+     * 文件下载 (GET /api/v1/files/{fileName})
      * 注意：此接口返回流，不返回 JSON Result
      */
-    @GetMapping("/download/{fileName}")
+    @GetMapping("/{fileName}")
     @Operation(summary = "文件下载", description = "根据文件名下载文件流。")
     public void download(@Parameter(description = "文件名") @PathVariable String fileName, HttpServletResponse response) {
         fileService.download(fileName, response);
     }
 
     /**
-     * WangEditor 编辑器专用上传
+     * WangEditor 编辑器专用上传 (POST /api/v1/files/wang)
      * 格式要求：{ "errno": 0, "data": [{ "url": "..." }] }
      */
-    @PostMapping("/wang/upload")
+    @PostMapping("/wang")
     @AuthCheck(role = BizStatus.ROLE_ADMIN)
     @RateLimit(key = "ip", time = 60, count = 20)
     @Log(module = "文件服务", type = "上传", desc = "编辑器图片上传")

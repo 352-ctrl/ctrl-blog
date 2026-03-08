@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 意见反馈控制器
  */
 @RestController
-@RequestMapping("/api/front/feedback")
+@RequestMapping("/api/v1/feedbacks")
 @Tag(name = "意见反馈管理")
 public class FeedbackController {
 

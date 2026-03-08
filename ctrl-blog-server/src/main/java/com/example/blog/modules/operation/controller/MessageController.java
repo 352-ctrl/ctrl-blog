@@ -18,7 +18,7 @@ import java.util.List;
  * 提供用户个人的未读消息数获取、消息已读标记等接口
  */
 @RestController
-@RequestMapping("/api/front/messages")
+@RequestMapping("/api/v1/messages")
 @Tag(name = "前台消息中心")
 @AuthCheck
 public class MessageController {
@@ -63,7 +63,7 @@ public class MessageController {
     /**
      * 一键全部已读
      */
-    @PutMapping("/read/all")
+    @PutMapping("/read-status")
     @Operation(summary = "一键全部已读", description = "将当前用户所有的未读消息标记为已读，支持按消息大类(type)进行分类一键已读。")
     public Result<Void> markAllAsRead(
             @Parameter(description = "消息大类(可选)，不传则清空所有类型的未读") @RequestParam(value = "type", required = false) BizStatus.MessageType type) {

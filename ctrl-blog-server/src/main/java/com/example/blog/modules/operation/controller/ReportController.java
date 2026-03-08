@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 内容举报控制器
  */
 @RestController
-@RequestMapping("/api/front/report")
+@RequestMapping("/api/v1/reports")
 @AuthCheck
 @Tag(name = "内容举报管理")
 public class ReportController {

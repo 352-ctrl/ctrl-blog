@@ -30,7 +30,7 @@ import java.util.List;
  */
 @RestController
 @Validated
-@RequestMapping("/api/admin/articles")
+@RequestMapping("/api/v1/admin/articles")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台文章管理")
 public class AdminArticleController {
@@ -113,7 +113,7 @@ public class AdminArticleController {
         return Result.success(pageResult);
     }
 
-    @PostMapping("/generate-summary")
+    @PostMapping("/summary-generation")
     @Operation(summary = "AI生成摘要")
     public Result<String> generateSummary(@RequestBody @Validated ArticleGenerateSummaryDTO dto) {
         String summary = aiSummaryService.generateSummary(dto.getTitle(), dto.getContent());

@@ -26,7 +26,7 @@ import java.util.List;
  */
 @RestController
 @Validated
-@RequestMapping("/api/admin/comments")
+@RequestMapping("/api/v1/admin/comments")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台评论管理")
 public class AdminCommentController {

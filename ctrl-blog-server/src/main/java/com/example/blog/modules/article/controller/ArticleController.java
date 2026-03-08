@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Validated
 @RestController
-@RequestMapping("/api/front/articles")
+@RequestMapping("/api/v1/articles")
 @Tag(name = "前台文章")
 public class ArticleController {
 
@@ -131,7 +131,7 @@ public class ArticleController {
     /**
      * 点赞文章
      */
-    @PostMapping("/{id}/like")
+    @PostMapping("/{id}/likes")
     @AuthCheck
     @RateLimit(key = "ip", time = 10, count = 5)
     @Operation(summary = "点赞文章", description = "登录用户对指定文章进行点赞。")
@@ -144,7 +144,7 @@ public class ArticleController {
     /**
      * 取消点赞文章
      */
-    @PostMapping("/{id}/cancel-like")
+    @DeleteMapping("/{id}/likes")
     @AuthCheck
     @RateLimit(key = "ip", time = 10, count = 5)
     @Operation(summary = "取消点赞文章", description = "登录用户取消对指定文章的点赞。")
@@ -156,7 +156,7 @@ public class ArticleController {
     /**
      * 收藏文章
      */
-    @PostMapping("/{id}/favorite")
+    @PostMapping("/{id}/favorites")
     @AuthCheck
     @RateLimit(key = "ip", time = 10, count = 5)
     @Operation(summary = "收藏文章", description = "登录用户对指定文章进行收藏。")
@@ -168,7 +168,7 @@ public class ArticleController {
     /**
      * 取消收藏文章
      */
-    @PostMapping("/{id}/cancel-favorite")
+    @DeleteMapping("/{id}/favorites")
     @AuthCheck
     @RateLimit(key = "ip", time = 10, count = 5)
     @Operation(summary = "取消收藏文章", description = "登录用户取消对指定文章的收藏。")

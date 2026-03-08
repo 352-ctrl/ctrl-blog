@@ -17,7 +17,7 @@ import java.util.List;
  * 提供首页公告展示等只读接口
  */
 @RestController
-@RequestMapping("/api/front/notices")
+@RequestMapping("/api/v1/notices")
 @Tag(name = "前台公告")
 public class NoticeController {
 

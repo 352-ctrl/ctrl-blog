@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/admin/monitor/redis")
+@RequestMapping("/api/v1/admin/monitor/redis")
 @AuthCheck(role = BizStatus.ROLE_SUPER_ADMIN)
 @Tag(name = "后台缓存监控")
 public class AdminRedisMonitorController {

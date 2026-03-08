@@ -24,7 +24,7 @@ import java.util.List;
  * 后台意见反馈控制器
  */
 @RestController
-@RequestMapping("/api/admin/feedback")
+@RequestMapping("/api/v1/admin/feedbacks")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台意见反馈管理")
 public class AdminFeedbackController {

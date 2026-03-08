@@ -24,7 +24,7 @@ import java.util.List;
  * 后台内容举报控制器
  */
 @RestController
-@RequestMapping("/api/admin/report")
+@RequestMapping("/api/v1/admin/reports")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
 @Tag(name = "后台内容举报管理")
 public class AdminReportController {
