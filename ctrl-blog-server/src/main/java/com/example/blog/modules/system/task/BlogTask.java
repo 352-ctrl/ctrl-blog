@@ -265,7 +265,6 @@ public class BlogTask {
      */
     private String extractFileName(String url) {
         if (StrUtil.isBlank(url)) return null;
-        // 提取最后一段，比如 "/api/files/download/12345.png" 变成 "12345.png"
         return FileUtil.getName(url);
     }
 }

@@ -57,10 +57,31 @@
         </el-form-item>
         <el-form-item label="封禁原因" prop="disableReason" v-if="dialog.rowData.value.status === 1"><el-input v-model="dialog.rowData.value.disableReason" type="textarea" :rows="2" maxlength="255" show-word-limit placeholder="请输入封禁原因" /></el-form-item>
         <el-form-item label="个人简介" prop="bio"><el-input v-model="dialog.rowData.value.bio" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="请输入个人简介" /></el-form-item>
-        <el-form-item label="头像">
-          <el-upload :action="uploadFileUrl" :on-success="handleFileSuccess" :headers="{ token: userStore.token }" :before-upload="beforeUpload" list-type="picture">
-            <el-button type="primary">上传头像</el-button>
-          </el-upload>
+        <el-form-item label="头像" prop="avatar">
+          <div class="avatar-upload-container">
+            <el-image
+                v-if="dialog.rowData.value.avatar"
+                :src="dialog.rowData.value.avatar"
+                class="avatar-preview-img"
+                :preview-src-list="[dialog.rowData.value.avatar]"
+                fit="cover"
+            />
+            <div v-else class="avatar-placeholder">
+              <el-icon><User /></el-icon>
+            </div>
+
+            <div class="upload-actions">
+              <el-upload
+                  action="#"
+                  :http-request="customUploadAvatar"
+                  :show-file-list="false"
+                  :before-upload="beforeUpload"
+              >
+                <el-button type="primary" plain>选择图片</el-button>
+              </el-upload>
+              <div class="upload-tip">建议尺寸 200x200 像素，支持 jpg、png 格式，大小不超过 10MB。</div>
+            </div>
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -77,13 +98,11 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { addUser, deleteUser, deleteUsers, getUserById, getUserPage, resetPassword, updateUser } from "@/api/admin/system/user.js";
 import { validateEmail, validateNickname, validatePasswordComplexity, regPasswordStrength } from "@/utils/validate.js";
 import { useUserStore } from "@/store/user.js";
+import { uploadFile } from "@/api/common/file.js";
 import { useTable } from "@/composables/useTable.js";
 import { useDialog } from "@/composables/useDialog.js";
 import { useRequest } from "@/composables/useRequest.js";
 
-const BASE_API = 'http://localhost:8080'
-const uploadFileUrl = `${BASE_API}/api/files/upload`;
-const userStore = useUserStore()
 const formRef = ref(null);
 const selectedIds = ref([]);
 
@@ -131,10 +150,25 @@ const handleResetPwd = (row) => {
   }).then(({ value }) => execResetPwd({ id: row.id, newPassword: value })).catch(() => {});
 };
 
-const handleFileSuccess = (res) => {
-  if (res.code === 200) { dialog.rowData.value.avatar = res.data; ElMessage.success('头像上传成功'); }
-  else ElMessage.error('头像上传失败：' + res.msg);
-}
+const customUploadAvatar = async (options) => {
+  const formData = new FormData();
+  formData.append('file', options.file);
+
+  try {
+    const res = await uploadFile(formData);
+    if (res.code === 200) {
+      // 成功后将返回的 URL 赋值给表单对象
+      dialog.rowData.value.avatar = res.data;
+      ElMessage.success('头像上传成功');
+      options.onSuccess(res);
+    } else {
+      ElMessage.error('头像上传失败：' + res.msg);
+      options.onError(new Error(res.msg));
+    }
+  } catch (error) {
+    options.onError(error);
+  }
+};
 
 const beforeUpload = (file) => {
   if (!file.type.startsWith('image/')) { ElMessage.error('只能上传图片格式文件！'); return false; }
@@ -183,5 +217,44 @@ const userColumns = reactive([
   flex: 1;
   word-break: break-all;
   color: var(--el-color-danger);
+}
+
+/* --- 头像上传区域样式优化 --- */
+.avatar-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.avatar-preview-img, .avatar-placeholder {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%; /* 圆形头像显示 */
+  border: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+  box-shadow: var(--el-box-shadow-light);
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-placeholder);
+  font-size: 32px;
+}
+
+.upload-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.4;
 }
 </style>

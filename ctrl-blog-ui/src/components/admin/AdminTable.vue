@@ -52,6 +52,7 @@
               :src="scope.row[column.prop]"
               class="cover-image"
               :preview-src-list="[scope.row[column.prop]]"
+              preview-teleported
           />
           <span v-else>无封面</span>
         </template>

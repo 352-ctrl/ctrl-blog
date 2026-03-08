@@ -54,12 +54,30 @@
         <el-row :gutter="20">
           <el-col :span="24"><el-form-item label="标题" prop="title"><el-input v-model="dialog.rowData.value.title" placeholder="请输入文章标题" /></el-form-item></el-col>
           <el-col :span="24">
-            <el-form-item label="封面">
-              <el-upload :action="uploadFileUrl" :on-success="handleFileSuccess" :headers="{ token: userStore.token }" :show-file-list="false" :before-upload="beforeUpload">
-                <el-button type="primary">上传封面</el-button>
-              </el-upload>
-              <div class="cover-preview" v-if="dialog.rowData.value.cover">
-                <el-image :src="dialog.rowData.value.cover" style="width: 100px; height: 60px; margin-left: 10px; border-radius: 4px;" :preview-src-list="[dialog.rowData.value.cover]" />
+            <el-form-item label="封面" prop="cover">
+              <div class="cover-upload-container">
+                <el-image
+                    v-if="dialog.rowData.value.cover"
+                    :src="dialog.rowData.value.cover"
+                    class="cover-preview-img"
+                    :preview-src-list="[dialog.rowData.value.cover]"
+                    fit="cover"
+                />
+                <div v-else class="cover-placeholder">
+                  <el-icon><Picture /></el-icon>
+                </div>
+
+                <div class="upload-actions">
+                  <el-upload
+                      action="#"
+                      :http-request="customUploadCover"
+                      :show-file-list="false"
+                      :before-upload="beforeUpload"
+                  >
+                    <el-button type="primary" plain>选择封面</el-button>
+                  </el-upload>
+                  <div class="upload-tip">建议尺寸 800x450 像素 (16:9比例)，支持 jpg、png 格式，大小不超过 10MB。</div>
+                </div>
               </div>
             </el-form-item>
           </el-col>
@@ -112,6 +130,7 @@ import { MdEditor } from 'md-editor-v3';
 import 'md-editor-v3/lib/style.css';
 import { useDark } from '@vueuse/core';
 import { useUserStore } from '@/store/user.js';
+import { uploadWangImage, uploadFile } from '@/api/common/file.js';
 import { addArticle, deleteArticle, deleteArticles, generateArticleSummary, getArticleById, getArticlePage, updateArticle } from "@/api/admin/content/article.js";
 import { getCategoryList } from "@/api/admin/content/category.js";
 import { getTagList } from "@/api/admin/content/tag.js";
@@ -124,8 +143,6 @@ import { useRequest } from "@/composables/useRequest.js";
 
 const isDark = useDark();
 const userStore = useUserStore();
-const BASE_API = 'http://localhost:8080';
-const uploadFileUrl = `${BASE_API}/api/files/upload`;
 
 const formRef = ref(null);
 const selectedIds = ref([]);
@@ -201,7 +218,7 @@ const submitForm = () => {
     if (valid) {
       await execSubmit({ ...dialog.rowData.value, userId: userStore.userId });
       dialog.closeDialog();
-      loadData();
+      await loadData();
     }
   });
 };
@@ -210,24 +227,46 @@ const deleteArticleApi = async (id) => await deleteArticle(id);
 const batchDeleteArticleApi = async (ids) => deleteArticles(ids);
 
 // ===================== 图片与 AI 相关逻辑 =====================
-const handleFileSuccess = (res) => {
-  if (res.code === 200) { dialog.rowData.value.cover = res.data; ElMessage.success('封面上传成功'); }
-  else ElMessage.error('封面上传失败：' + res.msg);
+
+// 自定义上传封面逻辑
+const customUploadCover = async (options) => {
+  const formData = new FormData();
+  formData.append('file', options.file);
+
+  try {
+    const res = await uploadFile(formData);
+    if (res.code === 200) {
+      dialog.rowData.value.cover = res.data;
+      ElMessage.success('封面上传成功');
+      options.onSuccess(res);
+    } else {
+      ElMessage.error('封面上传失败：' + res.msg);
+      options.onError(new Error(res.msg));
+    }
+  } catch (error) {
+    options.onError(error);
+  }
 };
+
 const beforeUpload = (file) => {
   if (!file.type.startsWith('image/')) { ElMessage.error('只能上传图片格式文件！'); return false; }
   if (file.size / 1024 / 1024 > 10) { ElMessage.error('图片大小不能超过10MB！'); return false; }
   return true;
 };
+
 const onUploadImg = async (files, callback) => {
   const formData = new FormData();
   formData.append('file', files[0]);
   try {
-    const response = await fetch(`${BASE_API}/api/files/wang/upload`, { method: 'POST', headers: { 'token': userStore.token }, body: formData });
-    const result = await response.json();
-    if (result.code === 200) callback([result.data?.[0]?.url || result.data]);
-    else ElMessage.error('图片上传失败：' + result.msg);
-  } catch (error) { callback([]); }
+    const res = await uploadWangImage(formData);
+    if (res.code === 200) {
+      callback([res.data?.[0]?.url || res.data]);
+    } else {
+      ElMessage.error('图片上传失败：' + res.msg);
+    }
+  } catch (error) {
+    callback([]);
+  }
 };
 
 const handleAiSwitchChange = async (val) => {
@@ -239,7 +278,7 @@ const handleAiSwitchChange = async (val) => {
   }
   if (dialog.rowData.value.summary && dialog.rowData.value.summary.trim() !== '') {
     try {
-      await ElMessageBox.confirm('当前摘要已有内容，AI 生成将覆盖原有内容，是否继续？', '覆盖确认', { type: 'warning' });
+      await ElMessageBox.confirm('当前摘要已有内容，AI 生成将覆盖原有内容，是否继续？', '覆盖确认', {type: 'warning'});
       await generateSummary();
     } catch { dialog.rowData.value.isAiSummary = 0; }
   } else {
@@ -267,7 +306,7 @@ watch(() => dialog.rowData.value.summary, (newVal) => {
 });
 
 const articleColumns = reactive([
-  { type: 'cover', prop: 'cover', label: '封面' },
+  { type: 'cover', prop: 'cover', label: '封面', minWidth: '130px' },
   { prop: 'title', label: '标题', showOverflowTooltip: true },
   { prop: 'userNickname', label: '作者' },
   { prop: 'categoryName', label: '分类' },
@@ -276,3 +315,44 @@ const articleColumns = reactive([
   { prop: 'createTime', label: '创建时间', minWidth: '160px' }
 ]);
 </script>
+
+<style scoped>
+/* --- 封面上传区域样式优化 --- */
+.cover-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.cover-preview-img, .cover-placeholder {
+  width: 160px;
+  height: 90px; /* 16:9 比例 */
+  border-radius: 6px; /* 文章封面通常用小圆角矩形 */
+  border: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
+  box-shadow: var(--el-box-shadow-light);
+}
+
+.cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-placeholder);
+  font-size: 32px;
+}
+
+.upload-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.4;
+}
+</style>

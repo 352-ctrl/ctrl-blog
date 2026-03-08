@@ -5,7 +5,7 @@
         :style="{ width: size + 'px', height: size + 'px' }"
         @click="openDialog"
     >
-      <el-avatar :size="size" :src="modelValue || defaultAvatar" shape="circle" />
+      <el-avatar :size="size" :src="modelValue" shape="circle" />
       <div class="avatar-mask">
         <el-icon class="mask-icon"><Camera /></el-icon>
         <span class="mask-text">修改头像</span>
@@ -94,8 +94,7 @@ import { VueCropper } from "vue-cropper";
 const props = defineProps({
   modelValue: { type: String, default: '' },
   title: { type: String, default: "修改头像" },
-  size: { type: Number, default: 100 },
-  uploadUrl: { type: String, default: 'http://localhost:8080/api/files/upload' }
+  size: { type: Number, default: 100 }
 });
 
 const emit = defineEmits([
@@ -107,10 +106,9 @@ const dialogVisible = ref(false);
 const visible = ref(false);
 const loading = ref(false);
 const cropperRef = ref(null);
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png';
 
 const options = reactive({
-  img: props.modelValue || defaultAvatar,
+  img: props.modelValue,
   autoCrop: true,
   autoCropWidth: 200,
   autoCropHeight: 200,
