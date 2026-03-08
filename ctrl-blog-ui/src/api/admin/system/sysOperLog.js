@@ -1,6 +1,6 @@
 import request from "@/utils/request.js";
 
-const BASE_URL = '/api/admin/monitor/oper-log'
+const BASE_URL = '/api/v1/admin/monitor/oper-log'
 
 // 1. 分页查询
 export function getOperLogPage(query) {

@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/admin/articles'
+const BASE_URL = '/api/v1/admin/articles'
 
 // 1. 获取详细信息
 export function getArticleById(id) {
@@ -58,7 +58,7 @@ export function deleteArticles(selectedIds) {
 // 7. AI生成摘要
 export function generateArticleSummary(data) {
     return request({
-        url: `${BASE_URL}/generate-summary`,
+        url: `${BASE_URL}/summary-generation`,
         method: 'post',
         data: data
     })

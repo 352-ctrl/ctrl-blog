@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/front/feedback'
+const BASE_URL = '/api/v1/feedbacks'
 
 // 提交意见反馈
 export function addFeedback(data, captchaToken) {

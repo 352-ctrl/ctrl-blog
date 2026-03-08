@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/admin/feedback'
+const BASE_URL = '/api/v1/admin/feedbacks'
 
 // 分页查询反馈列表
 export function getFeedbackPage(data) {

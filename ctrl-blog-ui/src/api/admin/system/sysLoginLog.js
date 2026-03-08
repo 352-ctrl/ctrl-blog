@@ -1,6 +1,6 @@
 import request from "@/utils/request.js";
 
-const BASE_URL = '/api/admin/monitor/login-log'
+const BASE_URL = '/api/v1/admin/monitor/login-log'
 
 // 1. 分页查询
 export function getLoginLogPage(query) {

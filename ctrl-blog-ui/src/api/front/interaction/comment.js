@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/front/comments'
+const BASE_URL = '/api/v1/comments'
 
 // 1. 分页查询
 export function getCommentPage(params) {
@@ -41,7 +41,7 @@ export function getCommentLocatorPage(id, pageSize = 10) {
 // 5. 点赞评论
 export function likeComment(commentId) {
     return request({
-        url: `${BASE_URL}/${commentId}/like`,
+        url: `${BASE_URL}/${id}/likes`,
         method: 'post'
     })
 }
@@ -49,7 +49,7 @@ export function likeComment(commentId) {
 // 6. 取消点赞评论
 export function cancelLikeComment(commentId) {
     return request({
-        url: `${BASE_URL}/${commentId}/cancel-like`,
-        method: 'post'
+        url: `${BASE_URL}/${id}/likes`,
+        method: 'delete'
     })
 }

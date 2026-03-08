@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/admin/report'
+const BASE_URL = '/api/v1/admin/reports'
 
 // 后台分页查询举报列表
 export function getReportPage(data) {

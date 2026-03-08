@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/admin/monitor/redis'
+const BASE_URL = '/api/v1/admin/monitor/redis'
 
 // 1. 获取缓存监控信息
 export function getRedisInfo() {

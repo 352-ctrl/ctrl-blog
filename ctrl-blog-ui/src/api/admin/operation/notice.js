@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/admin/notices'
+const BASE_URL = '/api/v1/admin/notices'
 
 // 1. 获取详细信息
 export function getNoticeById(id) {

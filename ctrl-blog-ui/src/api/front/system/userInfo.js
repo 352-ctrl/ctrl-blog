@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/front/user'
+const BASE_URL = '/api/v1/profile'
 
 // 1. 获取当前用户信息
 export function getUserProfile() {
@@ -40,7 +40,7 @@ export function changePassword(data) {
 // 5. 发送换绑邮箱验证码
 export function sendBindEmailCode(email, captchaToken) {
     return request({
-        url: `${BASE_URL}/email/code`,
+        url: `${BASE_URL}/email/verification-codes`,
         method: 'post',
         data: { email: email },
         headers: {

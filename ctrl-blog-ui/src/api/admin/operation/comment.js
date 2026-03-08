@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/admin/comments'
+const BASE_URL = '/api/v1/admin/comments'
 
 // 1. 分页查询
 export function getCommentPage(query) {

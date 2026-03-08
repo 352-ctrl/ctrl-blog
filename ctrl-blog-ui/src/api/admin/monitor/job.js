@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/admin/jobs'
+const BASE_URL = '/api/v1/admin/jobs'
 
 // 1. 获取详细信息
 export function getJobById(id) {

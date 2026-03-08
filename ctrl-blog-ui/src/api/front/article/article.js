@@ -1,7 +1,7 @@
 import request from "@/utils/request.js";
 
 // 基础路径
-const BASE_URL = '/api/front/articles'
+const BASE_URL = '/api/v1/articles'
 
 // 1. 根据ID查询 (获取详情)
 export function getArticleById(id) {
