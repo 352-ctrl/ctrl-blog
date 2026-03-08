@@ -296,7 +296,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 3. 执行逻辑删除
         boolean success = this.lambdaUpdate()
                 .eq(User::getId, targetUserId)
-                .set(User::getIsDeleted, 1)
+                .set(User::getIsDeleted, BizStatus.DeleteStatus.DELETED)
                 .set(User::getDeleteTime, LocalDateTime.now())
                 .update();
 
@@ -345,7 +345,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 2. 批量执行逻辑删除
         boolean success = this.lambdaUpdate()
                 .in(User::getId, ids)
-                .set(User::getIsDeleted, 1)
+                .set(User::getIsDeleted, BizStatus.DeleteStatus.DELETED)
                 .set(User::getDeleteTime, LocalDateTime.now())
                 .update();
 

@@ -201,7 +201,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         deleteChildrenComments(Collections.singletonList(id));
         this.lambdaUpdate()
                 .eq(Comment::getId, id)
-                .set(Comment::getIsDeleted, 1)
+                .set(Comment::getIsDeleted, BizStatus.DeleteStatus.DELETED)
                 .set(Comment::getDeleteTime, LocalDateTime.now())
                 .update();
     }
@@ -215,7 +215,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         }
         boolean success = this.lambdaUpdate()
                 .in(Comment::getId, ids)
-                .set(Comment::getIsDeleted, 1)
+                .set(Comment::getIsDeleted, BizStatus.DeleteStatus.DELETED)
                 .set(Comment::getDeleteTime, LocalDateTime.now())
                 .update();
 
@@ -327,7 +327,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         }
         this.lambdaUpdate()
                 .in(Comment::getParentId, potentialParentIds)
-                .set(Comment::getIsDeleted, 1)
+                .set(Comment::getIsDeleted, BizStatus.DeleteStatus.DELETED)
                 .set(Comment::getDeleteTime, LocalDateTime.now())
                 .update();
     }

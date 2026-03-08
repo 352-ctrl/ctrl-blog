@@ -37,6 +37,21 @@ public final class BizStatus {
         public Integer getValue() { return code; }
     }
 
+    @Getter
+    @AllArgsConstructor
+    public enum DeleteStatus implements BaseEnum<Integer> {
+        NORMAL(0, "正常/未删除"),
+        DELETED(1, "已删除");
+
+        @EnumValue // 存入数据库的值
+        private final Integer code;
+        @JsonValue // 返回给前端的值
+        private final String desc;
+
+        @Override
+        public Integer getValue() { return code; }
+    }
+
     /**
      * 角色标识：普通用户
      */

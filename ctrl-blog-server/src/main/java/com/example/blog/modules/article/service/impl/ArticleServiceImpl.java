@@ -208,7 +208,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         boolean success = this.lambdaUpdate()
                 .eq(Article::getId, id)
-                .set(Article::getIsDeleted, 1)
+                .set(Article::getIsDeleted, BizStatus.DeleteStatus.DELETED)
                 .set(Article::getDeleteTime, LocalDateTime.now())
                 .update();
 
@@ -241,7 +241,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         boolean success = this.lambdaUpdate()
                 .in(Article::getId, ids)
-                .set(Article::getIsDeleted, 1)
+                .set(Article::getIsDeleted, BizStatus.DeleteStatus.DELETED)
                 .set(Article::getDeleteTime, LocalDateTime.now())
                 .update();
 
