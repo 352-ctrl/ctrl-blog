@@ -224,6 +224,26 @@ public final class MessageConstants {
     public static final String MSG_NOTICE_NOT_EXIST = "公告不存在";
 
     /**
+     * 分类下存在文章，无法删除
+     */
+    public static final String MSG_CATEGORY_HAS_ARTICLE = "该分类下存在关联文章，无法直接删除，请先移除文章关联";
+
+    /**
+     * 批量删除分类时存在文章，无法删除
+     */
+    public static final String MSG_CATEGORY_BATCH_HAS_ARTICLE = "选中的分类中存在关联文章，无法批量删除，请先处理文章";
+
+    /**
+     * 标签下存在文章，无法删除
+     */
+    public static final String MSG_TAG_HAS_ARTICLE = "该标签下存在关联文章，无法直接删除，请先移除文章关联";
+
+    /**
+     * 批量删除标签时存在文章，无法删除
+     */
+    public static final String MSG_TAG_BATCH_HAS_ARTICLE = "选中的部分标签下存在关联文章，无法批量删除，请先处理文章";
+
+    /**
      * 敏感词拦截提示
      */
     public static final String MSG_CONTENT_SENSITIVE = "内容包含违规词汇，请修改后提交";

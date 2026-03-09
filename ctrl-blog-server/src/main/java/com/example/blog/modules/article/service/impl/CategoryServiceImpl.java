@@ -11,16 +11,18 @@ import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
+import com.example.blog.common.utils.RedisUtil;
+import com.example.blog.core.exception.CustomerException;
+import com.example.blog.modules.article.mapper.ArticleMapper;
+import com.example.blog.modules.article.mapper.CategoryMapper;
 import com.example.blog.modules.article.model.convert.CategoryConvert;
 import com.example.blog.modules.article.model.dto.CategoryAddDTO;
 import com.example.blog.modules.article.model.dto.CategoryQueryDTO;
 import com.example.blog.modules.article.model.dto.CategoryUpdateDTO;
+import com.example.blog.modules.article.model.entity.Article;
 import com.example.blog.modules.article.model.entity.Category;
-import com.example.blog.core.exception.CustomerException;
-import com.example.blog.modules.article.mapper.CategoryMapper;
-import com.example.blog.common.utils.RedisUtil;
-import com.example.blog.modules.article.service.CategoryService;
 import com.example.blog.modules.article.model.vo.CategoryVO;
+import com.example.blog.modules.article.service.CategoryService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -41,6 +43,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     @Resource
     private CategoryConvert categoryConvert;
+
+    @Resource
+    private ArticleMapper articleMapper;
 
     @Resource
     private RedisUtil redisUtil;
@@ -156,6 +161,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     public void deleteCategoryById(Long id) {
         Assert.notNull(id, "分类ID不能为空");
 
+        long articleCount = articleMapper.selectCount(
+                new LambdaQueryWrapper<Article>().eq(Article::getCategoryId, id)
+        );
+        if (articleCount > 0) {
+            throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_CATEGORY_HAS_ARTICLE);
+        }
+
         boolean success = this.removeById(id);
 
         // 只要有数据变动，清理缓存
@@ -171,6 +183,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         if (CollUtil.isEmpty(ids)) {
             log.warn("批量删除分类失败：传入的 ID 列表为空");
             return;
+        }
+
+        long articleCount = articleMapper.selectCount(
+                new LambdaQueryWrapper<Article>().in(Article::getCategoryId, ids)
+        );
+        if (articleCount > 0) {
+            throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_CATEGORY_BATCH_HAS_ARTICLE);
         }
 
         this.removeByIds(ids);

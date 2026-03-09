@@ -10,16 +10,18 @@ import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
+import com.example.blog.common.utils.RedisUtil;
+import com.example.blog.core.exception.CustomerException;
+import com.example.blog.modules.article.mapper.TagMapper;
 import com.example.blog.modules.article.model.convert.TagConvert;
 import com.example.blog.modules.article.model.dto.TagAddDTO;
 import com.example.blog.modules.article.model.dto.TagQueryDTO;
 import com.example.blog.modules.article.model.dto.TagUpdateDTO;
+import com.example.blog.modules.article.model.entity.ArticleTag;
 import com.example.blog.modules.article.model.entity.Tag;
-import com.example.blog.core.exception.CustomerException;
-import com.example.blog.modules.article.mapper.TagMapper;
-import com.example.blog.common.utils.RedisUtil;
-import com.example.blog.modules.article.service.TagService;
 import com.example.blog.modules.article.model.vo.TagVO;
+import com.example.blog.modules.article.service.ArticleTagService;
+import com.example.blog.modules.article.service.TagService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -40,6 +42,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
 
     @Resource
     private TagConvert tagConvert;
+
+    @Resource
+    private ArticleTagService articleTagService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -163,12 +168,14 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     public void deleteTagById(Long id) {
         Assert.notNull(id, "标签ID不能为空");
 
-        boolean success = this.removeById(id);
+        long count = articleTagService.count(new LambdaQueryWrapper<ArticleTag>()
+                .eq(ArticleTag::getTagId, id));
+        if (count > 0) {
+            throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_TAG_HAS_ARTICLE);
+        }
 
-        // 只要有数据变动，清理缓存
-        if (success) {
-            redisUtil.delete(RedisConstants.REDIS_TAG_LIST_KEY);
-            redisUtil.delete(RedisConstants.REDIS_WEBMASTER_INFO_KEY);
+        if (this.removeById(id)) {
+            this.clearTagCache();
         }
     }
 
@@ -177,9 +184,18 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     public void batchDeleteTags(List<Long> ids) {
         Assert.notEmpty(ids, "标签ID列表不能为空");
 
-        this.removeBatchByIds(ids);
+        long count = articleTagService.count(new LambdaQueryWrapper<ArticleTag>()
+                .in(ArticleTag::getTagId, ids));
+        if (count > 0) {
+            throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_TAG_BATCH_HAS_ARTICLE);
+        }
 
-        // 只要有数据变动，清理缓存
+        if (this.removeBatchByIds(ids)) {
+            this.clearTagCache();
+        }
+    }
+
+    private void clearTagCache() {
         redisUtil.delete(RedisConstants.REDIS_TAG_LIST_KEY);
         redisUtil.delete(RedisConstants.REDIS_WEBMASTER_INFO_KEY);
     }
