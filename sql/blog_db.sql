@@ -11,7 +11,7 @@
  Target Server Version : 80044 (8.0.44)
  File Encoding         : 65001
 
- Date: 04/03/2026 14:26:43
+ Date: 09/03/2026 09:01:57
 */
 
 SET NAMES utf8mb4;
@@ -152,6 +152,24 @@ CREATE TABLE `blog_daily_visit`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '每日访问统计表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Table structure for blog_danmaku
+-- ----------------------------
+DROP TABLE IF EXISTS `blog_danmaku`;
+CREATE TABLE `blog_danmaku`  (
+  `id` bigint NOT NULL COMMENT '弹幕ID',
+  `content` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '弹幕内容',
+  `user_id` bigint NULL DEFAULT NULL COMMENT '发送者ID(游客为空)',
+  `nickname` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '昵称(游客自动生成)',
+  `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '头像(游客使用默认)',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0 COMMENT '逻辑删除标识(0未删除,1已删除)',
+  `delete_time` datetime NULL DEFAULT NULL COMMENT '删除时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '弹幕留言表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for blog_feedback
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_feedback`;
@@ -171,7 +189,7 @@ CREATE TABLE `blog_feedback`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2028828244168286210 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户意见反馈表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2029210026780835843 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户意见反馈表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for blog_report
@@ -194,7 +212,7 @@ CREATE TABLE `blog_report`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_target`(`target_type` ASC, `target_id` ASC) USING BTREE,
   INDEX `idx_status`(`status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2028828305304461314 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '内容举报投诉表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2029486452587286531 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '内容举报投诉表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for blog_tag
@@ -242,7 +260,7 @@ CREATE TABLE `sys_login_log`  (
   `message` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提示消息(如:密码错误、账号锁定等)',
   `create_time` datetime NULL DEFAULT NULL COMMENT '登录时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2028828532430217218 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统登录日志表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2030654501021523971 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统登录日志表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for sys_message
@@ -331,11 +349,13 @@ CREATE TABLE `sys_user`  (
   `avatar` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '头像URL',
   `role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT 'USER' COMMENT '角色: SUPER_ADMIN/ADMIN/USER',
   `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '状态: 0-正常, 1-禁用, 2-注销冷静期',
+  `disable_end_time` datetime NULL DEFAULT NULL COMMENT '封禁到期时间 (为空表示未封禁, 极大值表示永久封禁)',
+  `disable_reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '封禁原因',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `is_deleted` tinyint(1) NULL DEFAULT 0 COMMENT '逻辑删除 0:未删 1:已删',
   `cancel_time` datetime NULL DEFAULT NULL COMMENT '注销申请时间',
-  `delete_time` datetime NULL DEFAULT NULL COMMENT '注销申请时间',
+  `delete_time` datetime NULL DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_email`(`email` ASC) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
