@@ -107,6 +107,8 @@ blog:
     message-retention-days: 30
 
 file:
+  # 存储策略：local 或 qiniu
+  storage-type: ${FILE_STORAGE_TYPE:local}
   # 这里的 ${user.dir} 会自动被 Spring 替换为当前项目运行的根目录
   upload-path: ${FILE_UPLOAD_PATH:${user.dir}/files/}
   # 访问前缀 (开发环境写 localhost，生产环境改域名)
@@ -131,3 +133,10 @@ aj:
     bypass:
       enabled: true
       master-key: AUTO_TEST_BYPASS_666
+
+# 七牛云配置
+qiniu:
+  access-key: ${QINIU_AK}
+  secret-key: ${QINIU_SK}
+  bucket: ${QINIU_BUCKET}
+  domain: ${QINIU_DOMAIN}

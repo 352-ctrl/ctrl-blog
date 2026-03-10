@@ -52,6 +52,10 @@ public final class Constants {
      * 默认昵称前缀
      */
     public static final String DEFAULT_NICKNAME_PREFIX = "用户_";
+    /**
+     * 自动生成封面时的默认作者名称兜底
+     */
+    public static final String DEFAULT_AUTHOR_NAME = "管理员";
 
     /**
      * 未知/已注销用户的默认占位昵称
@@ -115,6 +119,23 @@ public final class Constants {
      */
     public static final String GRAVATAR_DUMMY_DOMAIN = "@blog.com";
 
+    /* ---------- 文件与OSS存储配置 ---------- */
+    /**
+     * 清理孤儿文件的安全期时间（24小时的毫秒数）
+     */
+    public static final long FILE_SAFE_TIME_WINDOW_MS = 24 * 60 * 60 * 1000L;
+    /**
+     * 下载文件的附件响应头模板
+     */
+    public static final String FILE_ATTACHMENT_HEADER_PREFIX = "attachment;filename=";
+    /**
+     * 七牛云存储的默认目录前缀
+     */
+    public static final String QINIU_DIR_PREFIX = "blog";
+    /**
+     * 动态生成文章封面时的默认上传文件名
+     */
+    public static final String AUTO_COVER_FILE_NAME = "auto_cover.png";
 
     // ============================== 外部资源与配置 ==============================
 

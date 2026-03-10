@@ -200,6 +200,13 @@
             <artifactId>sensitive-word</artifactId>
             <version>0.29.4</version>
         </dependency>
+
+        <!-- 七牛云对象存储 SDK，用于文件上传和管理 -->
+        <dependency>
+            <groupId>com.qiniu</groupId>
+            <artifactId>qiniu-java-sdk</artifactId>
+            <version>7.14.0</version>
+        </dependency>
     </dependencies>
 
     <build>

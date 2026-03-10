@@ -14,6 +14,17 @@ public interface FileService {
     String upload(MultipartFile file);
 
     /**
+     * 上传文件 (内部字节流专用)
+     * <p>通常用于服务器端动态生成的图片（如 Playwright 截图、AI 生成图片）直接上传。
+     * 全程在内存中完成，避免了生成本地临时文件带来的磁盘 I/O 损耗与垃圾残留。</p>
+     *
+     * @param fileData         文件的字节数组数据 (内存流)
+     * @param originalFilename 原始文件名（用于提取后缀名，如 "cover.png"）
+     * @return 文件访问 URL
+     */
+    String upload(byte[] fileData, String originalFilename);
+
+    /**
      * 下载文件
      * @param fileName 文件名
      * @param response 响应对象

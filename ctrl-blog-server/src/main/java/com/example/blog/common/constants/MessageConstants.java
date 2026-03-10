@@ -285,6 +285,15 @@ public final class MessageConstants {
      * 上传文件为空
      */
     public static final String MSG_FILE_IS_EMPTY = "上传文件不能为空";
+    /**
+     * 文件上传格式错误 (非 multipart/form-data 或未选择文件)
+     */
+    public static final String MSG_UPLOAD_FORMAT_ERROR = "请选择要上传的文件或检查请求格式";
+
+    /**
+     * 云存储文件下载提示
+     */
+    public static final String MSG_OSS_DIRECT_ACCESS_REQUIRED = "云存储文件请直接使用URL访问";
 
     /**
      * Cron 表达式格式错误
@@ -294,11 +303,6 @@ public final class MessageConstants {
      * 定时任务不存在
      */
     public static final String MSG_JOB_NOT_EXIST = "任务不存在";
-
-    /**
-     * 文件上传格式错误 (非 multipart/form-data 或未选择文件)
-     */
-    public static final String MSG_UPLOAD_FORMAT_ERROR = "请选择要上传的文件或检查请求格式";
 
     /* ============================== 6. 互动与点赞消息 ============================== */
 
