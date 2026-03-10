@@ -1,30 +1,33 @@
 package com.example.blog.modules.article.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.blog.modules.article.model.vo.*;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
-import com.example.blog.modules.article.model.convert.ArticleConvert;
-import com.example.blog.modules.operation.service.CommentService;
-import com.example.blog.modules.user.model.dto.UserPayloadDTO;
-import com.example.blog.modules.article.event.ArticlesDeletedEvent;
-import com.example.blog.modules.operation.event.InteractiveMessageEvent;
+import com.example.blog.common.utils.HtmlToImageUtil;
+import com.example.blog.common.utils.RedisUtil;
 import com.example.blog.core.exception.CustomerException;
+import com.example.blog.core.security.UserContext;
+import com.example.blog.modules.article.event.ArticlesDeletedEvent;
 import com.example.blog.modules.article.manager.ArticleCacheManager;
 import com.example.blog.modules.article.manager.ArticleQueryManager;
 import com.example.blog.modules.article.mapper.ArticleMapper;
+import com.example.blog.modules.article.model.convert.ArticleConvert;
 import com.example.blog.modules.article.model.dto.*;
 import com.example.blog.modules.article.model.entity.*;
+import com.example.blog.modules.article.model.vo.*;
 import com.example.blog.modules.article.service.*;
-import com.example.blog.common.utils.RedisUtil;
+import com.example.blog.modules.file.service.FileService;
+import com.example.blog.modules.operation.event.InteractiveMessageEvent;
+import com.example.blog.modules.operation.service.CommentService;
 import com.example.blog.modules.system.validator.SensitiveWordManager;
-import com.example.blog.core.security.UserContext;
+import com.example.blog.modules.user.model.dto.UserPayloadDTO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,11 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +64,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Resource
     private CommentService commentService;
+
+    @Resource
+    private FileService fileService;
 
     @Resource
     private RedisUtil redisUtil;
@@ -176,6 +178,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public void addArticle(ArticleAddDTO addDTO) {
         Assert.notNull(addDTO, "新增文章参数不能为空");
 
+        // 获取当前登录用户
+        UserPayloadDTO currentUser = UserContext.get();
+        if (currentUser == null) {
+            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
+        }
+
+        // 校验分类
         Category category = categoryService.getById(addDTO.getCategoryId());
         if (category == null) {
             throw new CustomerException(ResultCode.NOT_FOUND, MessageConstants.MSG_CATEGORY_NOT_EXIST);
@@ -187,12 +196,33 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             addDTO.setContent(safeContent);
         }
 
+        // 自动生成专属封面（纯内存操作 + 动态上传）
+        if (StrUtil.isBlank(addDTO.getCover())) {
+            try {
+                // 提取文章标题和作者昵称（如果昵称为空则给个默认值）
+                String title = addDTO.getTitle();
+                String author = StrUtil.isNotBlank(currentUser.getNickname()) ? currentUser.getNickname() : Constants.DEFAULT_AUTHOR_NAME;
+
+                // 调用 Playwright 生成封面字节流 (内存操作)
+                byte[] coverBytes = HtmlToImageUtil.generateCoverBytes(title, author);
+
+                // 调用双引擎文件服务直接上传字节流（传入 "cover.png" 以便提取 .png 后缀）
+                String coverUrl = fileService.upload(coverBytes, Constants.AUTO_COVER_FILE_NAME);
+
+                // 将生成的 URL 设置回文章对象中
+                addDTO.setCover(coverUrl);
+
+                log.info("成功为文章【{}】自动生成封面: {}", title, coverUrl);
+            } catch (Exception e) {
+                // 万一 Playwright 在 Linux 服务器上因为缺少浏览器依赖启动失败，
+                // 或者七牛云上传超时，不要阻断用户发文章！降级使用原来的随机兜底策略。
+                log.error("动态生成封面失败，触发降级策略，使用静态默认封面", e);
+
+            }
+        }
+
         Article article = articleConvert.addDtoToEntity(addDTO);
 
-        UserPayloadDTO currentUser = UserContext.get();
-        if (currentUser == null) {
-            throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_NOT_LOGIN);
-        }
         article.setUserId(currentUser.getId());
 
         this.save(article);
