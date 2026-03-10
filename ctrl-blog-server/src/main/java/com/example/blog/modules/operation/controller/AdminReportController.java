@@ -35,9 +35,9 @@ public class AdminReportController {
     /**
      * 分页查询举报列表
      */
-    @PostMapping
+    @GetMapping
     @Operation(summary = "分页查询举报列表", description = "管理员分页查询所有举报记录")
-    public Result<IPage<AdminReportVO>> pageAdminReports(@RequestBody ReportQueryDTO queryDTO) {
+    public Result<IPage<AdminReportVO>> pageAdminReports(@Valid ReportQueryDTO queryDTO) {
         IPage<AdminReportVO> page = reportService.pageAdminReports(queryDTO);
         return Result.success(page);
     }

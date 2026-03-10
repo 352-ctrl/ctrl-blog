@@ -7,7 +7,7 @@ const BASE_URL = '/api/v1/admin/reports'
 export function getReportPage(data) {
     return request({
         url: BASE_URL,
-        method: 'post',
+        method: 'get',
         data: data
     })
 }

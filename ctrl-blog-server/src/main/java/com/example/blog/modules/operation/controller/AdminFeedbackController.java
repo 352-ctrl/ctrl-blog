@@ -35,9 +35,9 @@ public class AdminFeedbackController {
     /**
      * 分页查询反馈列表
      */
-    @PostMapping
+    @GetMapping
     @Operation(summary = "分页查询反馈列表", description = "管理员分页查询所有用户反馈")
-    public Result<IPage<AdminFeedbackVO>> pageAdminFeedbacks(@RequestBody FeedbackQueryDTO queryDTO) {
+    public Result<IPage<AdminFeedbackVO>> pageAdminFeedbacks(@Valid FeedbackQueryDTO queryDTO) {
         IPage<AdminFeedbackVO> page = feedbackService.pageAdminFeedbacks(queryDTO);
         return Result.success(page);
     }

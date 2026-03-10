@@ -7,7 +7,7 @@ const BASE_URL = '/api/v1/admin/feedbacks'
 export function getFeedbackPage(data) {
     return request({
         url: BASE_URL,
-        method: 'post',
+        method: 'get',
         data: data
     })
 }
