@@ -1,14 +1,24 @@
 <template>
   <div class="home-container">
     <div class="carousel-wrapper">
-      <el-carousel v-if="data.carouselList.length > 0" height="400px" motion-blur class="custom-carousel">
+      <el-carousel v-if="data.carouselList.length > 0" motion-blur class="custom-carousel">
         <el-carousel-item
             v-for="item in data.carouselList"
             :key="item.id"
             class="carousel-item-box"
             @click="navToArticle(item.id)"
         >
-          <el-image :src="item.cover" class="carousel-image" />
+          <el-image
+              :src="item.cover || defaultCoverUrl"
+              class="carousel-image"
+              fit="cover"
+          >
+            <template #error>
+              <div class="image-error-slot">
+                <img :src="defaultCoverUrl" alt="默认封面" class="fallback-img" />
+              </div>
+            </template>
+          </el-image>
 
           <div class="carousel-overlay">
             <div class="carousel-title">
@@ -58,6 +68,7 @@ import { getArticleCarousel, getArticlePage } from "@/api/front/article/article.
 import { getCategoryList } from '@/api/front/article/category.js'
 import { ElMessage } from "element-plus";
 import { useTable } from '@/composables/useTable.js'
+import defaultCoverUrl from '@/assets/images/default-cover.png';
 
 const router = useRouter();
 
@@ -148,6 +159,12 @@ const handleTabChange = (tabName) => {
   overflow: hidden;
   box-shadow: var(--el-box-shadow-light);
   transition: box-shadow 0.3s ease, transform 0.3s ease;
+  width: 100%;
+  aspect-ratio: 1200 / 630;
+}
+
+:deep(.el-carousel__container) {
+  height: 100% !important;
 }
 
 .custom-carousel:hover {
@@ -253,8 +270,8 @@ const handleTabChange = (tabName) => {
    移动端响应式适配
    ==================================== */
 @media screen and (max-width: 768px) {
-  :deep(.custom-carousel) {
-    height: 220px !important; /* 手机端减小轮播图高度 */
+  .custom-carousel {
+    aspect-ratio: 1200 / 630;
   }
 
   .carousel-overlay {

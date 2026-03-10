@@ -10,21 +10,17 @@
       <slot name="prefix" :item="item" :index="index"></slot>
 
       <el-image
-          v-if="item.cover"
           class="article-cover"
-          :src="item.cover"
+          :src="item.cover || ''"
           fit="cover"
           lazy
       >
         <template #error>
-          <div class="image-slot">
+          <div class="image-slot empty-cover">
             <el-icon><Picture /></el-icon>
           </div>
         </template>
       </el-image>
-      <div v-else class="article-cover empty-cover">
-        <el-icon><Picture /></el-icon>
-      </div>
 
       <div class="article-info">
         <div class="title" :title="item.title">{{ item.title }}</div>
@@ -37,6 +33,7 @@
 </template>
 
 <script setup>
+import defaultCoverUrl from '@/assets/images/default-cover.png';
 
 const props = defineProps({
   articles: {
@@ -66,7 +63,7 @@ const handleCardClick = (id) => {
 .mini-item {
   display: flex;
   align-items: center;
-  padding: 12px 10px;
+  padding: 14px 10px;
   margin: 0 -10px;
   border-radius: 8px;
   border-bottom: 1px dashed transparent;
@@ -89,14 +86,14 @@ const handleCardClick = (id) => {
       color: var(--el-color-primary);
     }
     .article-cover {
-      transform: scale(1.05);
+      transform: scale(1.03);
     }
   }
 
   /* 封面图样式 */
   .article-cover {
-    width: 65px;
-    height: 48px;
+    width: 84px;
+    height: 56px;
     border-radius: 6px;
     margin-right: 14px;
     flex-shrink: 0;

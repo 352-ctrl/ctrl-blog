@@ -6,10 +6,17 @@
         <div class="content-wrapper">
           <div class="image-container">
             <el-image
-                :src="item.cover"
+                :src="item.cover || defaultCoverUrl"
                 class="article-image"
                 fit="cover"
-            />
+                lazy
+            >
+              <template #error>
+                <div class="image-error-slot">
+                  <img :src="defaultCoverUrl" alt="默认封面" class="fallback-img" />
+                </div>
+              </template>
+            </el-image>
           </div>
 
           <div class="text-content">
@@ -73,6 +80,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import defaultCoverUrl from '@/assets/images/default-cover.png';
 
 const router = useRouter()
 
@@ -128,7 +136,7 @@ const formatTimeAgo = (timeStr) => {
 }
 
 :deep(.el-card__body) {
-  padding: 16px 20px;
+  padding: 20px;
 }
 
 .article-card:hover {
@@ -144,25 +152,27 @@ const formatTimeAgo = (timeStr) => {
 .content-wrapper {
   display: flex;
   align-items: flex-start;
-  min-height: 100px;
 }
 
 .image-container {
   flex: 0 0 auto;
-  padding-right: 16px;
+  padding-right: 20px;
 }
 
 .article-image {
   border-radius: 6px;
-  width: 140px;
-  height: 100px;
+  width: 172px;
+  height: 90px;
   object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .text-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 90px;
+  justify-content: space-between;
   overflow: hidden;
 }
 
@@ -171,6 +181,7 @@ const formatTimeAgo = (timeStr) => {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: -2px;
   margin-bottom: 8px;
 }
 
