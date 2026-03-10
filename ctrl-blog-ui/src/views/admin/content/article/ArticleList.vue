@@ -307,7 +307,7 @@ watch(() => dialog.rowData.value.summary, (newVal) => {
 
 const articleColumns = reactive([
   { type: 'cover', prop: 'cover', label: '封面', minWidth: '130px' },
-  { prop: 'title', label: '标题', showOverflowTooltip: true },
+  { type: 'title', prop: 'title', label: '标题', minWidth: '220px' },
   { prop: 'userNickname', label: '作者' },
   { prop: 'categoryName', label: '分类' },
   { prop: 'viewCount', label: '浏览量' },

@@ -169,6 +169,26 @@
       </el-table-column>
 
       <el-table-column
+          v-else-if="column.type === 'title'"
+          :prop="column.prop"
+          :label="column.label"
+          :width="column.width"
+          :min-width="column.minWidth || 200"
+          :align="column.align || 'left'"
+      >
+        <template #default="scope">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <el-tag v-if="scope.row.isTop === 1" type="danger" size="small" effect="dark" style="flex-shrink: 0;">
+              置顶
+            </el-tag>
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="scope.row[column.prop]">
+              {{ scope.row[column.prop] }}
+            </span>
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column
           v-else
           :prop="column.prop"
           :label="column.label"
