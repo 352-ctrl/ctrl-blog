@@ -12,31 +12,35 @@ import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
-import com.example.blog.common.utils.*;
-import com.example.blog.modules.user.model.convert.UserConvert;
+import com.example.blog.common.utils.GravatarUtils;
+import com.example.blog.common.utils.IpUtils;
+import com.example.blog.common.utils.MailService;
+import com.example.blog.common.utils.RedisUtil;
+import com.example.blog.core.exception.CustomerException;
 import com.example.blog.core.security.PasswordEncoderUtil;
 import com.example.blog.core.security.TokenUtils;
 import com.example.blog.core.security.UserContext;
 import com.example.blog.modules.operation.model.dto.EmailRequestDTO;
+import com.example.blog.modules.system.event.LoginLogEvent;
+import com.example.blog.modules.user.event.UserRegisteredEvent;
+import com.example.blog.modules.user.model.convert.UserConvert;
 import com.example.blog.modules.user.model.dto.UserForgotPwdDTO;
 import com.example.blog.modules.user.model.dto.UserLoginDTO;
 import com.example.blog.modules.user.model.dto.UserPayloadDTO;
 import com.example.blog.modules.user.model.dto.UserRegisterDTO;
 import com.example.blog.modules.user.model.entity.User;
-import com.example.blog.modules.system.event.LoginLogEvent;
-import com.example.blog.modules.user.event.UserRegisteredEvent;
-import com.example.blog.core.exception.CustomerException;
-import com.example.blog.modules.user.service.AuthService;
-import com.example.blog.modules.user.service.UserService;
 import com.example.blog.modules.user.model.vo.UserLoginVO;
 import com.example.blog.modules.user.model.vo.UserVO;
-import com.example.blog.common.utils.IpUtils;
+import com.example.blog.modules.user.service.AuthService;
+import com.example.blog.modules.user.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -171,6 +175,28 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /**
+     * 提取重置密码成功后的 Redis 清理逻辑
+     */
+    private void executeResetPasswordCacheClear(String redisKey, Long userId) {
+        // 删除验证码缓存
+        redisUtil.delete(redisKey);
+
+        // 踢出该用户，强制重新登录
+        // 清除用户的基本信息缓存
+        redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + userId);
+
+        // 获取该用户当前关联的 Token，并将其拉入黑名单
+        String tokenKey = RedisConstants.REDIS_USER_TOKEN_KEY + userId;
+        Object oldTokenObj = redisUtil.get(tokenKey);
+
+        if (oldTokenObj != null) {
+            this.blacklistToken(oldTokenObj.toString());
+            // 从 Redis 中彻底移除该用户的在线 Token 记录
+            redisUtil.delete(tokenKey);
+        }
+    }
+
     @Override
     public void sendRegisterEmailCode(EmailRequestDTO emailRequestDTO) {
         Assert.notNull(emailRequestDTO, "邮箱请求参数不能为空");
@@ -235,7 +261,7 @@ public class AuthServiceImpl implements AuthService {
             }
         }
         // 查询用户
-        User dbUser = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getEmail, loginDTO.getEmail()));
+        User dbUser = userService.getOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
         if (dbUser == null) {
             recordAuthLog(email, BizStatus.Log.FAIL.getValue(), MessageConstants.MSG_USER_NOT_EXIST);
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_LOGIN_ERROR);
@@ -389,12 +415,24 @@ public class AuthServiceImpl implements AuthService {
             throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_USER_EXIST);
         }
 
-        // 注册成功后，删除 Redis 中的验证码
-        redisUtil.delete(redisKey);
+        // 将 Redis 清理和事件发布注册到事务提交后的钩子中
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    // 只有数据库真正 commit 成功后，才删除 Redis 验证码和发通知
+                    // 防止数据库回滚了，验证码却没了，导致用户无法重试
+                    redisUtil.delete(redisKey);
+                    eventPublisher.publishEvent(new UserRegisteredEvent(this, user.getId()));
+                }
+            });
+        } else {
+            // 兜底逻辑（防脱离事务环境运行）
+            redisUtil.delete(redisKey);
+            eventPublisher.publishEvent(new UserRegisteredEvent(this, user.getId()));
+        }
 
-        // 发送欢迎系统通知
-        eventPublisher.publishEvent(new UserRegisteredEvent(this, user.getId()));
-        // 调用私有方法统一构建返回值
+        // 构建 Token 并返回 (这部分由于写入的是新 Token，放在这里没问题)
         return buildLoginResult(user, false, Constants.LOG_REGISTER_AND_LOGIN_SUCCESS);
     }
 
@@ -426,34 +464,16 @@ public class AuthServiceImpl implements AuthService {
         user.setPassword(PasswordEncoderUtil.encode(forgotPwdDTO.getNewPassword()));
         userService.updateById(user);
 
-        // 4. 删除验证码缓存
-        redisUtil.delete(redisKey);
-
-        // 5. 踢出该用户，强制重新登录 (核心：Token 失效逻辑)
-        // 5.1 清除用户的基本信息缓存
-        redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + user.getId());
-
-        // 5.2 获取该用户当前关联的 Token，并将其拉入黑名单
-        String tokenKey = RedisConstants.REDIS_USER_TOKEN_KEY + user.getId();
-        Object oldTokenObj = redisUtil.get(tokenKey);
-
-        if (oldTokenObj != null) {
-            String oldToken = oldTokenObj.toString();
-            try {
-                // 解析旧 Token 的过期时间
-                DecodedJWT jwt = JWT.decode(oldToken);
-                long remainingTime = jwt.getExpiresAt().getTime() - System.currentTimeMillis();
-
-                // 如果旧 Token 尚未过期，将其加入黑名单
-                if (remainingTime > 0) {
-                    String blacklistKey = RedisConstants.REDIS_TOKEN_BLACKLIST_PREFIX + oldToken;
-                    redisUtil.set(blacklistKey, RedisConstants.REDIS_TOKEN_BLACKLIST_VALUE, remainingTime, TimeUnit.MILLISECONDS);
+        // 4. 将所有 Redis 清理操作延迟到事务提交后执行
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    executeResetPasswordCacheClear(redisKey, user.getId());
                 }
-            } catch (Exception e) {
-                // Token 解析失败说明格式不合法或已损坏，忽略即可
-            }
-            // 5.3 从 Redis 中彻底移除该用户的在线 Token 记录
-            redisUtil.delete(tokenKey);
+            });
+        } else {
+            executeResetPasswordCacheClear(redisKey, user.getId());
         }
     }
 
@@ -464,10 +484,18 @@ public class AuthServiceImpl implements AuthService {
         }
 
         try {
-            // 1. 将当前传入的 Token 拉入黑名单
+            // 1. 如果携带了 Token，手动试探一下 JWT 格式
+            try {
+                JWT.decode(token);
+            } catch (Exception e) {
+                // 仅拦截伪造的非法结构，正常过期的 Token 不会报错，依然能顺利走完注销流程
+                throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_TOKEN_FAKE);
+            }
+
+            // 2. 将当前传入的 Token 拉入黑名单
             this.blacklistToken(token);
 
-            // 2. 清理当前用户的 Redis 缓存
+            // 3. 清理当前用户的 Redis 缓存
             UserPayloadDTO currentUser = UserContext.get();
             if (currentUser != null && currentUser.getId() != null) {
                 Long userId = currentUser.getId();
@@ -475,7 +503,7 @@ public class AuthServiceImpl implements AuthService {
                 redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + userId);
             }
         } finally {
-            // 3. 强制清理当前线程变量，防止内存泄漏
+            // 4. 强制清理当前线程变量，防止内存泄漏
             UserContext.remove();
         }
     }
