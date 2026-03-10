@@ -71,8 +71,7 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
         SysSensitiveWord sysSensitiveWord = sysSensitiveWordConvert.addDtoToEntity(addDTO);
         try {
             if (this.save(sysSensitiveWord)) {
-                // 变更后，仅将这一个新词加入内存，极速生效！不再需要全量刷新
-                sensitiveWordManager.addWord(sysSensitiveWord.getWord());
+                sensitiveWordManager.refresh();
             }
         } catch (DuplicateKeyException e) {
             throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_WORD_EXIST);
@@ -103,9 +102,7 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
                 .eq(SysSensitiveWord::getId, updateDTO.getId());
 
         if (this.update(null, updateWrapper)) {
-            // 2. 更新成功后：先从内存移除旧词，再将新词加入内存
-            sensitiveWordManager.removeWord(oldWordData.getWord());
-            sensitiveWordManager.addWord(updateDTO.getWord());
+            sensitiveWordManager.refresh();
         }
     }
 
@@ -118,7 +115,7 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
 
         // 2. 数据库删除成功后，将该词从内存中剔除
         if (wordData != null && this.removeById(id)) {
-            sensitiveWordManager.removeWord(wordData.getWord());
+            sensitiveWordManager.refresh();
         }
     }
 
@@ -135,11 +132,7 @@ public class SysSensitiveWordServiceImpl extends ServiceImpl<SysSensitiveWordMap
 
         // 2. 数据库批量删除成功后，循环从内存中剔除这些词汇
         if (CollUtil.isNotEmpty(wordList) && this.removeByIds(ids)) {
-            for (SysSensitiveWord word : wordList) {
-                if (StrUtil.isNotBlank(word.getWord())) {
-                    sensitiveWordManager.removeWord(word.getWord());
-                }
-            }
+            sensitiveWordManager.refresh();
         }
     }
 }

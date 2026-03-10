@@ -25,17 +25,17 @@ public class SensitiveWordManager {
     @Resource
     private SysSensitiveWordMapper sysSensitiveWordMapper;
 
-    // 核心过滤器实例
-    private SensitiveWordBs sensitiveWordBs;
+    // 核心过滤器实例(加上 volatile 保证多线程下的内存可见性)
+    private volatile SensitiveWordBs sensitiveWordBs;
 
     /**
-     * 项目启动时自动初始化
+     * 全量热更新词库
+     * 采用加锁重构的方式，规避 addWord 导致的分词器状态不一致 Bug
      */
-    @PostConstruct
-    public void init() {
-        log.info("开始初始化敏感词库...");
+    public synchronized void refresh() {
+        log.info("开始加载/刷新底层敏感词库 DFA 树...");
 
-        // 1. 定义动态的数据库词库加载器
+        // 1. 从 MySQL 实时拉取最新全量词库
         IWordDeny databaseWordDeny = () -> {
             List<SysSensitiveWord> wordList = sysSensitiveWordMapper.selectList(null);
             return wordList.stream()
@@ -43,22 +43,26 @@ public class SensitiveWordManager {
                     .collect(Collectors.toList());
         };
 
-        // 2. 初始化 SensitiveWordBs
+        // 2. 构建一个全新的实例替换旧实例 (这就是高并发下极其安全的 Copy-On-Write 思想)
         this.sensitiveWordBs = SensitiveWordBs.newInstance()
-                // 将框架自带词库与数据库自定义词库合并
                 .wordDeny(WordDenys.chains(WordDenys.defaults(), databaseWordDeny))
-                // 使用默认白名单
                 .wordAllow(WordAllows.defaults())
-                // 开启各种防绕过特性（默认其实都是 true，这里显式列出方便了解）
-                .ignoreCase(true)             // 忽略大小写
-                .ignoreWidth(true)            // 忽略全角半角
-                .ignoreChineseStyle(true)     // 忽略繁简互换
-                .ignoreRepeat(true)           // 忽略重复词，如 "傻傻傻冒"
-                // 忽略特殊字符干扰，如 "傻@冒"
+                .ignoreCase(true)
+                .ignoreWidth(true)
+                .ignoreChineseStyle(true)
+                .ignoreRepeat(true)
                 .charIgnore(SensitiveWordCharIgnores.specialChars())
-                .init();
+                .init(); // init() 会走一遍最完整的规则预处理流水线
 
-        log.info("敏感词库初始化完成！");
+        log.info("敏感词库热更新完毕，当前生效实例已替换！");
+    }
+
+    /**
+     * 项目启动时自动初始化
+     */
+    @PostConstruct
+    public void init() {
+        this.refresh();
     }
 
     /**
@@ -101,17 +105,4 @@ public class SensitiveWordManager {
         return text;
     }
 
-    /**
-     * 动态添加敏感词 (后台调用)
-     */
-    public void addWord(String word) {
-        sensitiveWordBs.addWord(word);
-    }
-
-    /**
-     * 动态删除敏感词 (后台调用)
-     */
-    public void removeWord(String word) {
-        sensitiveWordBs.removeWord(word);
-    }
 }
