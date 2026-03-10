@@ -99,6 +99,18 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理文件上传异常 (请求格式非 multipart/form-data)
+     *
+     * @param e 文件上传异常对象
+     * @return 统一错误响应 (400)
+     */
+    @ExceptionHandler(org.springframework.web.multipart.MultipartException.class)
+    public Result<Void> handleMultipartException(org.springframework.web.multipart.MultipartException e) {
+        log.warn("文件上传失败：当前请求不是 multipart/form-data 格式");
+        return Result.error(ResultCode.PARAM_ERROR, MessageConstants.MSG_UPLOAD_FORMAT_ERROR);
+    }
+
+    /**
      * 处理自定义业务异常
      * 业务逻辑中手动抛出的异常
      *

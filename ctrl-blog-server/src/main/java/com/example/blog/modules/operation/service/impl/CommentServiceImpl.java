@@ -192,7 +192,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         // 判断是否是作者
         boolean isOwner = comment.getUserId().equals(currentUser.getId());
         // 判断是否是管理员
-        boolean isAdmin = (currentUser.getRole() == BizStatus.Role.ADMIN);
+        boolean isAdmin = (currentUser.getRole() == BizStatus.Role.ADMIN || currentUser.getRole() == BizStatus.Role.SUPER_ADMIN);
         // 权限校验：既不是作者，也不是管理员
         if (!isOwner && !isAdmin) {
             throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_NO_PERMISSION);

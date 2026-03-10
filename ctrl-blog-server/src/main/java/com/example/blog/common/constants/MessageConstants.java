@@ -93,9 +93,27 @@ public final class MessageConstants {
      */
     public static final String MSG_SESSION_INVALID = "会话已失效，请重新登录";
     /**
+     * 执行目标不能为空
+     */
+    public static final String MSG_INVOKE_TARGET_EMPTY = "执行目标不能为空";
+
+    /**
+     * 执行目标格式错误
+     */
+    public static final String MSG_INVOKE_TARGET_FORMAT_ERROR = "执行目标格式错误，正确格式应为 beanName.methodName()";
+
+    /**
+     * 找不到执行目标 Bean (格式化模板)
+     */
+    public static final String MSG_INVOKE_TARGET_BEAN_NOT_FOUND = "参数异常：找不到执行目标 Bean [%s]";
+    /**
      * Token 解析失败或过期
      */
     public static final String MSG_TOKEN_INVALID = "token无效或已过期";
+    /**
+     * Token 结构非法或被伪造
+     */
+    public static final String MSG_TOKEN_FAKE = "无效或伪造的Token";
     /**
      * 角色信息无效（解析Token时角色无法识别）
      */
@@ -276,6 +294,11 @@ public final class MessageConstants {
      * 定时任务不存在
      */
     public static final String MSG_JOB_NOT_EXIST = "任务不存在";
+
+    /**
+     * 文件上传格式错误 (非 multipart/form-data 或未选择文件)
+     */
+    public static final String MSG_UPLOAD_FORMAT_ERROR = "请选择要上传的文件或检查请求格式";
 
     /* ============================== 6. 互动与点赞消息 ============================== */
 
