@@ -122,6 +122,11 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements TagSe
     public void addTag(TagAddDTO addDTO) {
         Assert.notNull(addDTO, "新增标签参数不能为空");
 
+        boolean exists = this.lambdaQuery().eq(Tag::getName, addDTO.getName()).exists();
+        if (exists) {
+            throw new CustomerException(ResultCode.CONFLICT, MessageConstants.MSG_TAG_EXIST);
+        }
+
         Tag tag = tagConvert.addDtoToEntity(addDTO);
         try {
             this.save(tag);

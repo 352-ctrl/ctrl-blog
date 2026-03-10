@@ -9,18 +9,19 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
+import com.example.blog.core.exception.CustomerException;
+import com.example.blog.modules.system.mapper.SysJobMapper;
 import com.example.blog.modules.system.model.convert.SysJobConvert;
 import com.example.blog.modules.system.model.dto.SysJobAddDTO;
 import com.example.blog.modules.system.model.dto.SysJobQueryDTO;
 import com.example.blog.modules.system.model.dto.SysJobUpdateDTO;
 import com.example.blog.modules.system.model.entity.SysJob;
-import com.example.blog.core.exception.CustomerException;
-import com.example.blog.modules.system.mapper.SysJobMapper;
+import com.example.blog.modules.system.model.vo.SysJobVO;
 import com.example.blog.modules.system.service.SysJobService;
 import com.example.blog.modules.system.task.ScheduleUtils;
-import com.example.blog.modules.system.model.vo.SysJobVO;
 import jakarta.annotation.Resource;
 import org.quartz.CronExpression;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -39,6 +40,30 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
 
     @Resource
     private SysJobConvert sysJobConvert;
+
+    @Resource
+    private ApplicationContext applicationContext;
+
+    /**
+     * 校验 invokeTarget (例如 "testTask.sync()") 在 Spring 容器中是否真实存在
+     */
+    private void validateInvokeTarget(String invokeTarget) {
+        if (StrUtil.isBlank(invokeTarget)) {
+            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_INVOKE_TARGET_EMPTY);
+        }
+
+        int dotIndex = invokeTarget.indexOf(StrUtil.DOT);
+        if (dotIndex == -1) {
+            throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_INVOKE_TARGET_FORMAT_ERROR);
+        }
+
+        String beanName = invokeTarget.substring(0, dotIndex);
+
+        // 防御点：去 Spring IoC 容器里查有没有这个 Bean
+        if (!applicationContext.containsBean(beanName)) {
+            throw new CustomerException(ResultCode.PARAM_ERROR, String.format(MessageConstants.MSG_INVOKE_TARGET_BEAN_NOT_FOUND, beanName));
+        }
+    }
 
     /**
      * 辅助方法：判断是否需要更新 Quartz 调度器
@@ -59,6 +84,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (!CronExpression.isValidExpression(addDTO.getCronExpression())) {
             throw new CustomerException(MessageConstants.MSG_CRON_FORMAT_ERROR);
         }
+
+        validateInvokeTarget(addDTO.getInvokeTarget());
 
         SysJob sysJob = sysJobConvert.addDtoToEntity(addDTO);
 
@@ -82,6 +109,8 @@ public class SysJobServiceImpl extends ServiceImpl<SysJobMapper, SysJob> impleme
         if (!CronExpression.isValidExpression(updateDTO.getCronExpression())) {
             throw new CustomerException(MessageConstants.MSG_CRON_FORMAT_ERROR);
         }
+
+        validateInvokeTarget(updateDTO.getInvokeTarget());
 
         SysJob job = this.getById(updateDTO.getId());
         if (job == null) {
