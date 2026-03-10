@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "用户登录成功响应对象 (VO)", title = "UserLoginVO")
 public class UserLoginVO {
     @Schema(
-            description = "认证令牌 (JWT Token), 后续请求需放在 Header: token 中",
+            description = "认证令牌 (JWT Token)。推荐后续请求在 Header 中添加 `Authorization: Bearer <token>` 携带",
             example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAwMSwi..."
     )
     private String token;

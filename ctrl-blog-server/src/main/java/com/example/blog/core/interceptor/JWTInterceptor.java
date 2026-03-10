@@ -2,20 +2,21 @@ package com.example.blog.core.interceptor;
 
 import cn.hutool.core.util.StrUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.example.blog.core.annotation.AuthCheck;
 import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
-import com.example.blog.modules.user.model.dto.UserPayloadDTO;
-import com.example.blog.core.exception.CustomerException;
 import com.example.blog.common.utils.RedisUtil;
+import com.example.blog.core.annotation.AuthCheck;
+import com.example.blog.core.exception.CustomerException;
 import com.example.blog.core.security.TokenUtils;
 import com.example.blog.core.security.UserContext;
+import com.example.blog.modules.user.model.dto.UserPayloadDTO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -53,11 +54,22 @@ public class JWTInterceptor implements HandlerInterceptor {
         }
         HandlerMethod handlerMethod = (HandlerMethod) handler;
 
-        // 从请求头获取token
-        String token = request.getHeader(Constants.HEADER_TOKEN);
+        // 解析 Token
+        String token = null;
 
-        if (StrUtil.isEmpty(token)) {
-            // 如果请求头中没有，尝试从请求参数中获取
+        // 1. 优先尝试获取标准的 Authorization Header
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (StrUtil.isNotBlank(bearerToken) && bearerToken.startsWith(Constants.TOKEN_PREFIX)) {
+            token = bearerToken.substring(Constants.TOKEN_PREFIX.length()).trim();
+        }
+
+        // 2. 降级策略 1：尝试获取自定义 Header
+        if (StrUtil.isBlank(token)) {
+            token = request.getHeader(Constants.HEADER_TOKEN);
+        }
+
+        // 3. 降级策略 2：尝试从 URL 参数中获取 (常用于文件下载、WebSocket握手等场景)
+        if (StrUtil.isBlank(token)) {
             token = request.getParameter(Constants.HEADER_TOKEN);
         }
 

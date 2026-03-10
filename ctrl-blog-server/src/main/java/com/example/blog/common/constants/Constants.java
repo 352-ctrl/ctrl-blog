@@ -20,6 +20,11 @@ public final class Constants {
     public static final String HEADER_TOKEN = "token";
 
     /**
+     * 标准的 Authorization Header 前缀
+     */
+    public static final String TOKEN_PREFIX = "Bearer ";
+
+    /**
      * JWT载荷 Key：用户ID
      */
     public static final String CLAIM_ID = "id";

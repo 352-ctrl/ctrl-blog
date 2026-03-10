@@ -1,21 +1,22 @@
 package com.example.blog.modules.user.controller;
 
 import cn.hutool.core.util.StrUtil;
-import com.example.blog.core.annotation.RateLimit;
-import com.example.blog.core.annotation.VerifyCaptcha;
 import com.example.blog.common.base.Result;
 import com.example.blog.common.constants.Constants;
+import com.example.blog.core.annotation.RateLimit;
+import com.example.blog.core.annotation.VerifyCaptcha;
 import com.example.blog.modules.operation.model.dto.EmailRequestDTO;
 import com.example.blog.modules.user.model.dto.UserForgotPwdDTO;
 import com.example.blog.modules.user.model.dto.UserLoginDTO;
 import com.example.blog.modules.user.model.dto.UserRegisterDTO;
-import com.example.blog.modules.user.service.AuthService;
 import com.example.blog.modules.user.model.vo.UserLoginVO;
+import com.example.blog.modules.user.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -34,8 +35,9 @@ public class AuthController {
      * 用户登录 (获取Token)
      */
     @PostMapping("/token")
+    @VerifyCaptcha
     @RateLimit(key = "ip", time = 60, count = 10)
-    @Operation(summary = "用户登录", description = "校验用户名密码。成功后返回 **Token**。<br>后续请求需在 Header 中携带 `Authorization: Bearer {token}`。")
+    @Operation(summary = "用户登录", description = "校验用户名密码。成功后返回 **JWT Token**。<br>后续请求建议使用标准格式，在请求头中携带：`Authorization: Bearer {token}`。")
     public Result<UserLoginVO> login(@Valid @RequestBody UserLoginDTO loginDTO) {
         UserLoginVO loginVO = authService.login(loginDTO);
         return Result.success(loginVO);
@@ -90,11 +92,26 @@ public class AuthController {
     /**
      * 退出登录 (销毁Token)
      */
-    @Operation(summary = "退出登录")
+    @Operation(summary = "退出登录", description = "销毁当前会话，将 Token 加入黑名单。")
     @DeleteMapping("/token")
     public Result<Void> logout(HttpServletRequest request) {
-        // 从 Header 中获取 token
-        String token = request.getHeader(Constants.HEADER_TOKEN);
+        String token = null;
+
+        // 1. 优先尝试获取标准的 Authorization Header
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (StrUtil.isNotBlank(bearerToken) && bearerToken.startsWith(Constants.TOKEN_PREFIX)) {
+            token = bearerToken.substring(Constants.TOKEN_PREFIX.length()).trim();
+        }
+
+        // 2. 降级策略：如果没拿到，尝试从旧版自定义 Header 获取
+        if (StrUtil.isBlank(token)) {
+            token = request.getHeader(Constants.HEADER_TOKEN);
+        }
+
+        // 3. 降级策略：尝试从参数获取
+        if (StrUtil.isBlank(token)) {
+            token = request.getParameter(Constants.HEADER_TOKEN);
+        }
 
         // 如果 Header 为空，尝试从参数获取
         if (StrUtil.isBlank(token)) {
