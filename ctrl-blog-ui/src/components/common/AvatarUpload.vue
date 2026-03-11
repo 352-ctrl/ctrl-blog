@@ -4,7 +4,9 @@
         class="avatar-trigger"
         @click="openDialog"
     >
-      <el-avatar :size="size" :src="modelValue" shape="circle" />
+      <el-avatar :size="size" :src="modelValue" shape="circle">
+        <el-icon :size="size * 0.5"><User /></el-icon>
+      </el-avatar>
       <div class="avatar-mask">
         <el-icon class="mask-icon"><Camera /></el-icon>
         <span class="mask-text">修改头像</span>
@@ -122,7 +124,7 @@ const options = reactive({
 const previews = ref({});
 
 const openDialog = () => {
-  options.img = props.modelValue || defaultAvatar;
+  options.img = props.modelValue || '';
   dialogVisible.value = true;
 };
 
@@ -179,10 +181,17 @@ const uploadImg = () => {
   }
   loading.value = true;
   cropperRef.value.getCropBlob(async (data) => {
+    if (!data) {
+      ElMessage.warning('未能获取到裁剪图片，请重新选择');
+      loading.value = false; // 必须手动关闭 loading
+      return;
+    }
+
     let formData = new FormData();
     formData.append("file", data, "avatar.png");
+
     try {
-      const res = await uploadFile(formData);
+      const res = await uploadFile(formData, 'avatar');
       const result = res.code !== undefined ? res : res.data;
       if (result.code === 200) {
         ElMessage.success('头像修改成功');

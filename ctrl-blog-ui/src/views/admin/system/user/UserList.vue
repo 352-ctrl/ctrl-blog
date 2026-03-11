@@ -159,7 +159,7 @@ const customUploadAvatar = async (options) => {
   formData.append('file', options.file);
 
   try {
-    const res = await uploadFile(formData);
+    const res = await uploadFile(formData, 'avatar');
     if (res.code === 200) {
       dialog.rowData.value.avatar = res.data;
       ElMessage.success('头像上传成功');

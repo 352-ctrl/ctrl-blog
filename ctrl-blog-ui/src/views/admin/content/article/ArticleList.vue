@@ -234,7 +234,7 @@ const customUploadCover = async (options) => {
   formData.append('file', options.file);
 
   try {
-    const res = await uploadFile(formData);
+    const res = await uploadFile(formData, 'cover');
     if (res.code === 200) {
       dialog.rowData.value.cover = res.data;
       ElMessage.success('封面上传成功');

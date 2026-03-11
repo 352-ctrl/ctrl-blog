@@ -207,7 +207,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 byte[] coverBytes = HtmlToImageUtil.generateCoverBytes(title, author);
 
                 // 调用双引擎文件服务直接上传字节流（传入 "cover.png" 以便提取 .png 后缀）
-                String coverUrl = fileService.upload(coverBytes, Constants.AUTO_COVER_FILE_NAME);
+                String coverUrl = fileService.upload(coverBytes, Constants.AUTO_COVER_FILE_NAME, Constants.UPLOAD_DIR_COVER);
 
                 // 将生成的 URL 设置回文章对象中
                 addDTO.setCover(coverUrl);

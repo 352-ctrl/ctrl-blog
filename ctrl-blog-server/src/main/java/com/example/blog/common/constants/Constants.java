@@ -137,6 +137,19 @@ public final class Constants {
      */
     public static final String AUTO_COVER_FILE_NAME = "auto_cover.png";
 
+    /**
+     * 文件上传子目录：用户头像
+     */
+    public static final String UPLOAD_DIR_AVATAR = "avatar";
+    /**
+     * 文件上传子目录：文章封面
+     */
+    public static final String UPLOAD_DIR_COVER = "cover";
+    /**
+     * 文件上传子目录：文章正文配图
+     */
+    public static final String UPLOAD_DIR_ARTICLE = "article";
+
     // ============================== 外部资源与配置 ==============================
 
     /* ---------- UI 颜色 ---------- */

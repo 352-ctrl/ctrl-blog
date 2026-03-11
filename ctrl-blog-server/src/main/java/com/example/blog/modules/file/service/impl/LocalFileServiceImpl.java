@@ -1,5 +1,6 @@
 package com.example.blog.modules.file.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -58,7 +60,7 @@ public class LocalFileServiceImpl implements FileService {
     }
 
     @Override
-    public String upload(MultipartFile file) {
+    public String upload(MultipartFile file, String dir) {
         // 添加针对文件对象的防空断言校验
         Assert.notNull(file, "上传文件对象不能为空");
 
@@ -74,12 +76,22 @@ public class LocalFileServiceImpl implements FileService {
             String extName = FileUtil.extName(originalFilename);
             String fileName = System.currentTimeMillis() + StrUtil.UNDERLINE + safeName + StrUtil.DOT + extName;
 
-            // 2. 写入磁盘 (使用 Hutool 或 Java NIO)
-            File dest = new File(basePath + fileName);
+            // 1. 动态构建子目录路径
+            String subDir = StrUtil.isNotBlank(dir) ? dir + File.separator : StrUtil.EMPTY;
+            String targetDirPath = basePath + subDir;
+
+            // 2. 如果子目录不存在，自动创建
+            if (!FileUtil.isDirectory(targetDirPath)) {
+                FileUtil.mkdir(targetDirPath);
+            }
+
+            // 3. 写入磁盘 (使用 Hutool 或 Java NIO)
+            File dest = new File(targetDirPath + fileName);
             file.transferTo(dest);
 
-            // 3. 生成 URL
-            return accessPath + fileName;
+            // 4. 生成返回的 URL
+            String urlDir = StrUtil.isNotBlank(dir) ? dir + StrUtil.SLASH : StrUtil.EMPTY;
+            return accessPath + urlDir + fileName;
         } catch (IOException e) {
             log.error("文件上传失败", e);
             throw new CustomerException(ResultCode.INTERNAL_SERVER_ERROR, MessageConstants.MSG_UPLOAD_FAILURE);
@@ -87,16 +99,20 @@ public class LocalFileServiceImpl implements FileService {
     }
 
     @Override
-    public String upload(byte[] fileData, String originalFilename) {
+    public String upload(byte[] fileData, String originalFilename, String dir) {
         try {
-            String extName = cn.hutool.core.io.FileUtil.extName(originalFilename);
-            String safeName = cn.hutool.core.io.FileUtil.mainName(originalFilename);
+            String extName = FileUtil.extName(originalFilename);
+            String safeName = FileUtil.mainName(originalFilename);
             String fileName = System.currentTimeMillis() + StrUtil.UNDERLINE + safeName + StrUtil.DOT + extName;
 
-            // 使用 Hutool 工具类直接把字节数组写成文件
-            cn.hutool.core.io.FileUtil.writeBytes(fileData, basePath + fileName);
+            String subDir = StrUtil.isNotBlank(dir) ? dir + File.separator : StrUtil.EMPTY;
+            String targetDirPath = basePath + subDir;
 
-            return accessPath + fileName;
+            // 使用 Hutool 工具类直接把字节数组写成文件
+            FileUtil.writeBytes(fileData, targetDirPath + fileName);
+
+            String urlDir = StrUtil.isNotBlank(dir) ? dir + StrUtil.SLASH : StrUtil.EMPTY;
+            return accessPath + urlDir + fileName;
         } catch (Exception e) {
             log.error("本地字节流上传失败", e);
             throw new CustomerException(ResultCode.INTERNAL_SERVER_ERROR, MessageConstants.MSG_UPLOAD_FAILURE);
@@ -148,15 +164,18 @@ public class LocalFileServiceImpl implements FileService {
             return 0;
         }
 
+        // 使用 Hutool 递归获取 basePath 及其所有子目录下的所有文件
+        List<File> allFiles = cn.hutool.core.io.FileUtil.loopFiles(dir);
+
         File[] files = dir.listFiles();
-        if (files == null || files.length == 0) {
+        if (CollUtil.isEmpty(allFiles)) {
             return 0;
         }
 
         int deleteCount = 0;
         long currentTime = System.currentTimeMillis();
 
-        for (File file : files) {
+        for (File file : allFiles) {
             if (file.isFile()) {
                 // 1. 检查是否在安全期内 (创建时间不到 24 小时的，坚决不删)
                 if (currentTime - file.lastModified() < Constants.FILE_SAFE_TIME_WINDOW_MS) {
@@ -168,7 +187,8 @@ public class LocalFileServiceImpl implements FileService {
                     boolean deleted = file.delete();
                     if (deleted) {
                         deleteCount++;
-                        log.debug("成功删除孤儿文件: {}", file.getName());
+                        // 日志打印使用绝对路径，方便排查具体删除了哪个子目录下的文件
+                        log.debug("成功删除孤儿文件: {}", file.getAbsolutePath());
                     }
                 }
             }

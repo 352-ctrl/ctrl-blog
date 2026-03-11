@@ -11,7 +11,7 @@ public interface FileService {
      * @param file 文件对象
      * @return 文件访问 URL
      */
-    String upload(MultipartFile file);
+    String upload(MultipartFile file, String dir);
 
     /**
      * 上传文件 (内部字节流专用)
@@ -22,7 +22,7 @@ public interface FileService {
      * @param originalFilename 原始文件名（用于提取后缀名，如 "cover.png"）
      * @return 文件访问 URL
      */
-    String upload(byte[] fileData, String originalFilename);
+    String upload(byte[] fileData, String originalFilename, String dir);
 
     /**
      * 下载文件

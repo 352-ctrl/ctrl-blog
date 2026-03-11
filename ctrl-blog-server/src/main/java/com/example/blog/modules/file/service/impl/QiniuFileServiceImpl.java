@@ -40,7 +40,7 @@ public class QiniuFileServiceImpl implements FileService {
     private String domain;
 
     @Override
-    public String upload(MultipartFile file) {
+    public String upload(MultipartFile file, String dir) {
         Assert.notNull(file, "上传文件对象不能为空");
         if (file.isEmpty()) {
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_FILE_IS_EMPTY);
@@ -51,7 +51,13 @@ public class QiniuFileServiceImpl implements FileService {
             String originalFilename = file.getOriginalFilename();
             String extName = FileUtil.extName(originalFilename);
             String safeName = FileUtil.mainName(originalFilename);
-            String fileName = Constants.QINIU_DIR_PREFIX + StrUtil.SLASH + System.currentTimeMillis() + StrUtil.UNDERLINE + safeName + StrUtil.DOT + extName;
+
+            // 动态拼接前缀：blog/cover/ 或者 blog/avatar/
+            String currentPrefix = Constants.QINIU_DIR_PREFIX;
+            if (StrUtil.isNotBlank(dir)) {
+                currentPrefix = currentPrefix + StrUtil.SLASH + dir;
+            }
+            String fileName = currentPrefix + StrUtil.SLASH + System.currentTimeMillis() + StrUtil.UNDERLINE + safeName + StrUtil.DOT + extName;
 
             // 2. 构造七牛云认证与上传管理器 (建议提取到配置类做成单例，这里为了演示写在一起)
             Configuration cfg = new Configuration(Region.autoRegion());
@@ -73,11 +79,16 @@ public class QiniuFileServiceImpl implements FileService {
     }
 
     @Override
-    public String upload(byte[] fileData, String originalFilename) {
+    public String upload(byte[] fileData, String originalFilename, String dir) {
         try {
-            String extName = cn.hutool.core.io.FileUtil.extName(originalFilename);
-            String safeName = cn.hutool.core.io.FileUtil.mainName(originalFilename);
-            String fileName = Constants.QINIU_DIR_PREFIX + StrUtil.SLASH + System.currentTimeMillis() + StrUtil.UNDERLINE + safeName + StrUtil.DOT + extName;
+            String extName = FileUtil.extName(originalFilename);
+            String safeName = FileUtil.mainName(originalFilename);
+
+            String currentPrefix = Constants.QINIU_DIR_PREFIX;
+            if (StrUtil.isNotBlank(dir)) {
+                currentPrefix = currentPrefix + StrUtil.SLASH + dir;
+            }
+            String fileName = currentPrefix + StrUtil.SLASH + System.currentTimeMillis() + StrUtil.UNDERLINE + safeName + StrUtil.DOT + extName;
 
             Configuration cfg = new Configuration(Region.autoRegion());
             UploadManager uploadManager = new UploadManager(cfg);

@@ -2,12 +2,16 @@ package com.example.blog.modules.file.controller;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Dict;
+import cn.hutool.core.util.StrUtil;
+import com.example.blog.common.base.Result;
+import com.example.blog.common.constants.Constants;
+import com.example.blog.common.constants.MessageConstants;
+import com.example.blog.common.enums.BizStatus;
+import com.example.blog.common.enums.ResultCode;
 import com.example.blog.core.annotation.AuthCheck;
 import com.example.blog.core.annotation.Log;
 import com.example.blog.core.annotation.RateLimit;
-import com.example.blog.common.base.Result;
-import com.example.blog.common.constants.MessageConstants;
-import com.example.blog.common.enums.BizStatus;
+import com.example.blog.core.exception.CustomerException;
 import com.example.blog.modules.file.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,11 +30,26 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/v1/files")
-@Tag(name = "文件服务")
+@Tag(name = "通用公共接口/文件服务")
 public class FileController {
 
     @Resource
     private FileService fileService;
+
+    /**
+     * 将前端的业务类型映射为后端安全的目录常量
+     */
+    private String getDirByType(String type) {
+        if (StrUtil.isBlank(type)) {
+            return null; // 默认传根目录或公共目录
+        }
+        return switch (type.toLowerCase()) {
+            case "avatar" -> Constants.UPLOAD_DIR_AVATAR; // 常量：avatar
+            case "cover" -> Constants.UPLOAD_DIR_COVER;   // 常量：cover
+            case "article" -> Constants.UPLOAD_DIR_ARTICLE; // 常量：article
+            default -> throw new CustomerException(ResultCode.PARAM_ERROR, "非法的上传业务类型");
+        };
+    }
 
     /**
      * 通用文件上传 (POST /api/v1/files)
@@ -40,8 +59,13 @@ public class FileController {
     @RateLimit(key = "ip", time = 60, count = 10)
     @Log(module = "文件服务", type = "上传", desc = "通用文件上传")
     @Operation(summary = "文件上传", description = "上传单文件。根据系统配置的存储策略（本地/云存储），自动返回完整的资源访问绝对 URL。")
-    public Result<String> upload(@RequestParam("file") MultipartFile file) {
-        String url = fileService.upload(file);
+    public Result<String> upload(
+            @RequestParam("file") MultipartFile file,
+            @Parameter(description = "业务类型(avatar/cover/article等)", required = false)
+            @RequestParam(value = "type", required = false) String type) {
+
+        String targetDir = getDirByType(type);
+        String url = fileService.upload(file, targetDir);
         return Result.success(url);
     }
 
@@ -70,7 +94,7 @@ public class FileController {
         Map<String, Object> resMap = new HashMap<>();
         try {
             // 复用 Service 的上传逻辑
-            String url = fileService.upload(file);
+            String url = fileService.upload(file, Constants.UPLOAD_DIR_ARTICLE);
 
             // 组装 WangEditor 需要的格式
             resMap.put("errno", 0);
