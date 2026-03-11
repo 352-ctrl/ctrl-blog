@@ -11,13 +11,13 @@
 
       <el-image
           class="article-cover"
-          :src="item.cover || ''"
+          :src="item.cover || defaultCoverUrl"
           fit="cover"
           lazy
       >
         <template #error>
           <div class="image-slot empty-cover">
-            <el-icon><Picture /></el-icon>
+            <img :src="defaultCoverUrl" alt="默认封面" class="fallback-img" />
           </div>
         </template>
       </el-image>
@@ -98,6 +98,7 @@ const handleCardClick = (id) => {
     margin-right: 14px;
     flex-shrink: 0;
     transition: transform 0.3s ease;
+    overflow: hidden;
 
     &.empty-cover, .image-slot {
       display: flex;
@@ -109,6 +110,12 @@ const handleCardClick = (id) => {
       color: var(--el-text-color-secondary);
       font-size: 18px;
       border-radius: 6px;
+    }
+
+    .fallback-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   }
 

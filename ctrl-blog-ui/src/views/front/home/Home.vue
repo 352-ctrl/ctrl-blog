@@ -179,8 +179,22 @@ const handleTabChange = (tabName) => {
 .carousel-image {
   width: 100%;
   height: 100%;
+  display: block;
+}
+
+.image-error-slot {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f7fa;
+}
+
+.fallback-img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
 }
 
 /* 鼠标悬浮时，背景图极其轻微地放大，增加沉浸感 */
