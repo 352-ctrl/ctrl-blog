@@ -1,5 +1,6 @@
 package com.example.blog.modules.dashboard.model.vo;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,16 +18,16 @@ public class DashboardVO {
 
     // ================== 1. 顶部统计卡片数据 ==================
 
-    @Schema(description = "文章总数", example = "1024")
+    @Schema(description = "文章总数", type = "string", example = "1024")
     private Long articleCount;
 
-    @Schema(description = "评论总数", example = "2048")
+    @Schema(description = "评论总数", type = "string", example = "2048")
     private Long commentCount;
 
-    @Schema(description = "用户总数", example = "500")
+    @Schema(description = "用户总数", type = "string", example = "500")
     private Long userCount;
 
-    @Schema(description = "总访问量 (PV)", example = "10000")
+    @Schema(description = "总访问量 (PV)", type = "string", example = "10000")
     private Long visitCount;
 
     // ================== 2. 图表数据区域 ==================
@@ -53,6 +54,7 @@ public class DashboardVO {
         private List<String> dates;
 
         @Schema(description = "访问量列表 (Y轴 PV)", example = "[120, 150]")
+        @ArraySchema(schema = @Schema(type = "string", example = "120"))
         private List<Long> pvCounts;
     }
 
@@ -69,7 +71,7 @@ public class DashboardVO {
         @Schema(description = "分类名称", example = "Java技术")
         private String name;
 
-        @Schema(description = "文章数量", example = "45")
+        @Schema(description = "文章数量", type = "string", example = "45")
         private Long value;
     }
 }

@@ -30,7 +30,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/jobs")
 @AuthCheck(role = BizStatus.ROLE_SUPER_ADMIN)
-@Tag(name = "后台定时任务管理")
+@Tag(name = "后台/定时任务管理")
 public class AdminJobController {
 
     @Resource

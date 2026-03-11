@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/reports")
 @AuthCheck
-@Tag(name = "内容举报管理")
+@Tag(name = "前台/内容举报")
 public class ReportController {
 
     @Resource

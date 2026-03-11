@@ -19,7 +19,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/messages")
-@Tag(name = "前台消息中心")
+@Tag(name = "前台/消息中心")
 @AuthCheck
 public class MessageController {
 
@@ -44,8 +44,8 @@ public class MessageController {
      */
     @GetMapping("/unread/count")
     @Operation(summary = "获取未读消息总数", description = "获取当前登录用户的未读消息总数，通常用于全局导航栏的小红点展示。")
-    public Result<Long> getUnreadMessageCount() {
-        Long count = MessageService.getUnreadMessageCount();
+    public Result<Integer> getUnreadMessageCount() {
+        Integer count = MessageService.getUnreadMessageCount();
         return Result.success(count);
     }
 

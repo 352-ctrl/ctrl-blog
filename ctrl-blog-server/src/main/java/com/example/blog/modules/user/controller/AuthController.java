@@ -1,8 +1,7 @@
 package com.example.blog.modules.user.controller;
 
-import cn.hutool.core.util.StrUtil;
 import com.example.blog.common.base.Result;
-import com.example.blog.common.constants.Constants;
+import com.example.blog.common.utils.SecurityUtils;
 import com.example.blog.core.annotation.RateLimit;
 import com.example.blog.core.annotation.VerifyCaptcha;
 import com.example.blog.modules.operation.model.dto.EmailRequestDTO;
@@ -16,7 +15,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -25,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "认证中心")
+@Tag(name = "前台/认证中心")
 public class AuthController {
 
     @Resource
@@ -95,28 +93,7 @@ public class AuthController {
     @Operation(summary = "退出登录", description = "销毁当前会话，将 Token 加入黑名单。")
     @DeleteMapping("/token")
     public Result<Void> logout(HttpServletRequest request) {
-        String token = null;
-
-        // 1. 优先尝试获取标准的 Authorization Header
-        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (StrUtil.isNotBlank(bearerToken) && bearerToken.startsWith(Constants.TOKEN_PREFIX)) {
-            token = bearerToken.substring(Constants.TOKEN_PREFIX.length()).trim();
-        }
-
-        // 2. 降级策略：如果没拿到，尝试从旧版自定义 Header 获取
-        if (StrUtil.isBlank(token)) {
-            token = request.getHeader(Constants.HEADER_TOKEN);
-        }
-
-        // 3. 降级策略：尝试从参数获取
-        if (StrUtil.isBlank(token)) {
-            token = request.getParameter(Constants.HEADER_TOKEN);
-        }
-
-        // 如果 Header 为空，尝试从参数获取
-        if (StrUtil.isBlank(token)) {
-            token = request.getParameter(Constants.HEADER_TOKEN);
-        }
+        String token = SecurityUtils.resolveToken(request);
 
         authService.logout(token);
         return Result.success();

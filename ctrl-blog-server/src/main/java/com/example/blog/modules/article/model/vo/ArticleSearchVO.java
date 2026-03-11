@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "前台全站搜索结果对象 (VO)", title = "ArticleSearchVO")
 public class ArticleSearchVO {
-    @Schema(description = "文章ID", example = "1623456789012345678")
+    @Schema(description = "文章ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(
@@ -32,7 +32,7 @@ public class ArticleSearchVO {
 
     // --- 分类信息 ---
 
-    @Schema(description = "分类ID", example = "1623456789012345678")
+    @Schema(description = "分类ID", type = "string", example = "1623456789012345678")
     private Long categoryId;
 
     @Schema(description = "分类名称", example = "后端技术")

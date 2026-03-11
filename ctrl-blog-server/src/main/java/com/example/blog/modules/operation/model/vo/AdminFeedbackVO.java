@@ -16,10 +16,10 @@ import java.time.LocalDateTime;
 @Schema(description = "后台意见反馈列表对象 (VO)", title = "AdminFeedbackVO")
 public class AdminFeedbackVO {
 
-    @Schema(description = "反馈ID", example = "1")
+    @Schema(description = "反馈ID", type = "string", example = "1")
     private Long id;
 
-    @Schema(description = "反馈用户ID (空表示游客)", example = "1001")
+    @Schema(description = "反馈用户ID (空表示游客)", type = "string", example = "1001")
     private Long userId;
 
     @Schema(description = "反馈用户昵称 (需要连表或业务层组装)", example = "张三")

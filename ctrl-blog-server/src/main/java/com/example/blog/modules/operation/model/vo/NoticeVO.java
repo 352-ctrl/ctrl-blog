@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Schema(description = "公告展示层对象 (VO)", title = "NoticeVO")
 public class NoticeVO {
-    @Schema(description = "公告ID", example = "1623456789012345678")
+    @Schema(description = "公告ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(
@@ -26,16 +26,14 @@ public class NoticeVO {
 
     @Schema(
             description = "是否置顶 (0-不置顶, 1-置顶)",
-            example = "1",
-            allowableValues = {"0", "1"}
+            example = "1"
     )
     private Integer isTop;
 
     @Schema(
             description = "发布时间",
             example = "2023-10-24 10:00:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;

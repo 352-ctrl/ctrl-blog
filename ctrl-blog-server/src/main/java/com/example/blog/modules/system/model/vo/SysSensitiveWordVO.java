@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Schema(description = "敏感词展示层对象 (VO)", title = "TagVO")
 public class SysSensitiveWordVO {
 
-    @Schema(description = "敏感词ID", example = "1623456789012345678")
+    @Schema(description = "敏感词ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "敏感词", example = "雄烯二醇")
@@ -25,8 +25,7 @@ public class SysSensitiveWordVO {
     @Schema(
             description = "创建时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;

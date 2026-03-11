@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Schema(description = "极简版文章列表展示对象 (VO)", title = "ArticleSimpleVO")
 public class ArticleSimpleVO {
 
-    @Schema(description = "文章ID", example = "1623456789012345678")
+    @Schema(description = "文章ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "文章封面URL", example = "https://example.com/cover/1.jpg")
@@ -28,8 +28,7 @@ public class ArticleSimpleVO {
     @Schema(
             description = "发布时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;

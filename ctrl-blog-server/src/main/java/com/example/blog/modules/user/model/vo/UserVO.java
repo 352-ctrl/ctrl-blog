@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Schema(description = "用户展示层对象 (VO)", title = "UserVO")
 public class UserVO {
-    @Schema(description = "用户ID", example = "1623456789012345678")
+    @Schema(description = "用户ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @JsonSerialize(using = EmailDesensitizeSerializer.class)
@@ -39,23 +39,20 @@ public class UserVO {
 
     @Schema(
             description = "用户角色 (ADMIN-管理员, USER-普通用户)",
-            example = "USER",
-            allowableValues = {"ADMIN", "USER"}
+            example = "USER"
     )
     private String role;
 
     @Schema(
             description = "账号状态 (0-正常, 1-禁用, 2-注销冷静期, 3-已注销)",
-            example = "0",
-            allowableValues = {"0", "1", "2", "3"}
+            example = "0"
     )
     private Integer status;
 
     @Schema(
             description = "注册时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
@@ -63,8 +60,7 @@ public class UserVO {
     @Schema(
             description = "封禁解封时间",
             example = "2023-10-31 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime disableEndTime;

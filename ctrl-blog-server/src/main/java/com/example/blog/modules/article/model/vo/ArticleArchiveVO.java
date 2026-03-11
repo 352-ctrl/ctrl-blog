@@ -15,7 +15,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Schema(description = "前台文章归档展示对象 (VO)", title = "ArticleArchiveVO")
 public class ArticleArchiveVO {
-    @Schema(description = "文章ID", example = "1623456789012345678")
+    @Schema(description = "文章ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "文章标题", example = "Spring Boot 实战笔记")
@@ -24,8 +24,7 @@ public class ArticleArchiveVO {
     @Schema(
             description = "发布日期",
             example = "2023-10-24",
-            type = "string",
-            pattern = "yyyy-MM-dd"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate createTime;

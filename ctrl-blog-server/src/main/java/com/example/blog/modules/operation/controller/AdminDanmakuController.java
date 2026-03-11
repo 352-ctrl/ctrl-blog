@@ -28,7 +28,7 @@ import java.util.List;
 @Validated
 @RequestMapping("/api/v1/admin/danmakus")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台弹幕管理")
+@Tag(name = "后台/弹幕管理")
 public class AdminDanmakuController {
 
     @Resource

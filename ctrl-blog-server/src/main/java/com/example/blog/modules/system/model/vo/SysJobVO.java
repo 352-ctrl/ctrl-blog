@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Schema(description = "定时任务详情")
 public class SysJobVO {
 
-    @Schema(description = "任务ID", example = "1623456789012345678")
+    @Schema(description = "任务ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "任务名称")

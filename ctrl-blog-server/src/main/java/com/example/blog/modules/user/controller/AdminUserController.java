@@ -31,7 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/users")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台用户管理")
+@Tag(name = "后台/用户管理")
 public class AdminUserController {
 
     @Resource

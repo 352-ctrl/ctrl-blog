@@ -30,7 +30,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/sensitive-words")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台敏感词管理", description = "系统敏感词库的维护接口")
+@Tag(name = "后台/敏感词管理", description = "系统敏感词库的维护接口")
 public class AdminSysSensitiveWordController {
 
     @Resource

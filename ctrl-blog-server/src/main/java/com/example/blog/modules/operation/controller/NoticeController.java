@@ -18,7 +18,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/notices")
-@Tag(name = "前台公告")
+@Tag(name = "前台/公告")
 public class NoticeController {
 
     @Resource

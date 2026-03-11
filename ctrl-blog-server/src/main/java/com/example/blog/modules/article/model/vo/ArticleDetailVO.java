@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "前台文章详情展示对象 (VO)", title = "ArticleDetailVO")
 public class ArticleDetailVO {
-    @Schema(description = "文章ID", example = "1623456789012345678")
+    @Schema(description = "文章ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "文章封面URL", example = "https://example.com/cover/1.jpg")
@@ -44,44 +44,43 @@ public class ArticleDetailVO {
 
     // --- 统计数据 ---
 
-    @Schema(description = "浏览量", example = "8848")
+    @Schema(description = "浏览量", type = "string", example = "8848")
     private Long viewCount;
 
-    @Schema(description = "点赞数量", example = "100")
+    @Schema(description = "点赞数量", type = "string", example = "100")
     private Long likeCount;
 
     @Schema(description = "当前登录用户是否已点赞", example = "true")
     @Builder.Default
     private boolean liked = false;
 
-    @Schema(description = "收藏数量", example = "100")
+    @Schema(description = "收藏数量", type = "string", example = "100")
     private Long favoriteCount;
 
     @Schema(description = "当前登录用户是否已收藏", example = "true")
     @Builder.Default
     private boolean isFavorite = false;
 
-    @Schema(description = "评论数量 (用于展示 '10条评论')", example = "10")
+    @Schema(description = "评论数量 (用于展示 '10条评论')", type = "string", example = "10")
     private Long commentCount;
 
     @Schema(
             description = "发布时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     // --- 分类与作者 ---
 
-    @Schema(description = "分类ID", example = "1623456789012345678")
+    @Schema(description = "分类ID", type = "string", example = "1623456789012345678")
     private Long categoryId;
 
     @Schema(description = "分类名称", example = "后端技术")
     private String categoryName;
 
-    @Schema(description = "作者ID", example = "1623456789012345678")
+    @Schema(description = "作者ID", type = "string", example = "1623456789012345678")
     private Long userId;
 
     @Schema(description = "作者昵称", example = "技术宅")

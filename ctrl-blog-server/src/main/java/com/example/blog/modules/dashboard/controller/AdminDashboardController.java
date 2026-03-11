@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/dashboard")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台仪表盘管理", description = "提供管理员首页的核心统计数据接口")
+@Tag(name = "后台/仪表盘管理", description = "提供管理员首页的核心统计数据接口")
 public class AdminDashboardController {
 
     @Resource

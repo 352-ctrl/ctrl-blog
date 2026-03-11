@@ -32,7 +32,7 @@ import java.util.List;
 @Validated
 @RequestMapping("/api/v1/admin/articles")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台文章管理")
+@Tag(name = "后台/文章管理")
 public class AdminArticleController {
 
     @Resource

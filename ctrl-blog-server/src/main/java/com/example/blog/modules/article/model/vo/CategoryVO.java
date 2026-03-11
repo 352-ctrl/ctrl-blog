@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Schema(description = "分类展示层对象 (VO)", title = "CategoryVO")
 public class CategoryVO {
-    @Schema(description = "分类ID", example = "1623456789012345678")
+    @Schema(description = "分类ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "分类名称", example = "后端开发")
@@ -24,8 +24,7 @@ public class CategoryVO {
     @Schema(
             description = "创建时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;

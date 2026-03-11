@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin/profile")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台个人中心")
+@Tag(name = "后台/个人中心")
 public class AdminUserProfileController {
 
     @Resource

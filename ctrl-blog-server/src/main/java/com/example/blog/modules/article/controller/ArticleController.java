@@ -28,7 +28,7 @@ import java.util.List;
 @Validated
 @RestController
 @RequestMapping("/api/v1/articles")
-@Tag(name = "前台文章")
+@Tag(name = "前台/文章")
 public class ArticleController {
 
     @Resource

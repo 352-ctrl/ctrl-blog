@@ -18,7 +18,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/tags")
-@Tag(name = "前台标签")
+@Tag(name = "前台/标签")
 public class TagController {
 
     @Resource

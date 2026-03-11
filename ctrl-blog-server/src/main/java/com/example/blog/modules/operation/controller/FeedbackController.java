@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/v1/feedbacks")
-@Tag(name = "意见反馈管理")
+@Tag(name = "前台/意见反馈")
 public class FeedbackController {
 
     @Resource

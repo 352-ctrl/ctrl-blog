@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "首页轮播图展示对象", title = "ArticleCarouselVO")
 public class ArticleCarouselVO {
 
-    @Schema(description = "文章ID (点击跳转用)", example = "1623456789012345678")
+    @Schema(description = "文章ID (点击跳转用)", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "文章封面 (大图)", example = "https://example.com/cover/banner.jpg")

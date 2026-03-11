@@ -22,7 +22,7 @@ import java.util.List;
 @Validated
 @RestController
 @RequestMapping("/api/v1/danmakus")
-@Tag(name = "前台弹幕")
+@Tag(name = "前台/弹幕")
 public class DanmakuController {
 
     @Resource

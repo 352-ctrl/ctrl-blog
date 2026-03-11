@@ -10,10 +10,10 @@ import java.time.LocalDateTime;
 @Schema(description = "系统操作日志展示层对象 (VO)", title = "SysOperLogVO")
 public class SysOperLogVO {
 
-    @Schema(description = "日志主键ID", example = "1623456789012345678")
+    @Schema(description = "日志主键ID", type = "string", example = "1623456789012345678")
     private Long id;
 
-    @Schema(description = "操作人ID", example = "10001")
+    @Schema(description = "操作人ID", type = "string", example = "10001")
     private Long userId;
 
     @Schema(description = "操作人昵称", example = "超级管理员")

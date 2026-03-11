@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Schema(description = "前台弹幕展示对象 (VO)")
 public class DanmakuVO {
 
-    @Schema(description = "弹幕ID")
+    @Schema(description = "弹幕ID", type = "string")
     private Long id;
 
     @Schema(description = "弹幕内容")

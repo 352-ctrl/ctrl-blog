@@ -24,7 +24,7 @@ public class Knif4jConfig {
                 .info(new Info()
                         .title("博客系统后端 API")      // 文档标题
                         .version("1.0")              // 版本号
-                        .description("基于 Spring Boot 3 的文章管理接口文档") // 描述
+                        .description("基于 Spring Boot 3 的接口文档") // 描述
                         .contact(new Contact().name("编码助手")) // 作者信息
                 );
     }

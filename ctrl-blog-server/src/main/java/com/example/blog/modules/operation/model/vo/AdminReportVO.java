@@ -16,10 +16,10 @@ import java.time.LocalDateTime;
 @Schema(description = "后台内容举报列表对象 (VO)", title = "AdminReportVO")
 public class AdminReportVO {
 
-    @Schema(description = "举报记录ID", example = "1")
+    @Schema(description = "举报记录ID", type = "string", example = "1")
     private Long id;
 
-    @Schema(description = "举报人ID", example = "1001")
+    @Schema(description = "举报人ID", type = "string", example = "1001")
     private Long userId;
 
     @Schema(description = "举报人昵称 (需组装)", example = "热心网友")
@@ -28,7 +28,7 @@ public class AdminReportVO {
     @Schema(description = "举报目标类型 (COMMENT, ARTICLE, USER)", example = "COMMENT")
     private String targetType;
 
-    @Schema(description = "举报目标ID", example = "123456")
+    @Schema(description = "举报目标ID", type = "string", example = "123456")
     private Long targetId;
 
     @Schema(description = "被举报的目标内容摘要/标题 (需组装，方便管理员直观审核)", example = "点击链接赚大钱...")

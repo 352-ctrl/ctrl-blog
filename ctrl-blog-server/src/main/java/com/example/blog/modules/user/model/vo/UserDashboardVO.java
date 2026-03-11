@@ -33,13 +33,13 @@ public class UserDashboardVO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Count {
-        @Schema(description = "累计收藏数")
+        @Schema(description = "累计收藏数", type = "string")
         private Long favorite;
 
-        @Schema(description = "累计点赞数")
+        @Schema(description = "累计点赞数", type = "string")
         private Long like;
 
-        @Schema(description = "累计评论数")
+        @Schema(description = "累计评论数", type = "string")
         private Long comment;
     }
 }

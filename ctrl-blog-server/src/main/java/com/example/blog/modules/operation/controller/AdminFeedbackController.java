@@ -26,7 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/feedbacks")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台意见反馈管理")
+@Tag(name = "后台/意见反馈管理")
 public class AdminFeedbackController {
 
     @Resource

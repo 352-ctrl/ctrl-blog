@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 @RestController
 @RequestMapping("/api/v1/comments")
-@Tag(name = "前台评论")
+@Tag(name = "前台/评论")
 public class CommentController {
 
     @Resource

@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Schema(description = "登录日志展示层对象 (VO)", title = "SysLoginLogVO")
 public class SysLoginLogVO {
 
-    @Schema(description = "日志ID", example = "1623456789012345678")
+    @Schema(description = "日志ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @JsonSerialize(using = EmailDesensitizeSerializer.class)
@@ -50,8 +50,7 @@ public class SysLoginLogVO {
     @Schema(
             description = "登录时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;

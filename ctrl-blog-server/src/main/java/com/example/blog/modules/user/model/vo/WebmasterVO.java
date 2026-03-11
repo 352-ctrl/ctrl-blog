@@ -16,7 +16,7 @@ import java.io.Serializable;
 public class WebmasterVO implements Serializable {
 
     // --- 1. 基本信息 ---
-    @Schema(description = "站长ID", example = "1623456789012345678")
+    @Schema(description = "站长ID", type = "string", example = "1623456789012345678")
     private Long userId;
 
     @Schema(description = "昵称", example = "Ctrl管理员")
@@ -29,13 +29,13 @@ public class WebmasterVO implements Serializable {
     private String bio;
 
     // --- 2. 博客统计信息 ---
-    @Schema(description = "文章总数")
+    @Schema(description = "文章总数", type = "string")
     private Long articleCount;
 
-    @Schema(description = "分类总数")
+    @Schema(description = "分类总数", type = "string")
     private Long categoryCount;
 
-    @Schema(description = "标签总数")
+    @Schema(description = "标签总数", type = "string")
     private Long tagCount;
 
     // --- 3. 社交链接 ---

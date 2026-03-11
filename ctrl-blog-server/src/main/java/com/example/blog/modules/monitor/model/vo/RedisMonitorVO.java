@@ -41,7 +41,7 @@ public class RedisMonitorVO {
     @Schema(description = "RDB是否成功")
     private String rdbStatus;
 
-    @Schema(description = "Key数量")
+    @Schema(description = "Key数量", type = "string")
     private Long keyCount;
 
     @Schema(description = "网络入口(kbps)")
@@ -71,7 +71,7 @@ public class RedisMonitorVO {
         @Schema(description = "剩余存活时间")
         private String ttl;
 
-        @Schema(description = "大小/数量")
+        @Schema(description = "大小/数量", type = "string")
         private Long size;
     }
 }

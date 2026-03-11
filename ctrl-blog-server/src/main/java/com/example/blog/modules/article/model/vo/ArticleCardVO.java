@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "前台文章列表展示对象 (VO)", title = "ArticleListVO")
 public class ArticleCardVO {
-    @Schema(description = "文章ID", example = "1623456789012345678")
+    @Schema(description = "文章ID", type = "string", example = "1623456789012345678")
     @JsonSerialize(contentUsing = ToStringSerializer.class)
     private Long id;
 
@@ -32,7 +32,7 @@ public class ArticleCardVO {
     @Schema(description = "文章摘要", example = "本文详细介绍了 Spring Boot 3.0 的 AOT 编译...")
     private String summary;
 
-    @Schema(description = "浏览量", example = "1024")
+    @Schema(description = "浏览量", type = "string", example = "1024")
     private Long viewCount;
 
     // --- 状态标识 ---
@@ -54,23 +54,20 @@ public class ArticleCardVO {
     @Schema(
             description = "发布时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     // --- 分类与作者 ---
 
-    @Schema(description = "分类ID", example = "1623456789012345678")
-    @JsonSerialize(contentUsing = ToStringSerializer.class)
+    @Schema(description = "分类ID", type = "string", example = "1623456789012345678")
     private Long categoryId;
 
     @Schema(description = "分类名称", example = "后端技术")
     private String categoryName;
 
-    @Schema(description = "作者ID", example = "1623456789012345678")
-    @JsonSerialize(contentUsing = ToStringSerializer.class)
+    @Schema(description = "作者ID", type = "string", example = "1623456789012345678")
     private Long userId;
 
     @Schema(description = "作者昵称", example = "技术宅")

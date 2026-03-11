@@ -26,7 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/reports")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台内容举报管理")
+@Tag(name = "后台/内容举报管理")
 public class AdminReportController {
 
     @Resource

@@ -30,7 +30,7 @@ import java.util.List;
 @Validated
 @RequestMapping("/api/v1/admin/categories")
 @AuthCheck(role = BizStatus.ROLE_ADMIN)
-@Tag(name = "后台分类管理")
+@Tag(name = "后台/分类管理")
 public class AdminCategoryController {
 
     @Resource

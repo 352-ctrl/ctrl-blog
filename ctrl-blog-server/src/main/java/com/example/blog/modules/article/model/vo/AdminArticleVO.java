@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "后台文章管理详情对象 (VO)", title = "AdminArticleVO")
 public class AdminArticleVO {
-    @Schema(description = "文章ID", example = "1623456789012345678")
+    @Schema(description = "文章ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "文章封面URL", example = "https://example.com/cover.jpg")
@@ -42,50 +42,46 @@ public class AdminArticleVO {
     )
     private String content;
 
-    @Schema(description = "浏览量", example = "1024")
+    @Schema(description = "浏览量", type = "string", example = "1024")
     private Long viewCount;
 
     // --- 状态控制字段 ---
 
     @Schema(
             description = "是否置顶 (0-否, 1-是)",
-            example = "0",
-            allowableValues = {"0", "1"}
+            example = "0"
     )
     private Integer isTop;
 
     @Schema(
             description = "是否轮播 (0-否, 1-是)",
-            example = "0",
-            allowableValues = {"0", "1"}
+            example = "0"
     )
     private Integer isCarousel;
 
     @Schema(
             description = "发布状态 (0-草稿/隐藏, 1-已发布)",
-            example = "1",
-            allowableValues = {"0", "1"}
+            example = "1"
     )
     private Integer status;
 
     @Schema(
             description = "创建时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     // --- 分类与作者 ---
 
-    @Schema(description = "分类ID", example = "1623456789012345678")
+    @Schema(description = "分类ID", type = "string", example = "1623456789012345678")
     private Long categoryId;
 
     @Schema(description = "分类名称", example = "后端技术")
     private String categoryName;
 
-    @Schema(description = "作者ID", example = "1623456789012345678")
+    @Schema(description = "作者ID", type = "string", example = "1623456789012345678")
     private Long userId;
 
     @Schema(description = "作者昵称", example = "Admin")

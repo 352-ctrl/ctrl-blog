@@ -17,13 +17,13 @@ import java.util.List;
 @AllArgsConstructor
 @Schema(description = "前台评论展示对象 (VO)", title = "CommentVO")
 public class CommentVO {
-    @Schema(description = "评论ID", example = "1623456789012345678")
+    @Schema(description = "评论ID", type = "string", example = "1623456789012345678")
     private Long id;
 
     @Schema(description = "评论内容", example = "博主写得太好了，受益匪浅！")
     private String content;
 
-    @Schema(description = "点赞数量", example = "100")
+    @Schema(description = "点赞数量", type = "string", example = "100")
     private Long likeCount;
 
     @Schema(description = "当前登录用户是否已点赞", example = "true")
@@ -33,15 +33,14 @@ public class CommentVO {
     @Schema(
             description = "发布时间",
             example = "2023-10-24 10:24:00",
-            type = "string",
-            pattern = "yyyy-MM-dd HH:mm:ss"
+            type = "string"
     )
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     // --- 评论者信息 ---
 
-    @Schema(description = "评论者ID", example = "1623456789012345678")
+    @Schema(description = "评论者ID", type = "string", example = "1623456789012345678")
     private Long userId;
 
     @Schema(description = "评论者昵称", example = "热心网友")
@@ -54,14 +53,15 @@ public class CommentVO {
 
     @Schema(
             description = "父评论ID (0或Null代表是顶层根评论，否则代表是子回复)",
+            type = "string",
             example = "1623456789012345678"
     )
     private Long parentId;
 
-    @Schema(description = "被回复的评论ID (用于定位具体回复了哪一条)", example = "1623456789012345678")
+    @Schema(description = "被回复的评论ID (用于定位具体回复了哪一条)", type = "string", example = "1623456789012345678")
     private Long replyCommentId;
 
-    @Schema(description = "被回复人的ID", example = "1623456789012345678")
+    @Schema(description = "被回复人的ID", type = "string", example = "1623456789012345678")
     private Long replyUserId;
 
     @Schema(description = "被回复人的昵称 (也就是 @某某某)", example = "技术大佬")

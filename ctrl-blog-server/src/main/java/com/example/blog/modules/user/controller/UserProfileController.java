@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/profile")
 @AuthCheck
-@Tag(name = "前台个人中心")
+@Tag(name = "前台/个人中心")
 public class UserProfileController {
 
     @Resource
