@@ -29,7 +29,7 @@ public interface MessageService extends IService<Message> {
      *
      * @return 未读消息数量
      */
-    Long getUnreadMessageCount();
+    Integer getUnreadMessageCount();
 
     /**
      * 标记单条消息为已读

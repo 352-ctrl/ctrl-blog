@@ -270,17 +270,17 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
     }
 
     @Override
-    public Long getUnreadMessageCount() {
+    public Integer getUnreadMessageCount() {
         UserPayloadDTO currentUser = UserContext.get();
         if (currentUser == null) {
-            return 0L; // 游客状态未读数为 0
+            return 0; // 游客状态未读数为 0
         }
 
         LambdaQueryWrapper<Message> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Message::getToUserId, currentUser.getId())
                 .eq(Message::getIsRead, BizStatus.ReadStatus.UNREAD);
 
-        return this.count(queryWrapper);
+        return Math.toIntExact(this.count(queryWrapper));
     }
 
     @Override
