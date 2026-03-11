@@ -22,7 +22,7 @@ export function register(data) {
 }
 
 // 3. 发送注册邮箱验证码
-export function sendRegisterEmailCode(email, captchaToken) {
+export function sendRegisterEmailCode({ email, captchaToken }) {
     return request({
         url: `${BASE_URL}/register/verification-codes`,
         method: 'post',
@@ -33,8 +33,8 @@ export function sendRegisterEmailCode(email, captchaToken) {
     })
 }
 
-// 4. 发送找回密码邮箱验证码=
-export function sendForgotPwdEmailCode(email, captchaToken) {
+// 4. 发送找回密码邮箱验证码
+export function sendForgotPwdEmailCode({ email, captchaToken }) {
     return request({
         url: `${BASE_URL}/password-reset/verification-codes`,
         method: 'post',

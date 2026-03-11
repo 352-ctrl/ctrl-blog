@@ -96,7 +96,10 @@ const onVerifySuccess = async (params) => {
   data.sendBtnText = '发送中...';
 
   try {
-    await execSendCode({ email: data.form.email, captchaVerification: params.captchaVerification });
+    await execSendCode({
+      email: data.form.email,
+      captchaToken: params.captchaVerification
+    });
 
     ElMessage.success("验证码已发送，请查收邮件");
     let count = 60;

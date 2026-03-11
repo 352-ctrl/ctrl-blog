@@ -162,11 +162,13 @@ export const useUserStore = defineStore('user', () => {
 
     // 清除用户数据
     const clearUserData = () => {
+        stopUnreadPolling()
+
+        isFetching = false
+
         token.value = ''
         userInfo.value = {}
-
         unreadCount.value = 0
-        stopUnreadPolling()
 
         localStorage.removeItem('token')
         localStorage.removeItem('userInfo')

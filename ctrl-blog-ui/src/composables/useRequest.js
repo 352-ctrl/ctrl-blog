@@ -28,7 +28,9 @@ export function useRequest(apiFunc, options = {}) {
             }
         } catch (err) {
             error.value = err
-            ElMessage.error(errorMsg || err.message || '系统异常')
+            if (errorMsg) {
+                ElMessage.error(errorMsg)
+            }
             throw err
         } finally {
             loading.value = false

@@ -5,6 +5,8 @@ import {useUserStore} from "@/store/user.js";
 
 // 添加全局标志位，防止重复显示登录提示
 let isShowingLoginMessage = false
+// 全局拦截熔断开关
+let isTokenExpired = false
 
 const request = axios.create({
     baseURL: 'http://localhost:8080/',
@@ -15,6 +17,16 @@ const request = axios.create({
 // 可以自请求发送前对请求做一些处理
 // 比如统一加token，对请求参数统一加密
 request.interceptors.request.use(config => {
+    // 白名单机制：如果当前请求是去登录的，立刻解除熔断状态！
+    if (config.url.includes('/auth/token') || config.url.includes('/login')) {
+        isTokenExpired = false;
+    }
+
+    // 短路防御：如果已经确诊 Token 过期，直接取消这批请求，绝对不发给后端！
+    if (isTokenExpired) {
+        return Promise.reject(new axios.Cancel("Token已过期，请求被前端拦截熔断"));
+    }
+
     if (!config.headers['Content-Type']) {
         config.headers['Content-Type'] = 'application/json;charset=utf-8'
     }
@@ -47,6 +59,9 @@ request.interceptors.response.use(
             else if (res.code === 403) {
                 ElMessage({ message: '权限不足', type: 'warning', grouping: true });
                 router.replace('/403');
+            }
+            else if (res.code === 429) {
+                ElMessage({ message: res.msg || '请求过于频繁，请稍后再试', type: 'warning', grouping: true });
             }
             // 3. 处理其他常规业务错误
             else {
@@ -96,6 +111,13 @@ request.interceptors.response.use(
 )
 
 function handleUnauthorized() {
+    isTokenExpired = true;
+
+    // 500 毫秒后自动解除熔断
+    setTimeout(() => {
+        isTokenExpired = false;
+    }, 500);
+
     if (!isShowingLoginMessage) {
         isShowingLoginMessage = true
 

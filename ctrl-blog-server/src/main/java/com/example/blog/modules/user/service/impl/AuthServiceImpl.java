@@ -26,7 +26,6 @@ import com.example.blog.modules.user.event.UserRegisteredEvent;
 import com.example.blog.modules.user.model.convert.UserConvert;
 import com.example.blog.modules.user.model.dto.UserForgotPwdDTO;
 import com.example.blog.modules.user.model.dto.UserLoginDTO;
-import com.example.blog.modules.user.model.dto.UserPayloadDTO;
 import com.example.blog.modules.user.model.dto.UserRegisterDTO;
 import com.example.blog.modules.user.model.entity.User;
 import com.example.blog.modules.user.model.vo.UserLoginVO;
@@ -135,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 当Key不存在时，expire 返回 -2。如果 > 240 说明刚发过不到1分钟
         if (expire > 240) {
-            throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
+            throw new CustomerException(ResultCode.TOO_MANY_REQUESTS, MessageConstants.MSG_SEND_FREQUENTLY);
         }
 
         // 2. 生成 6 位数字验证码
@@ -484,26 +483,26 @@ public class AuthServiceImpl implements AuthService {
         }
 
         try {
-            // 1. 如果携带了 Token，手动试探一下 JWT 格式
+            // 1. 手动解码 JWT，不仅验证格式，还要提取 userId
+            DecodedJWT jwt;
             try {
-                JWT.decode(token);
+                jwt = JWT.decode(token);
             } catch (Exception e) {
-                // 仅拦截伪造的非法结构，正常过期的 Token 不会报错，依然能顺利走完注销流程
                 throw new CustomerException(ResultCode.UNAUTHORIZED, MessageConstants.MSG_TOKEN_FAKE);
             }
 
             // 2. 将当前传入的 Token 拉入黑名单
             this.blacklistToken(token);
 
-            // 3. 清理当前用户的 Redis 缓存
-            UserPayloadDTO currentUser = UserContext.get();
-            if (currentUser != null && currentUser.getId() != null) {
-                Long userId = currentUser.getId();
+            // 3. 从 JWT 载荷中提取出真实的用户 ID 去删缓存
+            Long userId = jwt.getClaim("userId").asLong();
+            if (userId != null) {
                 redisUtil.delete(RedisConstants.REDIS_USER_INFO_KEY + userId);
                 redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + userId);
             }
+
         } finally {
-            // 4. 强制清理当前线程变量，防止内存泄漏
+            // 4. 清理当前线程变量
             UserContext.remove();
         }
     }

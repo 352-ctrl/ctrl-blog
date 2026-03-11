@@ -46,6 +46,8 @@ public class CaptchaAspect {
     public void doBefore(JoinPoint joinPoint) {
         String captchaVerification = getCaptchaVerification(joinPoint);
 
+        log.info("【验证码切面】接收到的 captchaVerification: {}", captchaVerification);
+
         // 1. 校验是否为空
         if (StrUtil.isBlank(captchaVerification)) {
             throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_CAPTCHA_REQUIRE);

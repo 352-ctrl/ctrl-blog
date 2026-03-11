@@ -23,6 +23,7 @@ public enum ResultCode {
     NOT_FOUND(404, "资源不存在"),
     METHOD_NOT_ALLOWED(405, "请求方法不支持"),
     CONFLICT(409, "资源冲突"),
+    TOO_MANY_REQUESTS(429, "请求过于频繁，请稍后再试"),
 
     /* 服务端错误 (500-599) */
     INTERNAL_SERVER_ERROR(500, "系统内部错误"),

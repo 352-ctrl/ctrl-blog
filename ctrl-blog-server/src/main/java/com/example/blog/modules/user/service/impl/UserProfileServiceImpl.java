@@ -419,7 +419,7 @@ public class UserProfileServiceImpl extends ServiceImpl<UserMapper, User> implem
         long frequencyThreshold = (RedisConstants.EXPIRE_EMAIL_CODE * 60) - 60;
 
         if (expire > frequencyThreshold) {
-            throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
+            throw new CustomerException(ResultCode.TOO_MANY_REQUESTS, MessageConstants.MSG_SEND_FREQUENTLY);
         }
 
         // 3. 生成 6 位数字验证码

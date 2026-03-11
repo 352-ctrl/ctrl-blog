@@ -45,7 +45,7 @@ public class RateLimitAspect {
 
         // 4. 超出限制，抛出异常
         if (count > rateLimit.count()) {
-            throw new CustomerException(ResultCode.FORBIDDEN, MessageConstants.MSG_SEND_FREQUENTLY);
+            throw new CustomerException(ResultCode.TOO_MANY_REQUESTS, MessageConstants.MSG_SEND_FREQUENTLY);
         }
 
         return point.proceed();
