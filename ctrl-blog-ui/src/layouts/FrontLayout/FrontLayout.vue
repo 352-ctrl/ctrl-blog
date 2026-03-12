@@ -6,7 +6,13 @@
           <IconHamburger size="24"/>
         </el-button>
 
-        <el-drawer v-model="drawer" direction="ltr" :show-close="false" :size="250">
+        <el-drawer
+            v-model="drawer"
+            direction="ltr"
+            :show-close="false"
+            :size="220"
+            append-to-body
+        >
           <template #header>
             <div class="drawer-header-row">
               <AppLogo/>
@@ -20,7 +26,7 @@
                 class="mobile-menu"
             >
               <el-menu-item index="/">
-                <el-icon><HomeFilled /></el-icon>
+                <el-icon><House /></el-icon>
                 <span>首页</span>
               </el-menu-item>
 
@@ -48,16 +54,10 @@
                 <span>留言板</span>
               </el-menu-item>
 
-              <el-sub-menu index="more">
-                <template #title>
-                  <el-icon><MoreFilled /></el-icon>
-                  <span>更多</span>
-                </template>
-                <el-menu-item index="/about">
-                  <el-icon><InfoFilled /></el-icon>
-                  <span>关于本站</span>
-                </el-menu-item>
-              </el-sub-menu>
+              <el-menu-item index="/about">
+                <el-icon><Warning /></el-icon>
+                <span>关于我</span>
+              </el-menu-item>
             </el-menu>
           </template>
         </el-drawer>
@@ -116,16 +116,10 @@
             <span>留言板</span>
           </el-menu-item>
 
-          <el-sub-menu index="more" popper-class="auto-width-popper">
-            <template #title>
-              <el-icon><More /></el-icon>
-              <span>更多</span>
-            </template>
-            <el-menu-item index="/about">
-              <el-icon><Warning /></el-icon>
-              <span>关于本站</span>
-            </el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/about">
+            <el-icon><Warning /></el-icon>
+            <span>关于我</span>
+          </el-menu-item>
         </el-menu>
       </div>
 
@@ -143,6 +137,7 @@
         </div>
         <RightSideBar v-if="isShowSidebar" />
       </div>
+      <FrontFooter />
     </el-main>
 
     <div class="feedback-toggle-wrapper custom-float-btn">
@@ -169,13 +164,14 @@ import { useUserStore } from '@/store/user.js'
 import { useRoute, useRouter } from "vue-router";
 import { useDark, useToggle } from '@vueuse/core'
 import AuthDialog from "./components/AuthDialog/AuthDialog.vue";
-import ReportDialog from "./components/ReportDialog.vue";
+import ReportDialog from "../../components/front/ReportDialog.vue";
 import RightSideBar from "./components/RightSidebar/RightSideBar.vue";
 import FeedbackDialog from "./components/FeedbackDialog.vue";
 import MessageBadge from "./components/MessageBadge.vue";
 import SearchModal from "./components/SearchModal.vue";
 import ThemeToggle from "./components/ThemeToggle.vue";
 import IconHamburger from "@/components/common/Icon/IconHamburger.vue";
+import FrontFooter from "@/layouts/FrontLayout/FrontFooter.vue";
 
 // 初始化路由和状态库
 const route = useRoute();
@@ -327,6 +323,9 @@ html.dark .mobile-menu :deep(.el-menu-item.is-active) {
   scroll-behavior: smooth;
   position: relative;
 
+  display: flex;
+  flex-direction: column;
+
   /* 基础底色 */
   background-color: var(--el-bg-color-page);
 
@@ -355,7 +354,7 @@ html.dark .page-scroll-view {
   width: 100%;
   display: flex;
   box-sizing: border-box;
-  min-height: 100%;
+  flex: 1 0 auto;
 }
 
 .main-content-wrapper {
@@ -376,13 +375,7 @@ html.dark .page-scroll-view {
   height: 60px;
   display: flex;
   align-items: center;
-  padding-right: 20px;
-}
-
-.brand-logo {
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
+  justify-content: center;
 }
 
 .header-left-box {
@@ -423,7 +416,7 @@ html.dark .page-scroll-view {
 
 /* 移动端右侧工具栏优化 */
 .mobile-right-tools {
-  gap: 10px;
+  gap: 14px;
   transform: scale(0.85);
   transform-origin: right center;
 }

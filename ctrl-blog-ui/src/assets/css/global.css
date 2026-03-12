@@ -21,6 +21,11 @@ a {
     color: #333;
 }
 
+.el-button.is-text:not(.is-disabled):hover{
+    background-color: transparent !important;
+    color: var(--el-color-primary) !important;
+}
+
 /* 导入思源黑体 (Noto Sans CJK) 作为基础正文 */
 @font-face {
     font-family: 'NotoSansCJK';

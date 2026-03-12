@@ -96,6 +96,7 @@ onMounted(async () => {
    外层卡片
    ==================================== */
 .archive-card {
+  margin-top: 10px;
   border-radius: 8px;
   /* 核心优化：使用 overlay 让卡片在暗黑模式下与底层 page 背景区分开，更具立体感 */
   background-color: var(--el-bg-color-overlay);
