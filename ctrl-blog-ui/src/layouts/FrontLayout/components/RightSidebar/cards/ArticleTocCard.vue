@@ -1,278 +1,210 @@
 <template>
-  <el-card class="tag-card" shadow="hover">
+  <el-card class="toc-card" shadow="hover">
     <template #header>
       <div class="card-header">
-        <span class="header-title"><el-icon class="icon-tag"><Collection /></el-icon> 标签云</span>
+        <span class="header-title">
+          <el-icon class="icon-reading"><Reading /></el-icon>
+          文章目录
+        </span>
+        <div class="header-progress">
+          <span class="progress-num">{{ readProgress }}%</span>
+          <el-progress
+              :percentage="readProgress"
+              :width="20"
+              :stroke-width="3"
+              :show-text="false"
+              color="var(--el-color-success)"
+          />
+        </div>
       </div>
     </template>
 
-    <div class="card-body">
-      <div v-if="tagList.length === 0" class="empty-state"><el-empty description="暂无标签" :image-size="60" /></div>
-      <div v-else ref="tagCloudRef" class="tag-cloud-container"></div>
+    <div class="toc-body">
+      <div
+          class="anchor-wrapper"
+          v-if="tocList.length > 0 && scrollContainer"
+          @click.capture.stop.prevent="handleAnchorClick"
+      >
+        <el-anchor
+            class="custom-anchor"
+            :container="scrollContainer"
+            :offset-top="20"
+            type="underline"
+        >
+          <el-anchor-link
+              v-for="item in tocList"
+              :key="item.id"
+              :href="`#${item.id}`"
+              :title="item.text"
+              :class="['toc-link', 'toc-item-level-' + item.level]"
+          />
+        </el-anchor>
+      </div>
+
+      <div v-else class="empty-toc">
+        <span v-if="loading">正在解析目录...</span>
+        <span v-else>暂无目录</span>
+      </div>
     </div>
   </el-card>
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref } from "vue";
-import { getTagList } from '@/api/front/article/tag.js';
-import { useRouter } from "vue-router";
-import { useRequest } from "@/composables/useRequest.js"; // 引入 Hook
+import { onMounted, onUnmounted, ref, shallowRef } from "vue";
+import { Reading } from '@element-plus/icons-vue';
 
-const router = useRouter();
+const props = defineProps({
+  containerSelector: {
+    type: String,
+    default: '#article-content-wrapper'
+  }
+});
 
-// 你的标签云算法配置保持不变
-const CONFIG = { RADIUS_RATIO: 0.9, PERSPECTIVE: 500, BASE_FONT_SIZE: 15, FONT_WEIGHT_FACTOR: 10, AUTO_ROTATE_SPEED: 0.002, DRAG_SENSITIVITY: 0.005, RESUME_DELAY: 2000 };
+const tocList = ref([]);
+const readProgress = ref(0);
+const loading = ref(true);
 
-const tagCloudRef = ref(null);
-const tagList = ref([]);
-let tagObjects = [];
-let animationFrameId = null;
-let resizeObserver = null;
-let isAutoRotating = true;
-let isDragging = false;
-let lastMousePos = { x: 0, y: 0 };
-let resumeTimer = null;
-let activeRotation = { x: CONFIG.AUTO_ROTATE_SPEED, y: CONFIG.AUTO_ROTATE_SPEED };
-
-// ======= Hook 接入 =======
-const { execute: fetchTags } = useRequest(getTagList);
+const scrollContainer = shallowRef(null);
+let contentObserver = null;
 
 onMounted(() => {
-  loadTags();
+  // 注意：确保您的外层滚动容器确实有 .page-scroll-view 这个类名。
+  // 如果您的网页是全局滚动，这里请改为 window 并适配对应的监听事件
+  const container = document.querySelector('.page-scroll-view') || window;
+  if (container) {
+    scrollContainer.value = container;
+    container.addEventListener('scroll', handleScroll);
+  }
+  initObserver();
 });
 
 onUnmounted(() => {
-  stopAnimation();
-  if (resizeObserver) resizeObserver.disconnect();
-  unbindGlobalEvents();
-  if (resumeTimer) clearTimeout(resumeTimer);
+  if (scrollContainer.value) {
+    scrollContainer.value.removeEventListener('scroll', handleScroll);
+  }
+  if (contentObserver) {
+    contentObserver.disconnect();
+  }
 });
 
-const loadTags = async () => {
-  const data = await fetchTags(); // 使用 Hook 获取数据
-  if (data) {
-    tagList.value = data;
-    await nextTick();
-
-    if (tagList.value.length > 0) {
-      setTimeout(() => {
-        initResizeObserver();
-        initTagCloud();
-        bindGlobalEvents();
-      }, 100);
-    }
+const initObserver = () => {
+  const articleDom = document.querySelector(props.containerSelector);
+  if (!articleDom) {
+    setTimeout(initObserver, 200);
+    return;
   }
-};
-
-const initResizeObserver = () => {
-  if (!tagCloudRef.value) return;
-  resizeObserver = new ResizeObserver((entries) => {
-    for (const entry of entries) {
-      const { width, height } = entry.contentRect;
-      if (width > 0 && height > 0 && tagList.value.length > 0) {
-        initTagCloud();
+  contentObserver = new MutationObserver((mutations) => {
+    let shouldUpdate = false;
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        shouldUpdate = true;
+        break;
       }
     }
+    if (shouldUpdate) {
+      generateToc();
+    }
   });
-  resizeObserver.observe(tagCloudRef.value);
+  contentObserver.observe(articleDom, { childList: true, subtree: true });
+  generateToc();
 };
 
-const initTagCloud = () => {
-  const container = tagCloudRef.value;
-  if (!container || tagList.value.length === 0 || container.offsetWidth === 0) return;
+const generateToc = () => {
+  const articleDom = document.querySelector(props.containerSelector);
+  if (!articleDom) return;
 
-  stopAnimation();
-  container.innerHTML = '';
-  tagObjects = [];
-
-  const width = container.clientWidth;
-  const height = container.clientHeight;
-  const radius = Math.min(width, height) / 2 * CONFIG.RADIUS_RATIO;
-  const fragment = document.createDocumentFragment();
-
-  tagList.value.forEach((tag, index) => {
-    const tagEl = document.createElement('div');
-    tagEl.className = 'tag-cloud-word';
-    tagEl.textContent = tag.name;
-
-    tagEl.style.position = 'absolute';
-    tagEl.style.left = '45%';
-    tagEl.style.top = '50%';
-    tagEl.style.whiteSpace = 'nowrap';
-    tagEl.style.fontWeight = 'bold';
-    tagEl.style.fontFamily = "'SmileySans', sans-serif";
-    tagEl.style.cursor = 'pointer';
-    tagEl.style.color = getRandomColor();
-    tagEl.style.transition = 'none';
-
-    const fontSize = CONFIG.BASE_FONT_SIZE + (tag.value || 50) / CONFIG.FONT_WEIGHT_FACTOR;
-    tagEl.dataset.fontSize = fontSize;
-
-    const phi = Math.acos(-1 + (2 * index) / tagList.value.length);
-    const theta = Math.sqrt(tagList.value.length * Math.PI) * phi;
-
-    const x = radius * Math.sin(phi) * Math.cos(theta);
-    const y = radius * Math.sin(phi) * Math.sin(theta);
-    const z = radius * Math.cos(phi);
-
-    const tagObj = { el: tagEl, x, y, z, radius };
-    tagObjects.push(tagObj);
-    bindTagEvents(tagEl, tag);
-    fragment.appendChild(tagEl);
-  });
-
-  container.appendChild(fragment);
-  tagObjects.forEach(tag => updateTagStyle(tag));
-  requestAnimationFrame(() => {
-    tagObjects.forEach(tag => {
-      tag.el.style.transition = 'all 0.3s ease';
-    });
-  });
-  startAnimation();
-};
-
-const updateFrame = () => {
-  let speedX = 0;
-  let speedY = 0;
-
-  if (isDragging) {
-    speedX = activeRotation.x;
-    speedY = activeRotation.y;
-  } else if (isAutoRotating) {
-    speedX = CONFIG.AUTO_ROTATE_SPEED;
-    speedY = CONFIG.AUTO_ROTATE_SPEED;
+  const headings = articleDom.querySelectorAll('h1, h2, h3');
+  if (headings.length === 0) {
+    loading.value = false;
+    return;
   }
 
-  const sinX = Math.sin(speedY);
-  const cosX = Math.cos(speedY);
-  const sinY = Math.sin(speedX);
-  const cosY = Math.cos(speedX);
-
-  tagObjects.forEach(tag => {
-    if (tag.el.dataset.hover === 'true') return;
-    let rx1 = tag.x * cosY - tag.z * sinY;
-    let rz1 = tag.z * cosY + tag.x * sinY;
-    let ry2 = tag.y * cosX - rz1 * sinX;
-    let rz2 = rz1 * cosX + tag.y * sinX;
-    tag.x = rx1;
-    tag.y = ry2;
-    tag.z = rz2;
-    updateTagStyle(tag);
+  const list = [];
+  headings.forEach((heading, index) => {
+    const text = heading.textContent.trim();
+    if (text) {
+      const id = `toc-heading-${index}`;
+      heading.id = id;
+      list.push({
+        id,
+        text,
+        level: parseInt(heading.tagName.replace('H', ''))
+      });
+    }
   });
-  animationFrameId = requestAnimationFrame(updateFrame);
+
+  tocList.value = list;
+  loading.value = false;
+  handleScroll();
 };
 
-const updateTagStyle = (tag) => {
-  const { el, x, y, z, radius } = tag;
-  const scale = CONFIG.PERSPECTIVE / (CONFIG.PERSPECTIVE + z);
-  const projX = x * scale;
-  const projY = y * scale;
+const handleAnchorClick = (e) => {
+  if (e.preventDefault) e.preventDefault();
+  e.stopPropagation();
 
-  const distance = Math.sqrt(x * x + y * y + z * z);
-  const viewDot = z / (distance || 1);
-  const frontFactor = Math.max(0, viewDot);
-  const enhancedFactor = Math.pow(frontFactor, 0.8);
+  const linkNode = e.target.closest('a');
+  if (!linkNode) return;
 
-  const baseFontSize = parseFloat(el.dataset.fontSize);
-  const sizeMultiplier = 0.2 + enhancedFactor * 0.9;
-  const scaledFontSize = baseFontSize * sizeMultiplier;
-  el.style.fontSize = `${scaledFontSize}px`;
+  const href = linkNode.getAttribute('href');
+  if (!href) return;
 
-  const opacityMultiplier = Math.pow(enhancedFactor, 0.5);
-  const opacity = 0.05 + opacityMultiplier * 0.95;
+  const id = href.replace('#', '');
+  const target = document.getElementById(id);
+  const container = scrollContainer.value;
 
-  const distanceFromCenter = Math.sqrt(projX * projX + projY * projY);
-  const maxRadius = radius * scale;
-  const distanceRatio = Math.min(1, distanceFromCenter / (maxRadius || 1));
-  const centerScale = 1.3 - (distanceRatio * 0.5);
-  const finalScale = scale * centerScale;
+  if (target && container) {
+    const targetRect = target.getBoundingClientRect();
+    // 判断容器是普通的 DOM 元素还是 window 对象
+    const containerTop = container === window ? 0 : container.getBoundingClientRect().top;
+    const currentScrollTop = container === window ? window.scrollY : container.scrollTop;
 
-  el.style.transform = `translate3d(${projX}px, ${projY}px, 0) scale(${finalScale})`;
-  el.style.zIndex = Math.floor(z + 100);
-  el.style.opacity = opacity;
-  el.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none';
-};
+    const offsetInsideContainer = targetRect.top - containerTop;
+    const targetScrollTop = currentScrollTop + offsetInsideContainer - 20; // 减去 20px 顶部安全距离
 
-const startAnimation = () => {
-  stopAnimation();
-  animationFrameId = requestAnimationFrame(updateFrame);
-};
-
-const stopAnimation = () => {
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
+    container.scrollTo({
+      top: targetScrollTop,
+      behavior: 'smooth'
+    });
   }
 };
 
-const bindTagEvents = (tagEl, tagData) => {
-  tagEl.addEventListener('click', (e) => {
-    e.stopPropagation();
-    router.push({
-      name: 'FrontTags',
-      query: { id: tagData.id }
-    });
-  });
-  tagEl.addEventListener('mouseenter', () => {
-    tagEl.dataset.hover = 'true';
-    tagEl.style.fontSize = `${parseFloat(tagEl.dataset.fontSize) * 1.2}px`;
-    tagEl.style.zIndex = '9999';
-    tagEl.style.opacity = '1';
-  });
-  tagEl.addEventListener('mouseleave', () => {
-    tagEl.dataset.hover = 'false';
-  });
-};
+const handleScroll = () => {
+  const el = scrollContainer.value;
+  const articleDom = document.querySelector(props.containerSelector);
 
-const bindGlobalEvents = () => {
-  const container = tagCloudRef.value;
-  if (!container) return;
-  const onStart = (cx, cy) => {
-    isDragging = true;
-    isAutoRotating = false;
-    lastMousePos.x = cx;
-    lastMousePos.y = cy;
-    container.style.cursor = 'grabbing';
-    activeRotation = { x: 0, y: 0 };
-  };
-  const onMove = (cx, cy) => {
-    if (!isDragging) return;
-    const deltaX = cx - lastMousePos.x;
-    const deltaY = cy - lastMousePos.y;
-    activeRotation.x = deltaX * CONFIG.DRAG_SENSITIVITY;
-    activeRotation.y = deltaY * CONFIG.DRAG_SENSITIVITY;
-    lastMousePos.x = cx;
-    lastMousePos.y = cy;
-  };
-  const onEnd = () => {
-    isDragging = false;
-    container.style.cursor = 'grab';
-    if (resumeTimer) clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => {
-      isAutoRotating = true;
-      activeRotation = { x: CONFIG.AUTO_ROTATE_SPEED, y: CONFIG.AUTO_ROTATE_SPEED };
-    }, CONFIG.RESUME_DELAY);
-  };
-  container.addEventListener('mousedown', (e) => onStart(e.clientX, e.clientY));
-  window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
-  window.addEventListener('mouseup', onEnd);
-  container.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) onStart(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
-  window.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 1) onMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
-  window.addEventListener('touchend', onEnd);
-};
+  // 1. 兜底逻辑：如果找不到文章DOM，退回原有的整个容器滚动计算
+  if (!el || !articleDom) {
+    if (!el) return;
+    const maxScroll = el === window
+        ? document.documentElement.scrollHeight - window.innerHeight
+        : el.scrollHeight - el.clientHeight;
 
-const unbindGlobalEvents = () => {};
+    const currentScroll = el === window ? window.scrollY : el.scrollTop;
+    const progress = maxScroll <= 0 ? 100 : (currentScroll / maxScroll) * 100;
+    readProgress.value = Math.min(100, Math.max(0, Math.round(progress)));
+    return;
+  }
 
-const getRandomColor = () => {
-  const r = Math.floor(Math.random() * 200);
-  const g = Math.floor(Math.random() * 200);
-  const b = Math.floor(Math.random() * 200);
-  return `rgb(${r}, ${g}, ${b})`;
+  // 2. 获取文章主体和可视容器的物理坐标
+  const articleRect = articleDom.getBoundingClientRect();
+  const containerHeight = el === window ? window.innerHeight : el.getBoundingClientRect().height;
+  const containerTop = el === window ? 0 : el.getBoundingClientRect().top;
+
+  // 3. 计算滚动的距离：容器顶部坐标 - 文章顶部坐标
+  const scrolledDistance = containerTop - articleRect.top;
+
+  // 4. 计算文章正文部分的真正可滚动总距离：文章总高度 - 视口高度
+  const totalScrollable = articleRect.height - containerHeight;
+
+  // 5. 计算并更新进度
+  if (totalScrollable <= 0) {
+    // 情况 A：文章很短，一屏就能全部看完，直接 100%
+    readProgress.value = 100;
+  } else {
+    // 情况 B：正常长文章，计算百分比
+    const progress = (scrolledDistance / totalScrollable) * 100;
+    readProgress.value = Math.min(100, Math.max(0, Math.round(progress)));
+  }
 };
 </script>
 
@@ -391,7 +323,6 @@ html.dark :deep(.el-anchor::before) {
     font-weight: bold;
     background-color: var(--el-color-success-light-9);
     border-radius: 0 4px 4px 0;
-    /* 取消原有直接加在文本上的左边框，交由 el-anchor__marker 统一控制游标滑动 */
   }
 }
 
