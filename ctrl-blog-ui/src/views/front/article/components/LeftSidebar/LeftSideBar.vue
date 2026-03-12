@@ -32,7 +32,7 @@
       </div>
     </div>
 
-    <ReportDialog ref="reportDialogRef" />
+    <ReportDialog />
   </div>
 </template>
 
@@ -42,7 +42,10 @@ import { ElMessage } from "element-plus";
 import ArticleLikeButton from './ArticleLikeButton.vue';
 import ArticleFavoriteButton from './ArticleFavoriteButton.vue';
 import ArticleCommentButton from './ArticleCommentButton.vue';
+import { useDialogStore } from '@/store/dialog.js';
 import { useUserStore } from "@/store/user.js";
+
+const dialogStore = useDialogStore();
 
 const props = defineProps({
   articleId: { type: [String, Number], default: '' },
@@ -61,7 +64,6 @@ const emit = defineEmits([
   'scrollToComment'
 ]);
 
-const reportDialogRef = ref(null);
 const userStore = useUserStore();
 
 const scrollToComment = () => {
@@ -73,7 +75,15 @@ const handleReportArticle = () => {
     ElMessage.warning('请先登录后举报');
     return;
   }
-  reportDialogRef.value.open('ARTICLE', props.articleId);
+
+  // 直接通过 store 打开弹窗并传参
+  if (typeof dialogStore.openReportDialog === 'function') {
+    dialogStore.openReportDialog(props.articleId, 'ARTICLE');
+  } else {
+    dialogStore.reportTargetType = 'ARTICLE';
+    dialogStore.reportTargetId = props.articleId;
+    dialogStore.reportVisible = true;
+  }
 };
 </script>
 

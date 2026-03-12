@@ -62,6 +62,7 @@ const handleSubmit = async () => {
 
 const onVerifySuccess = async (params) => {
   try {
+    const postData = {
       targetId: dialogStore.reportTargetId,
       targetType: dialogStore.reportTargetType,
       reason: formData.reason,
