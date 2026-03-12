@@ -11,13 +11,15 @@
               :nickname="article.userNickname"
               :bio="article.userBio"
           >
-            <el-avatar :size="35" :src="article.userAvatar" class="meta-avatar" />
+            <el-avatar :size="35" :src="article.userAvatar" class="meta-avatar">
+              <el-icon><User /></el-icon>
+            </el-avatar>
           </UserInfoPopover>
         </div>
         <div class="meta-author-info">
           <span class="nickname">{{ article.userNickname }}</span>
           <div class="meta-time-category">
-            {{ article.createTime }}
+            {{ formatTimeAgo(article.createTime) }}
             <el-tag size="small" class="category-tag">{{ article.categoryName }}</el-tag>
           </div>
         </div>
@@ -50,7 +52,7 @@
         </div>
       </div>
 
-      <div class="article-content" v-html="sanitizeHtml(article.contentHtml)"></div>
+      <div id="article-content-wrapper" class="article-content" v-html="sanitizeHtml(article.contentHtml)"></div>
 
       <div v-if="article.tags?.length > 0" class="article-tags">
         <el-tag
@@ -89,6 +91,7 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { sanitizeHtml } from "@/utils/filter.js";
+import { formatTimeAgo } from '@/utils/date.js';
 import { getArticleById, incrementArticleView } from "@/api/front/article/article.js";
 import { useRequest } from "@/composables/useRequest";
 import CommentSection from '@/views/front/article/components/Comment/CommentSection.vue';
@@ -107,7 +110,7 @@ onMounted(async () => {
     await fetchArticle(articleId);
     if (!article.value) throw new Error();
   } catch {
-    await router.push('/404');
+    await router.replace('/404');
     return;
   }
 
@@ -143,6 +146,7 @@ const handleCommentSuccess = () => {
    全局及布局样式
    ==================================== */
 .article-container {
+  margin-top: 10px;
   padding: 10px;
   background-color: var(--el-bg-color-overlay);
   border-color: var(--el-border-color-light);

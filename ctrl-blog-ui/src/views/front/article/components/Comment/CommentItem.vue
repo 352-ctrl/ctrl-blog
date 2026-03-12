@@ -11,7 +11,9 @@
             :size="isSub ? 24 : 34"
             :src="data.userAvatar"
             class="user-avatar"
-        />
+        >
+          <el-icon><User /></el-icon>
+        </el-avatar>
       </UserInfoPopover>
 
       <div class="comment-main-content">
@@ -27,12 +29,14 @@
         </div>
 
         <div class="meta-row">
-          <span class="time">{{ data.createTime }}</span>
+          <span class="time">{{ formatTimeAgo(data.createTime) }}</span>
 
           <CommentLikeButton
               :comment-id="data.id"
               :initial-count="data.likeCount"
               :initial-liked="data.liked"
+              @update:liked="val => data.liked = val"
+              @update:count="val => data.likeCount = val"
           />
 
           <el-button
@@ -90,7 +94,11 @@
               :key="child.id"
               :data="child"
               :article-id="articleId"
-              :reply-to-user="child.replyUserNickname || data.userNickname"
+              :reply-to-user="
+                (!child.replyUserNickname || child.replyUserNickname === data.userNickname || child.replyUserNickname === child.userNickname)
+                  ? ''
+                  : child.replyUserNickname
+              "
               :is-sub="true"
               @reply-success="$emit('reply-success')"
           />
@@ -116,6 +124,7 @@
 
 <script setup>
 import { ref, computed, inject, watch } from 'vue';
+import { formatTimeAgo } from '@/utils/date.js';
 import CommentBox from './CommentBox.vue';
 import CommentLikeButton from './CommentLikeButton.vue';
 import { addComment, deleteComment } from "@/api/front/interaction/comment.js";
@@ -199,10 +208,18 @@ const handleCommand = async (command) => {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 10px; /* 两侧增加一点 padding，防止高亮背景贴边 */
+  padding: 10px 0 10px 10px;
 }
 .user-avatar { flex-shrink: 0; }
-.comment-main-content { flex: 1; min-width: 0; }
+.comment-main-content {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding-right: 10px;
+}
+.is-sub-item .comment-main-content {
+  padding-right: 0;
+}
 .reply-icon { margin-right: 2px; }
 .expand-text { display: flex; align-items: center; gap: 4px; }
 .is-sub-item .comment-item-inner { padding-top: 5px; padding-bottom: 5px; }
@@ -212,7 +229,15 @@ const handleCommand = async (command) => {
 .comment-content { color: var(--el-text-color-primary); font-size: 15px; line-height: 1.6; margin-bottom: 4px; word-break: break-all; }
 .sub-content { font-size: 14px; line-height: 1.5; }
 .reply-target { color: var(--el-color-primary); margin-right: 4px; font-weight: 500; font-size: 14px; }
-.meta-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--el-text-color-placeholder); }
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 12px;
+  color: var(--el-text-color-placeholder);
+  width: 100%;
+  margin-top: 4px;
+}
 .reply-btn { padding: 0; height: auto; font-size: 12px; color: var(--el-text-color-placeholder); display: flex; align-items: center; }
 .reply-btn:hover { color: var(--el-color-primary); background: transparent; }
 .reply-box-wrapper { margin-top: 10px; }
@@ -220,7 +245,10 @@ const handleCommand = async (command) => {
 .expand-control { margin-top: 8px; font-size: 12px; color: var(--el-text-color-placeholder); }
 .expand-btn { cursor: pointer; display: inline-block; padding: 2px 0; transition: all 0.2s; }
 .expand-btn:hover { color: var(--el-color-primary); }
-.more-dropdown { margin-left: auto; }
+.more-dropdown {
+  margin-left: auto;
+  margin-right: -4px;
+}
 .more-btn {
   padding: 0 4px;
   height: auto;

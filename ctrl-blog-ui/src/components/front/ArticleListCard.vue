@@ -43,7 +43,10 @@
 
         <div class="meta-info">
           <div class="meta-left">
-            <el-avatar :size="24" :src="item.userAvatar" class="avatar"/>
+            <el-avatar :size="24" :src="item.userAvatar" class="avatar">
+              <el-icon><User /></el-icon>
+            </el-avatar>
+
             <span class="nickname">{{ item.userNickname }}</span>
 
             <el-divider direction="vertical" border-style="dashed" />
@@ -80,6 +83,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { formatTimeAgo } from '@/utils/date.js';
 import defaultCoverUrl from '@/assets/images/default-cover.png';
 
 const router = useRouter()
@@ -103,21 +107,6 @@ const handleCategoryClick = (categoryId) => {
     name: 'FrontCategories',
     query: { id: categoryId }
   });
-}
-
-const formatTimeAgo = (timeStr) => {
-  if (!timeStr) return '未知时间';
-
-  const date = new Date(timeStr).getTime();
-  const now = Date.now();
-  const diff = (now - date) / 1000;
-
-  if (diff < 60) return '刚刚';
-  if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
-  if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
-  if (diff < 2592000) return Math.floor(diff / 86400) + ' 天前';
-  if (diff < 31536000) return Math.floor(diff / 2592000) + ' 个月前';
-  return Math.floor(diff / 31536000) + ' 年前';
 }
 </script>
 

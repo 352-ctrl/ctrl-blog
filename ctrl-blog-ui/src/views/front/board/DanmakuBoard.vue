@@ -80,7 +80,7 @@
             <div class="wall-item-meta">
               <div class="wall-nickname">{{ item.nickname }}</div>
               <div class="wall-time">
-                <el-icon><Clock /></el-icon> {{ item.createTime || '刚刚' }}
+                <el-icon><Clock /></el-icon> {{ formatTimeAgo(item.createTime) }}
               </div>
             </div>
           </div>
@@ -99,6 +99,7 @@ import { ElMessage } from 'element-plus';
 import { getDanmakuList, addDanmaku } from '@/api/front/interaction/danmaku.js';
 import { useRequest } from '@/composables/useRequest';
 import { useUserStore } from '@/store/user.js';
+import { formatTimeAgo } from '@/utils/date.js';
 
 const userStore = useUserStore();
 const { loading, data: danmakuList, execute: fetchDanmakus } = useRequest(getDanmakuList);
