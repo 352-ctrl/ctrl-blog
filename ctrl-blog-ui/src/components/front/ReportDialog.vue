@@ -16,8 +16,8 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="补充说明" prop="description">
-        <el-input v-model="formData.description" type="textarea" :rows="4" placeholder="请详细描述违规情况，以便管理员快速核实（选填，最多200字）" maxlength="200" show-word-limit />
+      <el-form-item label="补充说明" prop="content">
+        <el-input v-model="formData.content" type="textarea" :rows="4" placeholder="请详细描述违规情况，以便管理员快速核实（选填，最多200字）" maxlength="200" show-word-limit />
       </el-form-item>
     </el-form>
 
@@ -43,7 +43,7 @@ const dialogStore = useDialogStore();
 const formRef = ref(null);
 const verifyRef = ref(null);
 
-const formData = reactive({ reason: '', description: '' });
+const formData = reactive({ reason: '', content: '' });
 const rules = { reason: [{ required: true, message: '请选择举报原因', trigger: 'change' }] };
 
 const { loading: submitting, execute: execReport } = useRequest(addReport, { successMsg: '举报提交成功，管理员会尽快核实处理！' });
@@ -62,11 +62,10 @@ const handleSubmit = async () => {
 
 const onVerifySuccess = async (params) => {
   try {
-    const postData = {
       targetId: dialogStore.reportTargetId,
       targetType: dialogStore.reportTargetType,
       reason: formData.reason,
-      description: formData.description
+      content: formData.content
     };
     await execReport(postData, params.captchaVerification);
     dialogStore.closeReportDialog();

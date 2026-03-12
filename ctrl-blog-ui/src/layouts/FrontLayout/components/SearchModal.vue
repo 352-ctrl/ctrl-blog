@@ -12,7 +12,7 @@
   <el-dialog v-model="isOpen" width="560px" :show-close="false" class="custom-search-dialog" @opened="focusInput" append-to-body align-center>
     <div class="search-box">
       <el-icon class="search-icon" :size="22"><Search /></el-icon>
-      <input ref="inputRef" v-model="keyword" class="custom-input" placeholder="搜索文章标题、摘要、内容或标签..." @input="handleSearch" />
+      <input ref="inputRef" v-model="keyword" class="custom-input" placeholder="搜索文章标题、摘要、内容或标签..." />
       <div class="close-btn" @click="isOpen = false" title="关闭 (ESC)"><el-icon :size="16"><Close /></el-icon></div>
     </div>
 
@@ -39,7 +39,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Search, Document, Close } from '@element-plus/icons-vue';
 import Fuse from 'fuse.js';
@@ -65,6 +65,17 @@ const fuseOptions = {
   ignoreLocation: true,
   includeMatches: true,
 };
+
+watch(keyword, () => {
+  handleSearch();
+});
+
+// 监听文章数据，一旦加载完成，如果用户已经输入了关键词，就自动执行一次搜索补偿
+watch(articles, (newVal) => {
+  if (newVal.length > 0 && keyword.value) {
+    handleSearch();
+  }
+});
 
 const escapeHtml = (unsafe) => {
   return (unsafe || "").toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");

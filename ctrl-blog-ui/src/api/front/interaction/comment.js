@@ -41,7 +41,7 @@ export function getCommentLocatorPage(id, pageSize = 10) {
 // 5. 点赞评论
 export function likeComment(commentId) {
     return request({
-        url: `${BASE_URL}/${id}/likes`,
+        url: `${BASE_URL}/${commentId}/likes`,
         method: 'post'
     })
 }
@@ -49,7 +49,7 @@ export function likeComment(commentId) {
 // 6. 取消点赞评论
 export function cancelLikeComment(commentId) {
     return request({
-        url: `${BASE_URL}/${id}/likes`,
+        url: `${BASE_URL}/${commentId}/likes`,
         method: 'delete'
     })
 }

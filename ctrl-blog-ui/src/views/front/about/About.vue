@@ -62,7 +62,7 @@
           联系方式
         </h3>
         <p class="section-text">
-          期待与你的交流！无论是探讨技术难题、分享有趣的想法，还是反馈本站的 Bug，你都可以随时前往 <el-link type="primary" href="/message">留言板</el-link> 畅所欲言，或者通过 GitHub 给我提 Issue。
+          期待与你的交流！无论是探讨技术难题、分享有趣的想法，还是反馈本站的 Bug，你都可以随时前往 <el-link type="primary" href="/board">留言板</el-link> 畅所欲言，或者通过 GitHub 给我提 Issue。
         </p>
       </div>
 
@@ -266,6 +266,7 @@ onMounted(async () => {
       font-family: 'SmileySans', sans-serif;
       margin: 0 4px;
       font-weight: normal;
+      font-size: 20px;
     }
 
     .el-link {
