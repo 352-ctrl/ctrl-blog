@@ -5,28 +5,29 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.blog.modules.article.model.bo.ArticleExtraContext;
-import com.example.blog.modules.article.model.vo.*;
+import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.constants.RedisConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
+import com.example.blog.common.utils.RedisUtil;
+import com.example.blog.core.exception.CustomerException;
+import com.example.blog.core.security.UserContext;
+import com.example.blog.modules.article.builder.ArticleContextBuilder;
+import com.example.blog.modules.article.mapper.ArticleMapper;
+import com.example.blog.modules.article.model.bo.ArticleExtraContext;
 import com.example.blog.modules.article.model.convert.ArticleConvert;
 import com.example.blog.modules.article.model.dto.ArticleCategoryCountDTO;
 import com.example.blog.modules.article.model.dto.ArticleQueryDTO;
-import com.example.blog.modules.operation.service.CommentService;
-import com.example.blog.modules.user.model.dto.UserPayloadDTO;
 import com.example.blog.modules.article.model.entity.Article;
 import com.example.blog.modules.article.model.entity.Category;
-import com.example.blog.modules.operation.model.entity.Comment;
-import com.example.blog.core.exception.CustomerException;
-import com.example.blog.modules.article.builder.ArticleContextBuilder;
-import com.example.blog.modules.article.mapper.ArticleMapper;
+import com.example.blog.modules.article.model.vo.*;
 import com.example.blog.modules.article.service.*;
+import com.example.blog.modules.operation.model.entity.Comment;
+import com.example.blog.modules.operation.service.CommentService;
+import com.example.blog.modules.user.model.dto.UserPayloadDTO;
+import com.example.blog.modules.user.model.entity.User;
 import com.example.blog.modules.user.service.UserService;
-import com.example.blog.common.utils.RedisUtil;
-import com.example.blog.core.security.UserContext;
-import com.example.blog.modules.user.model.vo.UserVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -156,10 +157,13 @@ public class ArticleQueryManager {
             vo = articleConvert.entityToVo(article);
 
             // 填充用户信息
-            UserVO user = userService.getUserById(article.getUserId());
+            User user = userService.getById(article.getUserId());
             if (user != null) {
                 vo.setUserNickname(user.getNickname());
                 vo.setUserAvatar(user.getAvatar());
+            } else {
+                vo.setUserNickname(Constants.DEFAULT_UNKNOWN_NICKNAME);
+                vo.setUserAvatar(StrUtil.EMPTY);
             }
 
             // 填充分类信息
