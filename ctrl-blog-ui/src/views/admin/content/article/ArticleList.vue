@@ -3,10 +3,10 @@
     <AdminSearchBar :on-search="loadData" :on-reset="resetSearch" :batch-delete-api="batchDeleteArticleApi" :selected-ids="selectedIds" batchDeleteTip="确定批量删除选中的文章吗？" @batch-delete-success="loadData">
       <template #search-items>
         <el-input v-model="query.title" placeholder="请输入标题查询" prefix-icon="Search" clearable @clear="loadData" />
-        <el-select v-model="query.status" placeholder="文章状态" clearable @change="loadData">
+        <el-select v-model="query.status" placeholder="文章状态" clearable>
           <el-option label="已发布" :value="1" /><el-option label="草稿" :value="0" />
         </el-select>
-        <el-select v-model="query.isTop" placeholder="置顶状态" clearable @change="loadData">
+        <el-select v-model="query.isTop" placeholder="置顶状态" clearable>
           <el-option label="已置顶" :value="1" /><el-option label="未置顶" :value="0" />
         </el-select>
         <el-select v-model="query.categoryId" placeholder="请选择文章分类" clearable>

@@ -9,9 +9,9 @@
         @batch-delete-success="loadData"
     >
       <template #search-items>
-        <el-input v-model="query.module" placeholder="操作模块" prefix-icon="Search" clearable @clear="loadData" @keyup.enter="loadData" />
-        <el-input v-model="query.nickname" placeholder="操作人昵称" prefix-icon="Search" clearable @clear="loadData" @keyup.enter="loadData" />
-        <el-select v-model="query.status" placeholder="操作状态" clearable @change="loadData">
+        <el-input v-model="query.module" placeholder="操作模块" prefix-icon="Search" clearable @keyup.enter="loadData" />
+        <el-input v-model="query.nickname" placeholder="操作人昵称" prefix-icon="Search" clearable @keyup.enter="loadData" />
+        <el-select v-model="query.status" placeholder="操作状态" clearable>
           <el-option label="成功" :value="1" />
           <el-option label="失败" :value="0" />
         </el-select>

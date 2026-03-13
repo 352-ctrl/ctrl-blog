@@ -9,7 +9,7 @@
         @batch-delete-success="loadData"
     >
       <template #search-items>
-        <el-select v-model="query.status" placeholder="登录状态" clearable @change="loadData">
+        <el-select v-model="query.status" placeholder="登录状态" clearable>
           <el-option label="成功" :value="1" />
           <el-option label="失败" :value="0" />
         </el-select>
@@ -21,7 +21,6 @@
             end-placeholder="结束时间"
             value-format="YYYY-MM-DD HH:mm:ss"
             clearable
-            @change="loadData"
         />
       </template>
     </AdminSearchBar>
