@@ -4,11 +4,11 @@ import request from "@/utils/request.js";
 const BASE_URL = '/api/v1/admin/reports'
 
 // 后台分页查询举报列表
-export function getReportPage(data) {
+export function getReportPage(query) {
     return request({
         url: BASE_URL,
         method: 'get',
-        data: data
+        params: query
     })
 }
 

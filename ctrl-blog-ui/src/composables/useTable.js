@@ -35,7 +35,11 @@ export function useTable(apiFunc, initQuery = {}) {
     }
 
     const resetQuery = async () => {
-        query.pageNum = 1
+        Object.assign(query, {
+            pageNum: 1,
+            pageSize: 10,
+            ...initQuery
+        })
         await loadData()
     }
 

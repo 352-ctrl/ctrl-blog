@@ -70,7 +70,7 @@
   <div id="comment-section" class="comment-container">
     <CommentSection
         :article-id="articleId"
-        :initial-total="article?.commentCount || 0"
+        :initial-total="Number(article?.commentCount || 0)"
         @comment-success="handleCommentSuccess"
     />
   </div>
@@ -82,7 +82,7 @@
       v-model:likeCount="article.likeCount"
       v-model:isFavorite="article.favorite"
       v-model:favoriteCount="article.favoriteCount"
-      :commentCount="article.commentCount"
+      :commentCount="Number(article.commentCount || 0)"
       @scrollToComment="handleScrollToComment"
   />
 </template>
@@ -146,7 +146,6 @@ const handleCommentSuccess = () => {
    全局及布局样式
    ==================================== */
 .article-container {
-  margin-top: 10px;
   padding: 10px;
   background-color: var(--el-bg-color-overlay);
   border-color: var(--el-border-color-light);

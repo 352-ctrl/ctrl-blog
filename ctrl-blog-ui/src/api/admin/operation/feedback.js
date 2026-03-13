@@ -4,11 +4,11 @@ import request from "@/utils/request.js";
 const BASE_URL = '/api/v1/admin/feedbacks'
 
 // 分页查询反馈列表
-export function getFeedbackPage(data) {
+export function getFeedbackPage(query) {
     return request({
         url: BASE_URL,
         method: 'get',
-        data: data
+        params: query
     })
 }
 
