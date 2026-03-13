@@ -13,11 +13,11 @@
 
       <div class="beian-info">
         <a href="https://beian.miit.gov.cn/" target="_blank" class="beian-link">
-          蜀ICP备12345678号-1
+          测试文本1
         </a>
         <el-divider direction="vertical" class="hide-on-mobile" />
         <a href="http://www.beian.gov.cn/portal/registerSystemInfo" target="_blank" class="beian-link">
-          川公网安备 510123456789号
+          测试文本2
         </a>
       </div>
     </div>
