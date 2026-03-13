@@ -104,6 +104,7 @@ onMounted(async () => {
  * 卡片容器与标题样式
  * ========================================== */
 .tag-main-card {
+  margin-top: 0;
   /* 增加轻微边框，适配暗黑模式下阴影不可见的问题 */
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 12px;

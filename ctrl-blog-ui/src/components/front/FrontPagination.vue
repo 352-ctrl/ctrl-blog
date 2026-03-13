@@ -30,7 +30,7 @@ const handleCurrentChange = (newPage) => {
 <style scoped>
 /* 居中容器 */
 .front-pagination-container {
-  margin-top: 30px;
+  margin-top: 20px;
   display: flex;
   justify-content: center; /* 核心：居中对齐 */
   width: 100%;

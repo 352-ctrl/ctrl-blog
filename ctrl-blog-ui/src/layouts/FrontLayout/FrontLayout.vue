@@ -171,7 +171,7 @@ import MessageBadge from "./components/MessageBadge.vue";
 import SearchModal from "./components/SearchModal.vue";
 import ThemeToggle from "./components/ThemeToggle.vue";
 import IconHamburger from "@/components/common/Icon/IconHamburger.vue";
-import FrontFooter from "@/layouts/FrontLayout/FrontFooter.vue";
+import FrontFooter from "@/layouts/FrontLayout/components/FrontFooter.vue";
 
 // 初始化路由和状态库
 const route = useRoute();
@@ -320,7 +320,6 @@ html.dark .mobile-menu :deep(.el-menu-item.is-active) {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0;
-  scroll-behavior: smooth;
   position: relative;
 
   display: flex;
@@ -350,7 +349,7 @@ html.dark .page-scroll-view {
 .app-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 10px 0 10px;
+  padding: 20px 10px 40px 10px;
   width: 100%;
   display: flex;
   box-sizing: border-box;
@@ -360,7 +359,6 @@ html.dark .page-scroll-view {
 .main-content-wrapper {
   flex: 1;
   min-width: 0;
-  padding-bottom: 20px;
 }
 
 /* ====================================

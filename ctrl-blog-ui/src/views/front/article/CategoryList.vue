@@ -76,9 +76,3 @@ onMounted(async () => {
   await loadData();
 });
 </script>
-
-<style scoped>
-.home-main-card {
-  margin-top: 10px;
-}
-</style>

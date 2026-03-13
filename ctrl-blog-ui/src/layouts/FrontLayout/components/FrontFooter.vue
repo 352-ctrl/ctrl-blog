@@ -30,7 +30,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 // ==========================================
 // 1. 基础信息配置
 // ==========================================
-const startYear = 2023;
+const startYear = 2026;
 const currentYear = new Date().getFullYear();
 
 // 设置建站时间 (格式：YYYY/MM/DD HH:mm:ss)
