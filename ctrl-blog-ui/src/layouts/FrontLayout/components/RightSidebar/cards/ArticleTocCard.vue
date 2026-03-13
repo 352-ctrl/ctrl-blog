@@ -20,15 +20,11 @@
     </template>
 
     <div class="toc-body">
-      <div
-          class="anchor-wrapper"
-          v-if="tocList.length > 0 && scrollContainer"
-          @click.capture.stop.prevent="handleAnchorClick"
-      >
+      <div class="anchor-wrapper" v-if="tocList.length > 0 && scrollContainer" @click.capture.prevent="handleAnchorClick">
         <el-anchor
             class="custom-anchor"
             :container="scrollContainer"
-            :offset-top="20"
+            :offset-top="80"
             type="underline"
         >
           <el-anchor-link
@@ -68,8 +64,7 @@ const scrollContainer = shallowRef(null);
 let contentObserver = null;
 
 onMounted(() => {
-  // 注意：确保您的外层滚动容器确实有 .page-scroll-view 这个类名。
-  // 如果您的网页是全局滚动，这里请改为 window 并适配对应的监听事件
+  // 绑定全局滚动容器，用于传递给 el-anchor 以及计算阅读进度
   const container = document.querySelector('.page-scroll-view') || window;
   if (container) {
     scrollContainer.value = container;
@@ -93,6 +88,7 @@ const initObserver = () => {
     setTimeout(initObserver, 200);
     return;
   }
+
   contentObserver = new MutationObserver((mutations) => {
     let shouldUpdate = false;
     for (const mutation of mutations) {
@@ -123,8 +119,11 @@ const generateToc = () => {
   headings.forEach((heading, index) => {
     const text = heading.textContent.trim();
     if (text) {
-      const id = `toc-heading-${index}`;
+      // 这里的 id 会被 md-editor 自动生成，如果没生成我们再兜底
+      // 最好是使用 heading 现有的 id，配合 sanitizeHtml 中白名单放行的 id 属性
+      const id = heading.id || `toc-heading-${index}`;
       heading.id = id;
+
       list.push({
         id,
         text,
@@ -139,9 +138,10 @@ const generateToc = () => {
 };
 
 const handleAnchorClick = (e) => {
-  if (e.preventDefault) e.preventDefault();
-  e.stopPropagation();
+  // 拦截默认跳转
+  e.preventDefault();
 
+  // 找到真正被点击的 a 标签
   const linkNode = e.target.closest('a');
   if (!linkNode) return;
 
@@ -150,21 +150,10 @@ const handleAnchorClick = (e) => {
 
   const id = href.replace('#', '');
   const target = document.getElementById(id);
-  const container = scrollContainer.value;
 
-  if (target && container) {
-    const targetRect = target.getBoundingClientRect();
-    // 判断容器是普通的 DOM 元素还是 window 对象
-    const containerTop = container === window ? 0 : container.getBoundingClientRect().top;
-    const currentScrollTop = container === window ? window.scrollY : container.scrollTop;
-
-    const offsetInsideContainer = targetRect.top - containerTop;
-    const targetScrollTop = currentScrollTop + offsetInsideContainer - 20; // 减去 20px 顶部安全距离
-
-    container.scrollTo({
-      top: targetScrollTop,
-      behavior: 'smooth'
-    });
+  if (target) {
+    // 原生 DOM 接口：平滑滚动，并将目标元素的顶部对齐视口顶部
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 };
 
@@ -172,7 +161,6 @@ const handleScroll = () => {
   const el = scrollContainer.value;
   const articleDom = document.querySelector(props.containerSelector);
 
-  // 1. 兜底逻辑：如果找不到文章DOM，退回原有的整个容器滚动计算
   if (!el || !articleDom) {
     if (!el) return;
     const maxScroll = el === window
@@ -185,23 +173,16 @@ const handleScroll = () => {
     return;
   }
 
-  // 2. 获取文章主体和可视容器的物理坐标
   const articleRect = articleDom.getBoundingClientRect();
   const containerHeight = el === window ? window.innerHeight : el.getBoundingClientRect().height;
   const containerTop = el === window ? 0 : el.getBoundingClientRect().top;
 
-  // 3. 计算滚动的距离：容器顶部坐标 - 文章顶部坐标
   const scrolledDistance = containerTop - articleRect.top;
-
-  // 4. 计算文章正文部分的真正可滚动总距离：文章总高度 - 视口高度
   const totalScrollable = articleRect.height - containerHeight;
 
-  // 5. 计算并更新进度
   if (totalScrollable <= 0) {
-    // 情况 A：文章很短，一屏就能全部看完，直接 100%
     readProgress.value = 100;
   } else {
-    // 情况 B：正常长文章，计算百分比
     const progress = (scrolledDistance / totalScrollable) * 100;
     readProgress.value = Math.min(100, Math.max(0, Math.round(progress)));
   }

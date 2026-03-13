@@ -142,7 +142,17 @@ const startDanmakuEngine = () => {
 
     danmakuTimer = setTimeout(() => {
       if (!document.hidden && danmakuList.value && danmakuList.value.length > 0) {
-        const randomIndex = Math.floor(Math.random() * danmakuList.value.length);
+
+        let randomIndex = 0;
+        const total = danmakuList.value.length;
+
+        // 60% 的概率从最新的 20 条留言里抽，40% 的概率从全局历史记录里抽
+        if (Math.random() < 0.6 && total > 20) {
+          randomIndex = Math.floor(Math.random() * 20);
+        } else {
+          randomIndex = Math.floor(Math.random() * total);
+        }
+
         const item = danmakuList.value[randomIndex];
         pushToScreen(item);
       }
@@ -196,21 +206,20 @@ const handleSend = async () => {
   }
 
   try {
+    // 1. 发送给后端保存
     await execSend({ content: newContent.value });
 
-    const defaultAvatar = 'https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png';
-    const myAvatar = userStore.userInfo?.avatar || defaultAvatar;
-    const myNickname = userStore.userInfo?.nickname || '匿名用户';
-
-    pushToScreen({
-      nickname: myNickname,
-      avatar: myAvatar,
-      content: newContent.value,
-      createTime: '刚刚'
-    }, true);
-
+    // 2. 先清空输入框，给用户即时反馈
     newContent.value = '';
+
+    // 3. 重新拉取后端最新列表（此时数据包含了后端真实生成的专属随机头像和昵称）
     await fetchDanmakus();
+
+    // 4. 拿到后端返回的最新第一条数据，立刻作为“自己的专属弹幕”发射到屏幕上
+    if (danmakuList.value && danmakuList.value.length > 0) {
+      pushToScreen(danmakuList.value[0], true);
+    }
+
   } catch (error) {
     console.error('发送失败', error);
   }

@@ -86,7 +86,7 @@
           <div class="info-box">
             <div class="meta-row">
               <span class="action-title" :title="msg.title">{{ msg.title }}</span>
-              <span class="time">{{ msg.createTime }}</span>
+              <span class="time">{{ formatTimeAgo(msg.createTime) }}</span>
             </div>
 
             <div class="msg-content" v-if="msg.content">
@@ -107,6 +107,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getMessagePage, markMessageAsRead, markAllAsRead } from '@/api/front/interaction/message.js'
 import { useTable } from '@/composables/useTable.js'
+import { formatTimeAgo } from '@/utils/date.js';
 
 const router = useRouter()
 const activeTab = ref('ALL')

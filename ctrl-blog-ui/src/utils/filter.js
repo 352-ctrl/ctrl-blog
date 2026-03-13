@@ -7,42 +7,50 @@ import xss from 'xss'
  */
 export function sanitizeHtml(htmlStr) {
     if (!htmlStr) return ''
-    // 扩展白名单：保留业务需要的合法标签，仅允许安全属性
+
     const xssOptions = {
         whiteList: {
-            // 原有基础标签
-            p: [],
-            strong: [],
-            em: [],
-            br: [],
-            div: [],
-            span: ['style'], // 仅允许span的style属性
-            // 补充测试HTML中的合法标签
-            h1: [],
-            h2: [],
-            ul: [],
-            li: [],
-            blockquote: [],
-            // 特殊标签：仅允许安全属性，过滤恶意属性
-            img: ['src'], // 仅保留img的src属性，过滤onerror等
-            button: [], // 保留button标签，过滤onclick等
-            a: ['href'], // 保留a标签的href属性，但会自动过滤javascript:协议
+            // --- 1. 基础排版标签 ---
+            p: [], br: [], div: ['class', 'id'],
+            span: ['style', 'class'],
+
+            // 允许 h 标签带 id，保证文章目录(TOC)正常锚点跳转
+            h1: ['id'], h2: ['id'], h3: ['id'], h4: ['id'], h5: ['id'], h6: ['id'],
+
+            // --- 2. 文本格式化标签 ---
+            strong: [], b: [], em: [], i: [], u: [], s: [], strike: [], del: [],
+            sub: [], sup: [], blockquote: [],
+
+            // 代码块允许带 class，保证 Highlight.js 语法高亮不丢失
+            code: ['class'], pre: ['class', 'style'],
+
+            // --- 3. 列表与表格 ---
+            ul: ['class'], ol: ['class'], li: ['class'],
+            table: [], thead: [], tbody: [], tr: [], th: ['style', 'align'], td: ['style', 'align'],
+
+            // 允许只读的 input，保证 Markdown 任务列表 ([x] Task) 正常显示
+            input: ['type', 'disabled', 'checked'],
+
+            // --- 4. 媒体与交互 ---
+            img: ['src', 'alt', 'title', 'width', 'height', 'class', 'style'],
+            button: ['class'],
+            a: ['href', 'target', 'title', 'rel', 'class'],
         },
-        // 强制过滤所有on*事件属性（onclick/onerror/onload等）
+        // 强制过滤所有 on* 事件属性（onclick/onerror/onload等）防跨站脚本
         onTagAttr: function(tag, name, value) {
-            return !name.startsWith('on')
+            if (name.startsWith('on')) {
+                return '';
+            }
         },
-        // 过滤a标签的javascript:伪协议（xss库默认已处理，此处强化）
+        // 过滤 a 标签的 javascript: 伪协议
         safeAttrValue: function(tag, name, value) {
             if (tag === 'a' && name === 'href') {
-                // 移除javascript:开头的链接
                 if (value.toLowerCase().startsWith('javascript:')) {
-                    return ''
+                    return '';
                 }
             }
-            return value
-        },
-        // 完全移除script/iframe等危险标签（不在白名单，默认已过滤）
+            return value;
+        }
     }
     return xss(htmlStr, xssOptions)
 }
