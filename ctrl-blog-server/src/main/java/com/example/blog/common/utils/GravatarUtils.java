@@ -1,5 +1,6 @@
 package com.example.blog.common.utils;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,9 +19,9 @@ public class GravatarUtils {
      * @return 头像的完整 URL 链接
      */
     public static String getRetroAvatar(String email) {
-        // 1. 如果邮箱为空，生成一个全0的默认散列值，它也会返回一个随机的像素头像
+        // 1. 如果邮箱为空，生成一个随机的 32 位字符串（UUID去横杠），确保得到不同的随机像素头像
         if (StringUtils.isBlank(email)) {
-            return GRAVATAR_BASE_URL + "00000000000000000000000000000000" + GRAVATAR_PARAMS;
+            return GRAVATAR_BASE_URL + IdUtil.simpleUUID() + GRAVATAR_PARAMS;
         }
 
         // 2. Gravatar 要求：去除首尾空格，并全部转换为小写
