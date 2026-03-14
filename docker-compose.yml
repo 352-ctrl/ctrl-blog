@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ctrl-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - blog-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ctrl-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - blog-network
+
+  ctrl-blog-server:
+    build:
+      context: ./ctrl-blog-server
+    container_name: ctrl-backend
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+    # 使用 env_file 直接把 .env 里的所有变量注入到这个容器中
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      # 覆盖 application.yml 里的 localhost，指向 compose 里的服务名
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+    networks:
+      - blog-network
+
+  ctrl-blog-ui:
+    build:
+      context: ./ctrl-blog-ui
+    container_name: ctrl-frontend
+    restart: always
+    depends_on:
+      - ctrl-blog-server
+    ports:
+      - "80:80"
+    networks:
+      - blog-network
+
+networks:
+  blog-network:
+    driver: bridge
