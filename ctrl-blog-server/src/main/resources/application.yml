@@ -131,8 +131,8 @@ aj:
   captcha:
     cache-type: redis # 指定使用 redis 缓存滑块数据
     bypass:
-      enabled: true
-      master-key: AUTO_TEST_BYPASS_666
+      enabled: false
+#      master-key: AUTO_TEST_BYPASS_666
 
 # 七牛云配置
 qiniu:
