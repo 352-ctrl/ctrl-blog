@@ -69,34 +69,38 @@ const handleLogin = () => {
 
 const handleBanException = (errorMsg) => {
   ElMessageBox.confirm(
-      // 使用 h 函数构建干净、扁平化的弹窗内容
-      h('div', null, [
+      // 使用 h 函数构建层次分明、带有危险警告 UI 的弹窗
+      h('div', { style: 'text-align: left;' }, [
+        h('p', {
+          style: 'margin: 0 0 16px 0; font-size: 15px; color: var(--el-text-color-primary); line-height: 1.6;'
+        }, '很抱歉，系统检测到您的账号存在违规行为，目前处于限制登录状态。'),
+
+        // 核心优化：仿邮件模板的左侧红边框引用块，完美适配暗黑模式
         h('div', {
-          style: 'font-size: 14px; color: var(--el-text-color-primary); margin-bottom: 12px;'
-        }, '您的账号目前处于封禁状态，无法进行登录。'),
-        h('div', {
-          // 使用 Element Plus 内置的浅灰色填充，低调且适配暗黑模式
-          style: 'padding: 10px 12px; background-color: var(--el-fill-color-light); border-radius: 6px; font-size: 13px; color: var(--el-text-color-regular); line-height: 1.6; word-break: break-all;'
+          style: 'padding: 12px 16px; background-color: var(--el-fill-color-light); border: 1px solid var(--el-border-color-lighter); border-left: 4px solid var(--el-color-danger); border-radius: 6px; font-size: 14px; line-height: 1.6; word-break: break-all;'
         }, [
-          h('strong', { style: 'color: var(--el-text-color-primary);' }, '封禁原因：'),
-          errorMsg
+          h('div', {
+            style: 'color: var(--el-color-danger); font-weight: 600; margin-bottom: 6px; font-size: 13px;'
+          }, '封禁原因：'),
+          h('div', {
+            style: 'color: var(--el-text-color-primary);'
+          }, errorMsg)
         ])
       ]),
-      '登录受限',
+      '账号登录受限',
       {
         confirmButtonText: '我要申诉',
         cancelButtonText: '我知道了',
-        type: 'warning', // 使用 warning 图标，比 error 显得柔和一些
+        type: 'error', // ⚠️ 修改点：封禁是严重事件，使用 error 红色交叉图标更符合直觉
         center: true,
-        // 这里不需要 dangerouslyUseHTMLString，因为我们使用了 h 函数安全渲染
+        customClass: 'ban-message-box' // 预留 customClass，防止影响全局其他 confirm 弹窗
       }
   ).then(() => {
     // 用户点击了“我要申诉”
-
     // 1. 关闭登录弹窗
     userStore.showAuthDialog = false;
 
-    // 2. 跳转到意见反馈页，同时携带 type 和刚才填写的 email 参数
+    // 2. 跳转到意见反馈页，同时携带 type=2 (封禁申诉) 和刚才填写的 email 参数
     router.push({
       path: '/',
       query: {

@@ -9,6 +9,7 @@ let isShowingLoginMessage = false
 let isTokenExpired = false
 
 const request = axios.create({
+    baseURL: import.meta.env.DEV ? 'http://localhost:8080' : '',
     timeout: 5000 // 后台接口超时时间
 })
 
@@ -51,10 +52,15 @@ request.interceptors.response.use(
         if (res.code && res.code !== 200) {
 
             // 1. 处理 401 登录过期
-            if (res.code === 401 || res.code === 4031 || res.code === 4032) {
+            if (res.code === 401) {
                 handleUnauthorized();
+                return Promise.reject(new Error('未授权')); // 中断后续的报错弹窗
             }
-            // 2. 处理 HTTP 权限不足
+            // 2. 对于 4031(封禁) 和 4032(封禁)，把完整的 res 对象抛出去
+            else if (res.code === 4031 || res.code === 4032) {
+                return Promise.reject(res);
+            }
+            // 3. 处理 HTTP 权限不足
             else if (res.code === 403) {
                 ElMessage({ message: '权限不足', type: 'warning', grouping: true });
                 router.replace('/403');
@@ -62,7 +68,7 @@ request.interceptors.response.use(
             else if (res.code === 429) {
                 ElMessage({ message: res.msg || '请求过于频繁，请稍后再试', type: 'warning', grouping: true });
             }
-            // 3. 处理其他常规业务错误
+            // 4. 处理其他常规业务错误
             else {
                 ElMessage({ message: res.msg || '操作失败', type: 'error', grouping: true });
             }

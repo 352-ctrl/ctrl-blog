@@ -113,7 +113,7 @@ export const useUserStore = defineStore('user', () => {
             return {
                 success: false,
                 code: error.code,
-                msg: error.msg || '登录失败，请检查网络'
+                msg: error.msg
             }
         } finally {
             isLoading.value = false
