@@ -1,12 +1,13 @@
 package com.example.blog.modules.monitor.service;
 
-import java.util.Map;
+import com.example.blog.modules.monitor.model.vo.VisitTrendVO;
 
 public interface VisitService {
     /**
-     * 记录一次页面访问
+     * 记录一次页面访问（带有防刷机制）
+     * @param ip 访问者的 IP 地址
      */
-    void recordVisit();
+    void recordVisit(String ip);
 
     /**
      * 获取网站历史总访问量 (PV)
@@ -22,7 +23,7 @@ public interface VisitService {
      *
      * @return 包含 "dates" 和 "counts" 的 Map
      */
-    Map<String, Object> getVisitTrendStats();
+    VisitTrendVO getVisitTrendStats();
 
     /**
      * 同步 Redis 中的今日访问量到数据库

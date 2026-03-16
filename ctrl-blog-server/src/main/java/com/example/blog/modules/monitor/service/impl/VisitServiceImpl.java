@@ -4,16 +4,16 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.blog.common.constants.RedisConstants;
-import com.example.blog.modules.monitor.model.entity.DailyVisit;
-import com.example.blog.modules.monitor.mapper.VisitMapper;
-import com.example.blog.modules.monitor.service.VisitService;
 import com.example.blog.common.utils.RedisUtil;
+import com.example.blog.modules.monitor.mapper.VisitMapper;
+import com.example.blog.modules.monitor.model.entity.DailyVisit;
+import com.example.blog.modules.monitor.model.vo.VisitTrendVO;
+import com.example.blog.modules.monitor.service.VisitService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -26,14 +26,24 @@ public class VisitServiceImpl extends ServiceImpl<VisitMapper, DailyVisit> imple
     private RedisUtil redisUtil;
 
     @Override
-    public void recordVisit() {
-        // 1. 增加总访问量 +1
-        redisUtil.increment(RedisConstants.VIEW_COUNT_KEY, 1);
-        // 2. 今日访问量 +1
-        String todayKey = RedisConstants.VIEW_COUNT_DAY_PREFIX + LocalDate.now();
-        redisUtil.increment(todayKey, 1);
-        // 设置 30 天过期
-        redisUtil.expire(todayKey, RedisConstants.EXPIRE_VIEW_COUNT_DAY, TimeUnit.DAYS);
+    public void recordVisit(String ip) {
+        // 构建当前 IP 的防刷限制 Key (例如: blog:view:day:lock:192.168.1.1)
+        String lockKey = RedisConstants.VIEW_COUNT_DAY_PREFIX + "lock:" + ip;
+
+        // 如果 Redis 中不存在这个 IP 的锁，说明是新访客或冷却期已过，才执行真实的 +1 操作
+        if (redisUtil.get(lockKey) == null) {
+            // 1. 增加总访问量 +1
+            redisUtil.increment(RedisConstants.VIEW_COUNT_KEY, 1);
+
+            // 2. 今日访问量 +1
+            String todayKey = RedisConstants.VIEW_COUNT_DAY_PREFIX + LocalDate.now();
+            redisUtil.increment(todayKey, 1);
+            // 设置过期时间，防止长期堆积占用内存
+            redisUtil.expire(todayKey, RedisConstants.EXPIRE_VIEW_COUNT_DAY, TimeUnit.DAYS);
+
+            // 3. 核心机制：给该 IP 加上冷却期锁（30 分钟内同一个 IP 重复访问不增加总访问量）
+            redisUtil.set(lockKey, "1", 30, TimeUnit.MINUTES);
+        }
     }
 
     @Override
@@ -58,7 +68,7 @@ public class VisitServiceImpl extends ServiceImpl<VisitMapper, DailyVisit> imple
     }
 
     @Override
-    public Map<String, Object> getVisitTrendStats() {
+    public VisitTrendVO getVisitTrendStats() {
         LocalDate today = LocalDate.now();
         LocalDate startDate = today.minusDays(6);
 
@@ -76,7 +86,7 @@ public class VisitServiceImpl extends ServiceImpl<VisitMapper, DailyVisit> imple
                 ));
 
         List<String> dateList = new ArrayList<>();
-        List<Long> visitList = new ArrayList<>();
+        List<Long> pvCountList = new ArrayList<>();
 
         // 循环组装数据
         for (int i = 6; i >= 0; i--) {
@@ -90,17 +100,17 @@ public class VisitServiceImpl extends ServiceImpl<VisitMapper, DailyVisit> imple
 
             if (ObjectUtil.isNotNull(redisCount)) {
                 // 如果 Redis 有，直接用 Redis 的 (实时性最高)
-                visitList.add(Long.valueOf((redisCount.toString())));
+                pvCountList.add(Long.valueOf((redisCount.toString())));
             } else {
                 // Redis 没有 (过期了)，用 DB Map 里的缓存 (内存匹配，不查库)
-                visitList.add(dbMap.getOrDefault(dateStr, 0L));
+                pvCountList.add(dbMap.getOrDefault(dateStr, 0L));
             }
         }
 
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("dates", dateList);
-        resultMap.put("visits", visitList);
-        return resultMap;
+        return VisitTrendVO.builder()
+                .dates(dateList)
+                .pvCounts(pvCountList)
+                .build();
     }
 
     @Override

@@ -202,7 +202,7 @@ public final class RedisConstants {
     /**
      * 每日访问量 (PV) Key
      */
-    public static final String VIEW_COUNT_DAY_PREFIX = "blog:view:site:day:";
+    public static final String VIEW_COUNT_DAY_PREFIX = "blog:view:site:day:lock:";
 
     /**
      * 每日访问量缓存过期时间 (30天)

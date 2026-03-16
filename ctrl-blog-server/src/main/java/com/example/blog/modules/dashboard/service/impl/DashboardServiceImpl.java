@@ -2,18 +2,18 @@ package com.example.blog.modules.dashboard.service.impl;
 
 import com.example.blog.modules.article.model.dto.ArticleCategoryCountDTO;
 import com.example.blog.modules.article.service.ArticleService;
+import com.example.blog.modules.dashboard.model.vo.DashboardVO;
 import com.example.blog.modules.dashboard.service.DashboardService;
+import com.example.blog.modules.monitor.model.vo.VisitTrendVO;
 import com.example.blog.modules.monitor.service.VisitService;
 import com.example.blog.modules.operation.service.CommentService;
 import com.example.blog.modules.user.service.UserService;
-import com.example.blog.modules.dashboard.model.vo.DashboardVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -45,15 +45,11 @@ public class DashboardServiceImpl implements DashboardService {
         Long visitCount = visitService.countTotalVisits();
 
         // 获取趋势图数据 (折线图)
-        Map<String, Object> trendMap = visitService.getVisitTrendStats();
-
-        // 安全转换 Map 到 VO 内部类
-        List<String> dates = (List<String>) trendMap.get("dates");
-        List<Long> pvCounts = (List<Long>) trendMap.get("visits");
+        VisitTrendVO trendVO = visitService.getVisitTrendStats();
 
         DashboardVO.VisitTrend visitTrend = DashboardVO.VisitTrend.builder()
-                .dates(dates)
-                .pvCounts(pvCounts)
+                .dates(trendVO.getDates())
+                .pvCounts(trendVO.getPvCounts())
                 .build();
 
         // 获取分类占比数据 (饼图)
