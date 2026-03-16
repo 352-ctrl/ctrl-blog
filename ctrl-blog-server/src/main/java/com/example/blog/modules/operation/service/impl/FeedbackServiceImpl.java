@@ -12,31 +12,30 @@ import com.example.blog.common.constants.Constants;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.BizStatus;
 import com.example.blog.common.enums.ResultCode;
+import com.example.blog.core.exception.CustomerException;
+import com.example.blog.core.security.UserContext;
+import com.example.blog.modules.operation.event.FeedbackAdminNoticeEvent;
+import com.example.blog.modules.operation.event.FeedbackRepliedEvent;
+import com.example.blog.modules.operation.event.FeedbackReplyEmailEvent;
+import com.example.blog.modules.operation.event.FeedbackSubmittedEvent;
+import com.example.blog.modules.operation.mapper.FeedbackMapper;
 import com.example.blog.modules.operation.model.dto.FeedbackAddDTO;
 import com.example.blog.modules.operation.model.dto.FeedbackProcessDTO;
 import com.example.blog.modules.operation.model.dto.FeedbackQueryDTO;
-import com.example.blog.modules.user.model.dto.UserPayloadDTO;
 import com.example.blog.modules.operation.model.entity.Feedback;
-import com.example.blog.modules.user.model.entity.User;
-import com.example.blog.modules.operation.event.FeedbackRepliedEvent;
-import com.example.blog.modules.operation.event.FeedbackSubmittedEvent;
-import com.example.blog.modules.user.event.UserUnbannedEvent;
-import com.example.blog.core.exception.CustomerException;
-import com.example.blog.modules.operation.mapper.FeedbackMapper;
-import com.example.blog.modules.operation.service.FeedbackService;
-import com.example.blog.modules.user.service.UserService;
-import com.example.blog.common.utils.MailService;
-import com.example.blog.core.security.UserContext;
 import com.example.blog.modules.operation.model.vo.AdminFeedbackVO;
+import com.example.blog.modules.operation.service.FeedbackService;
+import com.example.blog.modules.user.event.UserUnbannedEvent;
+import com.example.blog.modules.user.model.dto.UserPayloadDTO;
+import com.example.blog.modules.user.model.entity.User;
+import com.example.blog.modules.user.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,14 +49,7 @@ public class FeedbackServiceImpl extends ServiceImpl<FeedbackMapper, Feedback> i
     private UserService userService;
 
     @Resource
-    private MailService mailService;
-
-    @Resource
     private ApplicationEventPublisher eventPublisher;
-
-    // 从配置文件读取管理员接收邮件的邮箱地址
-    @Value("${blog.admin.email:admin@example.com}")
-    private String adminEmail;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -92,7 +84,6 @@ public class FeedbackServiceImpl extends ServiceImpl<FeedbackMapper, Feedback> i
         // 默认状态设为待处理
         feedback.setStatus(BizStatus.FeedbackStatus.PENDING);
 
-        // 3. 先保存到数据库，这样 feedback 对象就会获得自动生成的 ID
         this.save(feedback);
 
         // 4. 如果是已登录用户，发布事件发送站内通知
@@ -100,11 +91,8 @@ public class FeedbackServiceImpl extends ServiceImpl<FeedbackMapper, Feedback> i
             eventPublisher.publishEvent(new FeedbackSubmittedEvent(this, currentUser.getId()));
         }
 
-        // 5. 反馈提交成功时，发送邮件通知管理员
-        Map<String, Object> adminModel = new HashMap<>();
-        adminModel.put("content", feedback.getContent());
-        adminModel.put("contact", feedback.getContactEmail());
-        mailService.sendHtmlMail(adminEmail, Constants.EMAIL_SUBJECT_FEEDBACK_ADMIN, Constants.TEMPLATE_FEEDBACK_ADMIN, adminModel);
+        // 5. 反馈提交成功后，发布事件通知管理员
+        eventPublisher.publishEvent(new FeedbackAdminNoticeEvent(this, feedback.getContent(), feedback.getContactEmail()));
     }
 
     @Override
@@ -229,14 +217,9 @@ public class FeedbackServiceImpl extends ServiceImpl<FeedbackMapper, Feedback> i
             // 注意：如果管理员没有写回复，通常不建议发空邮件，做个兜底
             String replyContent = StrUtil.isNotBlank(processDTO.getAdminReply()) ? processDTO.getAdminReply() : defaultReply;
 
-            Map<String, Object> userModel = new HashMap<>();
-            userModel.put("content", originalFeedback.getContent());
-            userModel.put("adminReply", replyContent);
-            userModel.put("statusText", statusText);
-            userModel.put("replyColor", replyColor);
-
-            // 异步发送邮件最佳，避免网络卡顿导致前端一直转圈
-            mailService.sendHtmlMail(contactEmail, Constants.EMAIL_SUBJECT_FEEDBACK_REPLY, Constants.TEMPLATE_FEEDBACK_REPLY, userModel);
+            eventPublisher.publishEvent(new FeedbackReplyEmailEvent(
+                    this, contactEmail, originalFeedback.getContent(), replyContent, statusText, replyColor
+            ));
 
             // 5. 如果是登录用户提交的反馈，发布事件发送站内信
             if (originalFeedback.getUserId() != null) {

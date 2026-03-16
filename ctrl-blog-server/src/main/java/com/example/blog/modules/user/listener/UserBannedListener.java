@@ -1,6 +1,7 @@
 package com.example.blog.modules.user.listener;
 
-import cn.hutool.core.util.StrUtil;
+import com.example.blog.common.constants.Constants;
+import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.utils.MailService;
 import com.example.blog.modules.user.event.UserBannedEvent;
 import jakarta.annotation.Resource;
@@ -10,66 +11,73 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 用户模块邮件监听器
+ * 用户违规封禁事件监听器
  */
 @Slf4j
 @Component
-public class UserMailListener {
+public class UserBannedListener {
 
     @Resource
     private MailService mailService;
 
-    // 注入管理员邮箱，用于邮件模板中的申诉联系方式
+    // 从配置文件读取管理员邮箱，用于在邮件中展示给用户申诉
     @Value("${blog.admin.email:admin@example.com}")
     private String adminEmail;
 
     /**
-     * 监听用户被封禁事件
-     * 使用 AFTER_COMMIT 确保数据库更新成功后再发邮件
+     * 监听用户封禁事件
+     * 必须等事务提交后 (AFTER_COMMIT) 才发邮件，防止数据库回滚导致“幽灵邮件”
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onUserBanned(UserBannedEvent event) {
-        // 如果没有邮箱，则无法发送
-        if (StrUtil.isBlank(event.getEmail())) {
-            log.warn("用户 {} (ID:{}) 被封禁，但未绑定邮箱，跳过邮件发送", event.getNickname(), event.getUserId());
-            return;
-        }
-
         log.info("监听到用户封禁事件，准备发送通知邮件给用户：{}", event.getEmail());
 
         Map<String, Object> model = new HashMap<>();
+
+        // 1. 对应 FTL: ${nickname}
         model.put("nickname", event.getNickname());
+
+        // 2. 对应 FTL: ${banType}。这里固定为账号封禁
+        model.put("banType", MessageConstants.MSG_BAN_TYPE_ACCOUNT);
+
+        // 3. 对应 FTL: ${banReason}
         model.put("banReason", event.getBanReason());
+
+        // 4. 对应 FTL: ${adminEmail}
         model.put("adminEmail", adminEmail);
 
-        // 处理封禁类型和时间格式化
-        String banType = "永久封禁";
-        String endTimeStr = "永久封禁";
-
-        if (event.getDisableEndTime() != null) {
-            // 判断是否是你在 processReport 中设置的永久封禁极大值 (2099年)
-            if (event.getDisableEndTime().getYear() < 2099) {
-                banType = "限时封禁";
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                endTimeStr = event.getDisableEndTime().format(formatter);
-            }
-        }
-
-        model.put("banType", banType);
+        // 5. 对应 FTL: ${endTime}。需要将 LocalDateTime 格式化为字符串，或者判断是否为永久封禁
+        String endTimeStr = formatEndTime(event.getDisableEndTime());
         model.put("endTime", endTimeStr);
 
-        // 调用异步邮件发送服务
-        // 注意：Constants.TEMPLATE_USER_BANNED 的值应该是 "user_banned.ftl"
+        // 异步发送邮件 (MailService.sendHtmlMail 内部应该已经标了 @Async)
         mailService.sendHtmlMail(
                 event.getEmail(),
-                "【CtrlBlog】账号违规处理通知",
-                "user_banned.ftl",
+                Constants.EMAIL_SUBJECT_USER_BANNED,
+                Constants.TEMPLATE_USER_BANNED,
                 model
         );
+    }
+
+    /**
+     * 格式化封禁结束时间
+     */
+    private String formatEndTime(LocalDateTime endTime) {
+        if (endTime == null) {
+            return MessageConstants.MSG_PERMANENT_BAN;
+        }
+        // 如果年份大于等于 2099，通常业务上代表永久封禁
+        if (endTime.getYear() >= 2099) {
+            return MessageConstants.MSG_PERMANENT_BAN;
+        }
+        // 格式化为：2026-03-15 15:30:00
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.FORMAT_DATETIME);
+        return endTime.format(formatter);
     }
 }

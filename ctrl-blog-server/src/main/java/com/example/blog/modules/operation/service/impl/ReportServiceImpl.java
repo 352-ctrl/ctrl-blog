@@ -7,28 +7,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.blog.modules.operation.model.bo.ReportExtraContext;
 import com.example.blog.common.constants.MessageConstants;
 import com.example.blog.common.enums.BizStatus;
+import com.example.blog.core.exception.CustomerException;
+import com.example.blog.core.security.UserContext;
+import com.example.blog.modules.article.model.entity.Article;
+import com.example.blog.modules.article.service.ArticleService;
+import com.example.blog.modules.operation.builder.ReportContextBuilder;
+import com.example.blog.modules.operation.event.ReportProcessedEvent;
+import com.example.blog.modules.operation.mapper.ReportMapper;
+import com.example.blog.modules.operation.model.bo.ReportExtraContext;
 import com.example.blog.modules.operation.model.dto.ReportAddDTO;
 import com.example.blog.modules.operation.model.dto.ReportProcessDTO;
 import com.example.blog.modules.operation.model.dto.ReportQueryDTO;
-import com.example.blog.modules.operation.service.CommentService;
-import com.example.blog.modules.operation.service.ReportService;
-import com.example.blog.modules.user.model.dto.UserPayloadDTO;
-import com.example.blog.modules.article.model.entity.Article;
 import com.example.blog.modules.operation.model.entity.Comment;
 import com.example.blog.modules.operation.model.entity.Report;
+import com.example.blog.modules.operation.model.vo.AdminReportVO;
+import com.example.blog.modules.operation.service.CommentService;
+import com.example.blog.modules.operation.service.ReportService;
+import com.example.blog.modules.user.event.UserBannedEvent;
+import com.example.blog.modules.user.model.dto.UserPayloadDTO;
 import com.example.blog.modules.user.model.entity.User;
-import com.example.blog.modules.operation.event.ReportProcessedEvent;
-import com.example.blog.core.exception.CustomerException;
-import com.example.blog.modules.operation.builder.ReportContextBuilder;
-import com.example.blog.modules.operation.mapper.ReportMapper;
-import com.example.blog.modules.article.service.ArticleService;
 import com.example.blog.modules.user.service.AuthService;
 import com.example.blog.modules.user.service.UserService;
-import com.example.blog.core.security.UserContext;
-import com.example.blog.modules.operation.model.vo.AdminReportVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -171,6 +172,11 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
                     endTime = LocalDateTime.of(2099, 12, 31, 23, 59, 59);
                 }
 
+                String banReason = StrUtil.isNotBlank(processDTO.getAdminNote()) ? processDTO.getAdminNote() : MessageConstants.MSG_DEFAULT_BAN_REASON;
+
+                // 获取被封禁用户的完整信息
+                User bannedUser = userService.getById(targetId);
+
                 userService.lambdaUpdate()
                         .eq(User::getId, targetId)
                         .set(User::getStatus, BizStatus.User.DISABLE)
@@ -180,6 +186,17 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
 
                 authService.forceLogoutByUserId(targetId);
                 log.info("已自动封禁违规用户，ID: {}，封禁至: {}", targetId, endTime);
+
+                if (bannedUser != null && StrUtil.isNotBlank(bannedUser.getEmail())) {
+                    eventPublisher.publishEvent(new UserBannedEvent(
+                            this,
+                            bannedUser.getId(),
+                            bannedUser.getEmail(),
+                            bannedUser.getNickname(),
+                            banReason,
+                            endTime
+                    ));
+                }
             }
         }
 

@@ -191,6 +191,21 @@ public final class MessageConstants {
      */
     public static final String MSG_DEFAULT_BAN_REASON = "存在违规行为";
 
+    /**
+     * 账号严重违规默认原因 (用于未填写原因时的兜底)
+     */
+    public static final String MSG_SEVERE_VIOLATION = "严重违反社区规范";
+
+    /**
+     * 封禁类型：限制登录
+     */
+    public static final String MSG_BAN_TYPE_ACCOUNT = "限制登录 (账号封禁)";
+
+    /**
+     * 解封时间占位：永久封禁
+     */
+    public static final String MSG_PERMANENT_BAN = "永久封禁";
+
 
     /* ============================== 4. 内容业务消息 ============================== */
 
@@ -289,6 +304,10 @@ public final class MessageConstants {
      * 文件上传格式错误 (非 multipart/form-data 或未选择文件)
      */
     public static final String MSG_UPLOAD_FORMAT_ERROR = "请选择要上传的文件或检查请求格式";
+    /**
+     * 非法的上传业务类型
+     */
+    public static final String MSG_INVALID_UPLOAD_TYPE = "非法的上传业务类型";
 
     /**
      * 云存储文件下载提示

@@ -239,13 +239,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             // 强制下线（如果角色变更没清理过的话，这里再清理一次Token以防万一）
             redisUtil.delete(RedisConstants.REDIS_USER_TOKEN_KEY + updateDTO.getId());
 
+            String reason = StrUtil.isNotBlank(targetUser.getDisableReason())
+                    ? targetUser.getDisableReason()
+                    : MessageConstants.MSG_SEVERE_VIOLATION;
+
             // 发布封禁事件，交由监听器异步发送邮件
             eventPublisher.publishEvent(new UserBannedEvent(
                     this,
                     targetUser.getId(),
                     targetUser.getEmail(),
                     targetUser.getNickname(),
-                    targetUser.getDisableReason(),
+                    reason,
                     targetUser.getDisableEndTime()
             ));
         }

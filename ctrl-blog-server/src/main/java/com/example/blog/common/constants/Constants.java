@@ -89,18 +89,25 @@ public final class Constants {
      */
     public static final String FORMAT_DATETIME_SHORT = "yyyy-MM-dd HH:mm";
 
+    /**
+     * 标准日期时间格式 (含秒)
+     */
+    public static final String FORMAT_DATETIME = "yyyy-MM-dd HH:mm:ss";
+
 
     /* ---------- 邮件模板与标题配置 ---------- */
     public static final String TEMPLATE_REGISTER_CODE = "register_code.ftl";
     public static final String TEMPLATE_FEEDBACK_ADMIN = "feedback_admin_notice.ftl";
     public static final String TEMPLATE_FEEDBACK_REPLY = "feedback_reply.ftl";
+    public static final String TEMPLATE_USER_BANNED = "user_banned.ftl";
 
-    public static final String EMAIL_SUBJECT_REGISTER = "【CtrlBlog】注册验证码";
+    public static final String EMAIL_SUBJECT_REGISTER = "注册验证码";
     public static final String EMAIL_SUBJECT_RESET = "找回密码验证码";
-    public static final String EMAIL_SUBJECT_BIND = "【CtrlBlog】换绑邮箱验证码";
+    public static final String EMAIL_SUBJECT_BIND = "换绑邮箱验证码";
     public static final String EMAIL_TITLE_BIND = "换绑邮箱验证码";
-    public static final String EMAIL_SUBJECT_FEEDBACK_ADMIN = "【系统通知】收到新的用户反馈";
-    public static final String EMAIL_SUBJECT_FEEDBACK_REPLY = "【CtrlBlog】您的反馈已收到回复";
+    public static final String EMAIL_SUBJECT_FEEDBACK_ADMIN = "收到新的用户反馈";
+    public static final String EMAIL_SUBJECT_FEEDBACK_REPLY = "您的反馈已收到回复";
+    public static final String EMAIL_SUBJECT_USER_BANNED = "账号违规处理通知";
 
 
     /* ---------- 分页通用配置 ---------- */
