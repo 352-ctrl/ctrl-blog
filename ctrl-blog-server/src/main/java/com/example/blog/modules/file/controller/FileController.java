@@ -12,6 +12,7 @@ import com.example.blog.core.annotation.AuthCheck;
 import com.example.blog.core.annotation.Log;
 import com.example.blog.core.annotation.RateLimit;
 import com.example.blog.core.exception.CustomerException;
+import com.example.blog.modules.file.model.vo.EditorUploadVO;
 import com.example.blog.modules.file.service.FileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,9 +21,6 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 文件管理控制器
@@ -47,7 +45,7 @@ public class FileController {
             case "avatar" -> Constants.UPLOAD_DIR_AVATAR; // 常量：avatar
             case "cover" -> Constants.UPLOAD_DIR_COVER;   // 常量：cover
             case "article" -> Constants.UPLOAD_DIR_ARTICLE; // 常量：article
-            default -> throw new CustomerException(ResultCode.PARAM_ERROR, "非法的上传业务类型");
+            default -> throw new CustomerException(ResultCode.PARAM_ERROR, MessageConstants.MSG_INVALID_UPLOAD_TYPE);
         };
     }
 
@@ -90,19 +88,16 @@ public class FileController {
     @RateLimit(key = "ip", time = 60, count = 20)
     @Log(module = "文件服务", type = "上传", desc = "编辑器图片上传")
     @Operation(summary = "编辑器文件上传", description = "WangEditor 编辑器专用接口，返回特定 JSON 格式。")
-    public Map<String, Object> uploadForEditor(@RequestParam("file") MultipartFile file) {
-        Map<String, Object> resMap = new HashMap<>();
+    public EditorUploadVO uploadForEditor(@RequestParam("file") MultipartFile file) {
         try {
-            // 复用 Service 的上传逻辑
             String url = fileService.upload(file, Constants.UPLOAD_DIR_ARTICLE);
 
-            // 组装 WangEditor 需要的格式
-            resMap.put("errno", 0);
-            resMap.put("data", CollUtil.newArrayList(Dict.create().set("url", url)));
+            // 组装 WangEditor 兼容格式
+            Object data = CollUtil.newArrayList(Dict.create().set("url", url));
+            return EditorUploadVO.success(data);
         } catch (Exception e) {
-            resMap.put("errno", 1);
-            resMap.put("message", MessageConstants.MSG_UPLOAD_FAILURE);
+            // 返回带常量的失败信息
+            return EditorUploadVO.fail(MessageConstants.MSG_UPLOAD_FAILURE);
         }
-        return resMap;
     }
 }

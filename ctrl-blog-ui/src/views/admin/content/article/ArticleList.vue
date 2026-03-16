@@ -259,7 +259,7 @@ const onUploadImg = async (files, callback) => {
   formData.append('file', files[0]);
   try {
     const res = await uploadWangImage(formData);
-    if (res.code === 200) {
+    if (res.errno === 0) {
       callback([res.data?.[0]?.url || res.data]);
     } else {
       ElMessage.error('图片上传失败：' + res.msg);

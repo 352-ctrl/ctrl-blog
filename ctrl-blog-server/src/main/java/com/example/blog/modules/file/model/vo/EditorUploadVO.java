@@ -1,52 +1,39 @@
 package com.example.blog.modules.file.model.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import java.util.List;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Schema(description = "WangEditor上传结果响应对象")
-public class WangEditorUploadVO {
+@Schema(description = "富文本编辑器上传返回对象 (适配 WangEditor)")
+public class EditorUploadVO {
 
-    @Schema(description = "错误码 (0代表成功，1代表失败)", example = "0")
+    @Schema(description = "错误码，0 代表成功，非 0 代表失败", example = "0")
     private Integer errno;
 
-    @Schema(description = "返回的图片数据 (成功时包含)")
-    private List<ImageData> data;
-
-    @Schema(description = "错误提示消息 (失败时包含)", example = "上传失败")
+    @Schema(description = "错误提示，仅在 errno 非 0 时需要", example = "上传失败")
     private String message;
 
-    @Data
-    @AllArgsConstructor
-    @Schema(description = "图片URL对象")
-    public static class ImageData {
-        @Schema(description = "图片绝对地址", example = "https://example.com/123.jpg")
-        private String url;
-    }
+    @Schema(description = "返回数据载荷，包含图片 url 列表或对象")
+    private Object data;
 
     /**
-     * 成功响应的快捷构造工厂
+     * 快捷构建成功响应
      */
-    public static WangEditorUploadVO success(String url) {
-        return WangEditorUploadVO.builder()
+    public static EditorUploadVO success(Object data) {
+        return EditorUploadVO.builder()
                 .errno(0)
-                .data(List.of(new ImageData(url)))
+                .data(data)
                 .build();
     }
 
     /**
-     * 失败响应的快捷构造工厂
+     * 快捷构建失败响应
      */
-    public static WangEditorUploadVO fail(String message) {
-        return WangEditorUploadVO.builder()
-                .errno(1) // WangEditor 规定 1 代表失败
+    public static EditorUploadVO fail(String message) {
+        return EditorUploadVO.builder()
+                .errno(1) // WangEditor 规定非 0 为失败
                 .message(message)
                 .build();
     }
