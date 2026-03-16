@@ -1,6 +1,5 @@
 package com.example.blog.modules.operation.model.vo;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +34,5 @@ public class NoticeVO {
             example = "2023-10-24 10:00:00",
             type = "string"
     )
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 }

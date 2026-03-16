@@ -27,7 +27,6 @@ public class SysSensitiveWordVO {
             example = "2023-10-24 10:24:00",
             type = "string"
     )
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
 }

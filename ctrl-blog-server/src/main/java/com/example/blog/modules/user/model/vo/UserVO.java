@@ -54,7 +54,6 @@ public class UserVO {
             example = "2023-10-24 10:24:00",
             type = "string"
     )
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     @Schema(
@@ -62,7 +61,6 @@ public class UserVO {
             example = "2023-10-31 10:24:00",
             type = "string"
     )
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime disableEndTime;
 
     @Schema(description = "封禁原因", example = "发布违规不良信息")

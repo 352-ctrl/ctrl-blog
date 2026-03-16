@@ -26,7 +26,6 @@ public class AdminCommentVO {
             example = "2023-10-24 10:24:00",
             type = "string"
     )
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     // --- 评论者信息 ---

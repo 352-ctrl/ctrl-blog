@@ -27,7 +27,6 @@ public class UserCommentVO {
             example = "2023-10-24 10:24:00",
             type = "string"
     )
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 
     @Schema(description = "所属文章ID", type = "string", example = "111222333444")

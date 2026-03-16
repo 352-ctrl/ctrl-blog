@@ -47,6 +47,5 @@ public class AdminReportVO {
     private String adminNote;
 
     @Schema(description = "提交时间", example = "2023-10-24 10:24:00", type = "string", pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime createTime;
 }

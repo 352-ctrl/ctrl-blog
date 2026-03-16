@@ -1,9 +1,15 @@
 package com.example.blog.core.config;
 
+import com.example.blog.common.constants.Constants;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Jackson 全局序列化配置类
@@ -21,8 +27,15 @@ public class JacksonConfig {
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
         return builder -> {
-            // 将 Long 类型序列化为 String
+            // 1. 解决前端 JS 中 Long 类型精度丢失的问题
             builder.serializerByType(Long.class, ToStringSerializer.instance);
+
+            // 2. 全局配置 LocalDateTime 的序列化（后端 -> 前端）
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(Constants.FORMAT_DATETIME);
+            builder.serializerByType(LocalDateTime.class, new LocalDateTimeSerializer(formatter));
+
+            // 3. 全局配置 LocalDateTime 的反序列化（前端 -> 后端）
+            builder.deserializerByType(LocalDateTime.class, new LocalDateTimeDeserializer(formatter));
         };
     }
 }
