@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -26,27 +24,24 @@ services:
       - blog-network
 
   ctrl-blog-server:
-    build:
-      context: ./ctrl-blog-server
+    # 使用阿里云私有仓库的 VPC 地址
+    image: crpi-no0f86ik9slq5elj-vpc.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-server:latest
     container_name: ctrl-backend
     restart: always
     depends_on:
       - mysql
       - redis
-    # 使用 env_file 直接把 .env 里的所有变量注入到这个容器中
     env_file:
       - .env
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      # 覆盖 application.yml 里的 localhost，指向 compose 里的服务名
       - DB_HOST=mysql
       - REDIS_HOST=redis
     networks:
       - blog-network
 
   ctrl-blog-ui:
-    build:
-      context: ./ctrl-blog-ui
+    image: crpi-no0f86ik9slq5elj-vpc.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-ui:latest
     container_name: ctrl-frontend
     restart: always
     depends_on:
