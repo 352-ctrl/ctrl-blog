@@ -1,0 +1,43 @@
+name: 自动部署 (ACR模式)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 登录阿里云镜像仓库 (公网)
+        uses: aliyun/acr-login@v1
+        with:
+          login-server: ${{ secrets.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: 构建并推送后端镜像
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-server:latest ./ctrl-blog-server
+          docker push ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-server:latest
+
+      - name: 构建并推送前端镜像
+        run: |
+          docker build -t ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-ui:latest ./ctrl-blog-ui
+          docker push ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-ui:latest
+
+      - name: SSH远程更新服务器
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            cd /root/ctrl-blog
+            # 这里的 docker-compose.yml 已经在服务器上了，只需执行拉取和更新
+            sudo docker compose pull
+            sudo docker compose up -d
+            # 清理旧的无用镜像，节省磁盘
+            sudo docker image prune -f
