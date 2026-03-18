@@ -1,4 +1,6 @@
-target/
-.idea/
-*.iml
-.git/
+src/
+.mvn/
+.gitignore
+pom.xml
+mvnw*
+*.md
