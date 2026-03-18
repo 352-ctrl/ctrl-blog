@@ -134,9 +134,6 @@ const onVerifySuccess = async (params) => {
     } else {
       if (result.code === 4031) {
         handleBanException(result.msg);
-      } else {
-        // 其他的普通错误（账号密码错误等），照常显示红色小提示
-        ElMessage.error(result.msg || '登录失败，请重试');
       }
     }
   } catch (error) {

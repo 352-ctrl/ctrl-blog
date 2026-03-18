@@ -8,17 +8,20 @@
 
       <div class="copyright">
         © {{ startYear }} - {{ currentYear }} By
-        <span class="author-name">神秘站长</span>
+        <a
+            v-if="webmaster.github"
+            :href="webmaster.github"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="author-name hover-link"
+        >
+          {{ webmaster.nickname || '神秘站长' }}
+        </a>
+        <span v-else class="author-name">{{ webmaster.nickname || '神秘站长' }}</span>
       </div>
 
-      <div class="beian-info">
-        <a href="https://beian.miit.gov.cn/" target="_blank" class="beian-link">
-          测试文本1
-        </a>
-        <el-divider direction="vertical" class="hide-on-mobile" />
-        <a href="http://www.beian.gov.cn/portal/registerSystemInfo" target="_blank" class="beian-link">
-          测试文本2
-        </a>
+      <div class="tech-stack hide-on-mobile">
+        Powered by Spring Boot 3 & Vue 3
       </div>
     </div>
   </footer>
@@ -26,6 +29,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { getWebmasterInfo } from '@/api/front/system/site.js';
 
 // ==========================================
 // 1. 基础信息配置
@@ -33,11 +37,33 @@ import { ref, onMounted, onUnmounted } from 'vue';
 const startYear = 2026;
 const currentYear = new Date().getFullYear();
 
-// 设置建站时间 (格式：YYYY/MM/DD HH:mm:ss)
-const siteStartDate = new Date('2026/01/01 00:00:00').getTime();
+// 建站时间 (建议未来也可以做成后端系统配置接口返回，目前先写死)
+const siteStartDate = new Date('2026/03/19 00:00:00').getTime();
+
+// 站长信息响应式对象
+const webmaster = ref({
+  nickname: '加载中...',
+  github: 'https://github.com/352-ctrl' // 默认占位，接口返回后会被覆盖
+});
 
 // ==========================================
-// 2. 运行时间计算逻辑
+// 2. 数据获取逻辑
+// ==========================================
+const fetchWebmasterInfo = async () => {
+  try {
+    const res = await getWebmasterInfo();
+    // 假设你的 request 拦截器已经处理了 code === 200 的解构，直接拿 data
+    if (res && res.data) {
+      webmaster.value = res.data;
+    }
+  } catch (error) {
+    console.error('获取站长信息失败:', error);
+    webmaster.value.nickname = '神秘站长'; // 降级处理
+  }
+};
+
+// ==========================================
+// 3. 运行时间计算逻辑
 // ==========================================
 const runTimeText = ref('');
 let timer = null;
@@ -52,17 +78,13 @@ const updateRunTime = () => {
   }
 
   const days = Math.floor(diff / (24 * 3600 * 1000));
-
-  const leave1 = diff % (24 * 3600 * 1000); // 计算天数后剩余的毫秒数
+  const leave1 = diff % (24 * 3600 * 1000);
   const hours = Math.floor(leave1 / (3600 * 1000));
-
-  const leave2 = leave1 % (3600 * 1000); // 计算小时数后剩余的毫秒数
+  const leave2 = leave1 % (3600 * 1000);
   const minutes = Math.floor(leave2 / (60 * 1000));
-
-  const leave3 = leave2 % (60 * 1000); // 计算分钟数后剩余的毫秒数
+  const leave3 = leave2 % (60 * 1000);
   const seconds = Math.floor(leave3 / 1000);
 
-  // 补零补齐
   const h = hours < 10 ? `0${hours}` : hours;
   const m = minutes < 10 ? `0${minutes}` : minutes;
   const s = seconds < 10 ? `0${seconds}` : seconds;
@@ -71,6 +93,7 @@ const updateRunTime = () => {
 };
 
 onMounted(() => {
+  fetchWebmasterInfo();
   updateRunTime();
   timer = setInterval(updateRunTime, 1000);
 });
@@ -83,7 +106,7 @@ onUnmounted(() => {
 <style scoped>
 .front-footer {
   width: 100%;
-  padding: 20px;
+  padding: 24px 20px;
   margin-top: auto;
   flex-shrink: 0;
   background-color: var(--el-bg-color-overlay);
@@ -96,7 +119,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
   color: var(--el-text-color-secondary);
 }
@@ -105,7 +128,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: monospace; /* 时间数字用等宽字体更好看 */
+  font-family: monospace;
 }
 
 .heart-icon {
@@ -118,47 +141,39 @@ onUnmounted(() => {
   50% { transform: scale(1.2); }
 }
 
-.copyright .author-name {
+.copyright {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.author-name {
   font-weight: bold;
   color: var(--el-text-color-primary);
   font-family: 'SmileySans', sans-serif;
   letter-spacing: 1px;
-}
-
-.beian-info {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap; /* 移动端换行 */
-  gap: 5px;
-}
-
-.beian-link {
-  color: var(--el-text-color-secondary);
   text-decoration: none;
-  transition: color 0.3s;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  font-size: 15px;
 }
 
-.beian-link:hover {
+.hover-link {
+  transition: color 0.3s ease;
+}
+
+.hover-link:hover {
   color: var(--el-color-primary);
 }
 
-.gongan-icon {
-  width: 14px;
-  height: 14px;
+.tech-stack {
+  font-size: 12px;
+  opacity: 0.8;
 }
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .hide-on-mobile {
     display: none;
-  }
-  .beian-info {
-    flex-direction: column;
-    gap: 8px;
   }
 }
 </style>
