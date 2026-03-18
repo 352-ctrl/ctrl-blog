@@ -50,13 +50,6 @@
             <version>5.8.40</version>
         </dependency>
 
-        <!-- 处理office文件的依赖 -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>5.5.0</version>
-        </dependency>
-
         <!-- 添加安全版本的commons-lang3 -->
         <dependency>
         <groupId>org.apache.commons</groupId>
@@ -75,13 +68,6 @@
             <groupId>org.commonmark</groupId>
             <artifactId>commonmark</artifactId>
             <version>0.21.0</version>
-        </dependency>
-
-        <!-- 热部署 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <version>3.2.7</version>
         </dependency>
 
         <!-- 参数校验（JSR 380） -->
