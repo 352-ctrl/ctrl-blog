@@ -1,6 +1,12 @@
 <template>
 <div :class="mode=='pop'?'mask':''"  v-show="showBox">
-    <div :class="mode=='pop'?'verifybox':''" :style="{'max-width':parseInt(imgSize.width)+30+'px'}">
+  <div
+      :class="mode=='pop'?'verifybox':''"
+      :style="{'max-width':parseInt(imgSize.width)+30+'px'}"
+      @touchstart="handleCaptchaTouchStart"
+      @touchmove="handleCaptchaTouchMove"
+      @touchend="handleCaptchaTouchEnd"
+  >
         <div class="verifybox-top"  v-if="mode=='pop'">
             请完成安全验证
             <span class="verifybox-close" @click="closeBox">
@@ -95,6 +101,24 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
 
             const instance = ref({})
 
+          // 处理触摸开始事件，阻止默认行为
+          const handleCaptchaTouchStart = (e) => {
+            e.preventDefault(); // 阻止浏览器默认触摸行为
+            e.stopPropagation(); // 阻止事件冒泡
+          }
+
+          // 处理触摸滑动事件（核心：阻止默认行为解决跳转问题）
+          const handleCaptchaTouchMove = (e) => {
+            e.preventDefault(); // 关键：阻止移动端滑动的默认行为（如页面滚动、跳转）
+            e.stopPropagation();
+          }
+
+          // 处理触摸结束事件
+          const handleCaptchaTouchEnd = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+
             const showBox = computed(()=>{
                 if (mode.value=='pop') {
                     return clickShow.value
@@ -141,7 +165,10 @@ import { computed, ref,watch,toRefs,watchEffect } from 'vue';
                 instance,
                 showBox,
                 closeBox,
-                show
+                show,
+                handleCaptchaTouchStart,
+                handleCaptchaTouchMove,
+                handleCaptchaTouchEnd
             }
         },
     }
