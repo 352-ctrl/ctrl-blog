@@ -2,7 +2,7 @@
   <el-card class="hot-article-card" shadow="hover">
     <template #header>
       <div class="card-header">
-        <span class="header-title"><el-icon class="icon-hot"><TrendCharts /></el-icon> 热门文章</span>
+        <span class="header-title"><el-icon class="icon-hot icon-swing"><TrendCharts /></el-icon> 热门文章</span>
       </div>
     </template>
 
@@ -67,7 +67,6 @@ const goToArticle = (id) => router.push(`/post/${id}`);
         margin-right: 10px;
         color: var(--el-color-danger);
         font-size: 18px;
-        animation: swing 2s infinite linear;
         transform-origin: bottom center;
       }
     }
@@ -137,16 +136,5 @@ const goToArticle = (id) => router.push(`/post/${id}`);
     background-color: var(--el-color-primary);
     border-radius: 0 4px 4px 0;
   }
-}
-
-/* 动画 Keyframes */
-@keyframes swing {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(15deg); }
-  20% { transform: rotate(-10deg); }
-  30% { transform: rotate(5deg); }
-  40% { transform: rotate(-5deg); }
-  50% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
 }
 </style>

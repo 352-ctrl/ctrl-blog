@@ -2,7 +2,7 @@
   <el-card class="notice-card" shadow="hover">
     <template #header>
       <div class="card-header">
-        <span class="header-title"><el-icon class="icon-bell"><Bell /></el-icon> 公告通知</span>
+        <span class="header-title"><el-icon class="icon-bell icon-swing"><Bell /></el-icon> 公告通知</span>
       </div>
     </template>
 
@@ -67,7 +67,6 @@ onMounted(async () => {
         margin-right: 10px;
         color: var(--el-color-danger);
         font-size: 18px;
-        animation: swing 2s infinite linear;
         transform-origin: top center;
       }
     }
@@ -130,15 +129,5 @@ onMounted(async () => {
       margin-top: 10px;
     }
   }
-}
-
-@keyframes swing {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(15deg); }
-  20% { transform: rotate(-10deg); }
-  30% { transform: rotate(5deg); }
-  40% { transform: rotate(-5deg); }
-  50% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
 }
 </style>

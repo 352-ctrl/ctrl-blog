@@ -3,7 +3,7 @@
     <template #header>
       <div class="card-header">
         <span class="header-title">
-          <el-icon class="icon-user"><UserFilled /></el-icon>
+          <el-icon class="icon-user icon-swing"><UserFilled /></el-icon>
           关于站长
         </span>
       </div>
@@ -87,7 +87,6 @@ onMounted(async () => {
         margin-right: 10px;
         color: var(--el-color-primary);
         font-size: 18px;
-        animation: swing 2s infinite linear;
         transform-origin: bottom center;
       }
     }
@@ -191,16 +190,5 @@ onMounted(async () => {
       color: white;
     }
   }
-}
-
-/* 动画 Keyframes */
-@keyframes swing {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(15deg); }
-  20% { transform: rotate(-10deg); }
-  30% { transform: rotate(5deg); }
-  40% { transform: rotate(-5deg); }
-  50% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
 }
 </style>

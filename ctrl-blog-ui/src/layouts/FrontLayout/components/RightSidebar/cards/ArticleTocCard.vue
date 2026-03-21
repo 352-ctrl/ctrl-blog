@@ -3,7 +3,7 @@
     <template #header>
       <div class="card-header">
         <span class="header-title">
-          <el-icon class="icon-reading"><Reading /></el-icon>
+          <el-icon class="icon-reading icon-swing"><Reading /></el-icon>
           文章目录
         </span>
         <div class="header-progress">
@@ -218,6 +218,7 @@ const handleScroll = () => {
         margin-right: 10px;
         color: var(--el-color-success);
         font-size: 18px;
+        transform-origin: bottom center;
       }
     }
 

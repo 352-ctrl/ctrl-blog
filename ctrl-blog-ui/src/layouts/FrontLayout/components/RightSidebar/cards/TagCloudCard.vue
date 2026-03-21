@@ -3,7 +3,7 @@
     <template #header>
       <div class="card-header">
         <span class="header-title">
-          <el-icon class="icon-tag"><Collection /></el-icon>
+          <el-icon class="icon-tag icon-swing"><Collection /></el-icon>
           标签云
         </span>
       </div>
@@ -321,7 +321,6 @@ const getRandomColor = () => {
         margin-right: 10px;
         color: var(--el-color-primary);
         font-size: 18px;
-        animation: swing 2s infinite linear;
         transform-origin: top center;
       }
     }
@@ -349,15 +348,5 @@ const getRandomColor = () => {
       margin-top: 10px;
     }
   }
-}
-
-@keyframes swing {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(15deg); }
-  20% { transform: rotate(-10deg); }
-  30% { transform: rotate(5deg); }
-  40% { transform: rotate(-5deg); }
-  50% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
 }
 </style>

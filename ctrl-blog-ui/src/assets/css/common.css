@@ -64,6 +64,28 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); /* 阴影收缩，强化按压感 */
 }
 
+/* ====================================
+   全局基础动画库
+   ==================================== */
+/* ====================================
+   全局基础动画库
+   ==================================== */
+@keyframes swing {
+    0% { transform: rotate(0deg); }
+    10% { transform: rotate(15deg); }
+    20% { transform: rotate(-10deg); }
+    30% { transform: rotate(5deg); }
+    40% { transform: rotate(-5deg); }
+    50% { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* 摇摆动画公共类 */
+.icon-swing {
+    display: inline-block;
+    animation: swing 2s infinite linear;
+}
+
 /*
  * 响应式断点定义
  * xs: 超小屏幕 (<576px) - 手机竖屏
