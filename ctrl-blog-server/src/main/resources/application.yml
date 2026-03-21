@@ -130,6 +130,7 @@ management:
 aj:
   captcha:
     cache-type: redis # 指定使用 redis 缓存滑块数据
+    water-mark: ctrlBlog
     bypass:
       enabled: false
 #      master-key: AUTO_TEST_BYPASS_666
