@@ -365,7 +365,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
 }
 
 .highlight-text {
-  background-color: var(--el-color-warning-light-9);
+  background-color: var(--el-fill-color-light);
   color: var(--el-color-warning);
   font-weight: bold;
   padding: 2px 4px;
