@@ -80,7 +80,7 @@
             <el-menu-item-group title="账号管理">
               <el-menu-item index="/user/settings">
                 <el-icon><Setting /></el-icon>
-                <span>安全设置</span>
+                <span>个人设置</span>
               </el-menu-item>
             </el-menu-item-group>
           </el-menu>

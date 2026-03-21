@@ -1,56 +1,105 @@
 <template>
-  <el-card class="user-page-card" shadow="never">
-    <template #header>
-      <div class="page-header">
-        <el-icon class="header-icon color-primary"><Setting /></el-icon>
-        <span class="header-title">安全设置</span>
-      </div>
-    </template>
-
-    <div class="page-content">
-      <div class="setting-list">
-        <div class="setting-item">
-          <div class="item-left">
-            <el-icon class="item-icon"><Lock /></el-icon>
-            <div class="item-info">
-              <div class="title">登录密码</div>
-              <div class="desc">建议定期更换密码，以保障账号安全</div>
-            </div>
-          </div>
-          <div class="item-right">
-            <el-button round @click="openPwdDialog">修改密码</el-button>
-          </div>
+  <div class="settings-container">
+    <el-card class="user-page-card mb-20" shadow="never">
+      <template #header>
+        <div class="page-header">
+          <el-icon class="header-icon color-success icon-swing"><User /></el-icon>
+          <span class="header-title">基本资料</span>
         </div>
+      </template>
 
-        <div class="setting-item">
-          <div class="item-left">
-            <el-icon class="item-icon"><Message /></el-icon>
-            <div class="item-info">
-              <div class="title">绑定邮箱</div>
-              <div class="desc">
-                已绑定：<span class="highlight-text">{{ userStore.email || '未绑定' }}</span>
+      <div class="page-content">
+        <el-form
+            ref="profileFormRef"
+            :model="profileData"
+            :rules="profileRules"
+            label-width="80px"
+            label-position="right"
+        >
+          <el-form-item label="用户昵称" prop="nickname">
+            <el-input
+                v-model="profileData.nickname"
+                placeholder="请输入您的昵称"
+                maxlength="20"
+                show-word-limit
+                class="max-w-400"
+            />
+          </el-form-item>
+
+          <el-form-item label="个人简介" prop="bio">
+            <el-input
+                v-model="profileData.bio"
+                type="textarea"
+                :rows="3"
+                placeholder="这个人很懒，什么都没写~"
+                maxlength="200"
+                show-word-limit
+                class="max-w-400"
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button type="primary" :loading="profileLoading" @click="submitProfile">
+              保存修改
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-card>
+
+    <el-card class="user-page-card" shadow="never">
+      <template #header>
+        <div class="page-header">
+          <el-icon class="header-icon color-primary icon-swing"><Setting /></el-icon>
+          <span class="header-title">安全设置</span>
+        </div>
+      </template>
+
+      <div class="page-content">
+        <div class="setting-list">
+          <div class="setting-item">
+            <div class="item-left">
+              <el-icon class="item-icon"><Lock /></el-icon>
+              <div class="item-info">
+                <div class="title">登录密码</div>
+                <div class="desc">建议定期更换密码，以保障账号安全</div>
               </div>
             </div>
-          </div>
-          <div class="item-right">
-            <el-button round @click="openEmailDialog">换绑邮箱</el-button>
-          </div>
-        </div>
-
-        <div class="setting-item danger-zone">
-          <div class="item-left">
-            <el-icon class="item-icon color-danger"><Warning /></el-icon>
-            <div class="item-info">
-              <div class="title color-danger">注销账号</div>
-              <div class="desc">注销后您的所有数据将被永久删除，此操作不可逆，请谨慎操作</div>
+            <div class="item-right">
+              <el-button round @click="openPwdDialog">修改密码</el-button>
             </div>
           </div>
-          <div class="item-right">
-            <el-button type="danger" plain round @click="handleCancelAccount">注销账号</el-button>
+
+          <div class="setting-item">
+            <div class="item-left">
+              <el-icon class="item-icon"><Message /></el-icon>
+              <div class="item-info">
+                <div class="title">绑定邮箱</div>
+                <div class="desc">
+                  已绑定：<span class="highlight-text">{{ userStore.email || '未绑定' }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="item-right">
+              <el-button round @click="openEmailDialog">换绑邮箱</el-button>
+            </div>
+          </div>
+
+          <div class="setting-item danger-zone">
+            <div class="item-left">
+              <el-icon class="item-icon color-danger"><Warning /></el-icon>
+              <div class="item-info">
+                <div class="title color-danger">注销账号</div>
+                <div class="desc">注销后您的所有数据将被永久删除，此操作不可逆，请谨慎操作</div>
+              </div>
+            </div>
+            <div class="item-right">
+              <el-button type="danger" plain round @click="handleCancelAccount">注销账号</el-button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </el-card>
 
     <el-dialog
         v-model="pwdDialogVisible"
@@ -104,19 +153,60 @@
     </el-dialog>
 
     <Verify ref="verifyRef" mode="pop" captchaType="blockPuzzle" :imgSize="{ width: '310px', height: '155px' }" @success="handleCaptchaSuccess" />
-  </el-card>
+  </div>
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
-import { ElMessageBox } from "element-plus";
+import { reactive, ref, onMounted } from "vue";
+import { ElMessageBox, ElMessage } from "element-plus";
 import { useUserStore } from '@/store/user.js';
 import { validatePasswordComplexity, validateEmail, validateVerifyCode } from "@/utils/validate.js";
-import { changePassword, sendBindEmailCode, changeEmail, requestAccountDeletion } from "@/api/front/system/userInfo.js";
+import { changePassword, sendBindEmailCode, changeEmail, requestAccountDeletion, updateProfile } from "@/api/front/system/userInfo.js";
 import { useRequest } from '@/composables/useRequest.js';
 
 const userStore = useUserStore();
 
+// ================== 基本资料逻辑 ==================
+const profileFormRef = ref(null);
+const profileData = reactive({
+  id: '',
+  nickname: '',
+  bio: '',
+  avatar: ''
+});
+
+const profileRules = {
+  nickname: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }
+  ]
+};
+
+// 初始化表单数据
+onMounted(() => {
+  if (userStore.userInfo) {
+    profileData.id = userStore.userInfo.id;
+    profileData.nickname = userStore.userInfo.nickname || '';
+    profileData.bio = userStore.userInfo.bio || '';
+    profileData.avatar = userStore.userInfo.avatar || '';
+  }
+});
+
+const { loading: profileLoading, execute: execUpdateProfile } = useRequest(updateProfile, { successMsg: '个人资料保存成功' });
+
+const submitProfile = () => {
+  profileFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        await execUpdateProfile(profileData);
+        // 保存成功后，触发 Pinia 刷新最新状态（保证左侧边栏即时更新）
+        await userStore.fetchUserInfo();
+      } catch (error) {}
+    }
+  });
+};
+
+// ================== 安全设置逻辑 (保留原有逻辑) ==================
 const pwdDialogVisible = ref(false);
 const emailDialogVisible = ref(false);
 const passwordFormRef = ref(null);
@@ -233,24 +323,13 @@ const handleCancelAccount = () => {
 </script>
 
 <style scoped>
-.dialog-alert {
-  margin-bottom: 20px;
-}
+.mb-20 { margin-bottom: 20px; }
+.max-w-400 { max-width: 400px; }
 
-.current-email-text {
-  color: var(--el-text-color-primary);
-  font-weight: 500;
-}
-
-.code-input-group {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-}
-
-.send-code-btn {
-  width: 130px;
-}
+.dialog-alert { margin-bottom: 20px; }
+.current-email-text { color: var(--el-text-color-primary); font-weight: 500; }
+.code-input-group { display: flex; gap: 10px; width: 100%; }
+.send-code-btn { width: 130px; }
 
 /* ==================== 基础容器样式 ==================== */
 .user-page-card {
@@ -264,15 +343,11 @@ const handleCancelAccount = () => {
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.header-icon {
-  font-size: 20px;
-}
+.page-header { display: flex; align-items: center; gap: 10px; }
+.header-icon { font-size: 20px; }
+.color-success { color: var(--el-color-success); }
+.color-primary { color: var(--el-color-primary); }
+.color-danger { color: var(--el-color-danger); }
 
 .header-title {
   font-family: 'SmileySans', sans-serif;
@@ -282,87 +357,37 @@ const handleCancelAccount = () => {
   letter-spacing: 1px;
 }
 
-.page-content {
-  padding: 10px;
-}
+.page-content { padding: 10px 20px; }
 
-.setting-list {
-  display: flex;
-  flex-direction: column;
-}
-
+/* 列表样式 */
+.setting-list { display: flex; flex-direction: column; }
 .setting-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 10px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 10px; border-bottom: 1px solid var(--el-border-color-lighter);
   transition: background-color 0.3s ease;
 }
+.setting-item:last-child { border-bottom: none; }
+.setting-item:hover { background-color: var(--el-fill-color-light); border-radius: 8px; }
 
-.setting-item:last-child {
-  border-bottom: none;
-}
-
-.setting-item:hover {
-  background-color: var(--el-fill-color-light);
-  border-radius: 8px;
-}
-
-.item-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.item-icon {
-  font-size: 24px;
-  color: var(--el-text-color-regular);
-}
-
-.item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.item-info .title {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-}
-
-.item-info .desc {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
-
+.item-left { display: flex; align-items: center; gap: 12px; }
+.item-icon { font-size: 24px; color: var(--el-text-color-regular); }
+.item-info { display: flex; flex-direction: column; gap: 6px; }
+.item-info .title { font-size: 16px; font-weight: 500; color: var(--el-text-color-primary); }
+.item-info .desc { font-size: 13px; color: var(--el-text-color-secondary); }
 .highlight-text {
-  color: var(--el-color-primary);
+  color: var(--el-text-color-regular);
+  background-color: var(--el-fill-color-light);
+  padding: 2px 8px;
+  border-radius: 4px;
   font-weight: 500;
-}
-
-.danger-zone .item-icon {
-  color: var(--el-color-danger);
 }
 
 @media screen and (max-width: 768px) {
-  .setting-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 15px 5px;
-  }
-  .item-right {
-    align-self: flex-end;
-  }
+  .setting-item { flex-direction: column; align-items: flex-start; gap: 15px; padding: 15px 5px; }
+  .item-right { align-self: flex-end; }
+  .max-w-400 { max-width: 100%; }
 }
 
-:deep(.mask) {
-  z-index: 9998 !important;
-}
-
-:deep(.verifybox) {
-  z-index: 9999 !important;
-}
+:deep(.mask) { z-index: 9998 !important; }
+:deep(.verifybox) { z-index: 9999 !important; }
 </style>
