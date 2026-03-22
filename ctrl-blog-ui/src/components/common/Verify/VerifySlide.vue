@@ -373,3 +373,10 @@
     }
 </script>
 
+<style scoped>
+/* 针对 AJ-Captcha 的滑动区域，禁用浏览器的默认触摸动作，防止触发边缘返回 */
+.verify-bar-area,
+:deep(.verify-sub-block) {
+  touch-action: none;
+}
+</style>
