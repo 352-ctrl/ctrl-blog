@@ -6,7 +6,7 @@
       </div>
     </template>
 
-    <div class="card-body">
+    <div>
       <div v-if="hotList.length === 0" class="empty-state"><el-empty description="暂无热门文章" :image-size="60" /></div>
       <SimpleArticleCard v-else :articles="hotList" :item-class="getDynamicRowClass" @click="goToArticle">
         <template #prefix="{ index }"><div :class="['rank-badge', `rank-${index + 1}`]">{{ index + 1 }}</div></template>
@@ -70,10 +70,6 @@ const goToArticle = (id) => router.push(`/post/${id}`);
         transform-origin: bottom center;
       }
     }
-  }
-
-  .card-body {
-    min-height: 100px;
   }
 
   .empty-state {

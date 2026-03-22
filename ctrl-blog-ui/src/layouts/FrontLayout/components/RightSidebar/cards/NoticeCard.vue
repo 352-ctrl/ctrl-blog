@@ -6,7 +6,7 @@
       </div>
     </template>
 
-    <div class="notice-body">
+    <div>
       <div v-if="noticeList.length === 0" class="empty-state">
         <el-empty description="暂无公告" :image-size="60" />
       </div>
@@ -70,10 +70,6 @@ onMounted(async () => {
         transform-origin: top center;
       }
     }
-  }
-
-  .notice-body {
-    min-height: 100px;
   }
 
   /* 列表项样式 */

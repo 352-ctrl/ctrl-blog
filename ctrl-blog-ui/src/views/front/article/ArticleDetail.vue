@@ -331,10 +331,26 @@ const handleCommentSuccess = () => {
 }
 
 :deep(.article-content code) {
-  background-color: var(--el-fill-color);
+  background-color: #f5f7fa;
+  color: #303643;
   padding: 2px 4px;
   border-radius: 4px;
-  color: var(--el-color-danger);
+  border: 1px solid #e5e6eb;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+:deep(.article-content pre) {
+  background-color: #f5f7fa;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e6eb;
+  overflow-x: auto;
+  margin: 15px 0;
+}
+:deep(.article-content pre code) {
+  background-color: transparent;
+  padding: 0;
+  border: none;
 }
 
 /* ====================================
