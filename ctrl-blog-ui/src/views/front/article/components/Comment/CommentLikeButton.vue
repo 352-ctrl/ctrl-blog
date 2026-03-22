@@ -33,7 +33,6 @@ const props = defineProps({
 const userStore = useUserStore();
 const likeCount = ref(Number(props.initialCount) || 0);
 
-// 优化2: 修复原来布尔值的强制数字转换。之前使用 Number(val) || 0，这会导致 false 变成 0，引起状态混乱。
 const isLiked = ref(Boolean(props.initialLiked));
 
 const displayCount = computed(() => likeCount.value > 0 ? likeCount.value : '点赞');

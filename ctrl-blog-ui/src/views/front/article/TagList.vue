@@ -68,7 +68,7 @@ const handleTagClick = async (tagKey) => {
     query.tagIds = [];
   } else {
     activeTab.value = tagKey;
-    query.tagIds = [Number(tagKey)];
+    query.tagIds = [tagKey];
   }
   query.pageNum = 1;
   await loadData();
@@ -92,7 +92,7 @@ onMounted(async () => {
   const queryId = route.query.id;
   if (queryId) {
     activeTab.value = queryId.toString();
-    query.tagIds = [Number(queryId)];
+    query.tagIds = [parseInt(queryId, 10)];
   }
 
   await loadData();

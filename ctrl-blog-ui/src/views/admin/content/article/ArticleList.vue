@@ -202,11 +202,10 @@ const handleEdit = async (row) => {
   const res = await getArticleById(row.id);
   if (res.code === 200) {
     const formData = res.data;
-    formData.tagIds = Array.isArray(formData.tags) ? formData.tags.map(t => Number(t.id)) : [];
+    formData.tagIds = Array.isArray(formData.tags) ? formData.tags.map(t => t.id) : [];
     formData.isTop = formData.isTop ?? 0;
     formData.status = formData.status ?? 0;
     formData.isAiSummary = formData.isAiSummary ?? 0;
-    if (formData.categoryId) formData.categoryId = Number(formData.categoryId);
 
     dialog.openDialog('编辑文章', 'edit', formData);
     nextTick(() => formRef.value?.clearValidate());
