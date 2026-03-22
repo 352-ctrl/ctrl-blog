@@ -22,10 +22,10 @@ public class Knif4jConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("博客系统后端 API")      // 文档标题
+                        .title("CtrlBlog 博客系统后端API接口文档")      // 文档标题
                         .version("1.0")              // 版本号
-                        .description("基于 Spring Boot 3 的接口文档") // 描述
-                        .contact(new Contact().name("编码助手")) // 作者信息
+                        .description("CtrlBlog 是基于 Spring Boot 3 + Vue 3 开发的前后端分离现代化博客系统，该文档包含所有后端核心业务接口（文章管理、用户交互、系统监控等）的定义、请求参数及返回值说明。")  // 描述
+                        .contact(new Contact().name("ctrl")) // 作者信息
                 );
     }
 }
