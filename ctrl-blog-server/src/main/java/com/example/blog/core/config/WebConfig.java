@@ -1,7 +1,6 @@
 package com.example.blog.core.config;
 
 import com.example.blog.core.interceptor.JWTInterceptor;
-import com.example.blog.core.interceptor.VisitInterceptor;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -16,9 +15,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Resource
     private JWTInterceptor jwtInterceptor;
-
-    @Resource
-    private VisitInterceptor visitInterceptor;
 
     /**
      * 添加拦截器配置
@@ -40,13 +36,6 @@ public class WebConfig implements WebMvcConfigurer {
                         "/webjars/**",           // 放行静态资源
                         "/v3/api-docs/**",       // 放行接口数据
                         "/swagger-resources/**"  // 放行兼容资源
-                );
-
-        registry.addInterceptor(visitInterceptor)
-                .addPathPatterns("/api/v1/articles/**")  // 拦截前端路径
-                .excludePathPatterns(
-                        "/api/v1/articles/*/view",
-                        "/api/v1/articles/search/index"
                 );
     }
 
