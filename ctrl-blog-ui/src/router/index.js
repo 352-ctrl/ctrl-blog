@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import {ElMessage} from "element-plus";
 import {frontRoutes} from "@/router/modules/frontRoutes.js";
 import {adminRoutes} from "@/router/modules/adminRoutes.js";
+import { reportSiteVisit } from "@/api/front/system/visit.js";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -75,5 +76,21 @@ router.beforeEach((to, from, next) => {
 
   // 全部通过
   next();
+});
+
+// ================= 全局后置钩子 (主动上报访问量) =================
+router.afterEach((to, from) => {
+  // 只统计前台页面
+  // 排除后台管理系统 (/admin)、错误页 (404, 403)
+  const isFrontPage = !to.path.startsWith('/admin')
+      && to.name !== 'NotFound'
+      && to.name !== 'Forbidden';
+
+  if (isFrontPage) {
+    // 异步无阻塞发送上报请求，不管成功失败，绝不能影响用户页面的正常渲染
+    reportSiteVisit().catch(err => {
+      console.warn('访问量上报失败，', err);
+    });
+  }
 });
 export default router

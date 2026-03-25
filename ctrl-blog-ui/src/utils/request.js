@@ -50,27 +50,28 @@ request.interceptors.response.use(
         }
 
         if (res.code && res.code !== 200) {
+            // 获取当前请求的配置，查看是否开启了静默模式
+            const isSilent = response.config.silent === true;
 
-            // 1. 处理 401 登录过期
             if (res.code === 401) {
-                handleUnauthorized();
-                return Promise.reject(new Error('未授权')); // 中断后续的报错弹窗
-            }
-            // 2. 对于 4031(封禁) 和 4032(封禁)，把完整的 res 对象抛出去
-            else if (res.code === 4031 || res.code === 4032) {
+                // 401 通常是系统级拦截，视业务情况决定静默请求是否触发重新登录。
+                // 建议埋点类请求即使401也不弹窗、不跳登录，直接丢弃
+                if (!isSilent) handleUnauthorized();
+                return Promise.reject(new Error('未授权'));
+            } else if (res.code === 4031 || res.code === 4032) {
                 return Promise.reject(res);
             }
-            // 3. 处理 HTTP 权限不足
-            else if (res.code === 403) {
-                ElMessage({ message: '权限不足', type: 'warning', grouping: true });
-                router.replace('/403');
-            }
-            else if (res.code === 429) {
-                ElMessage({ message: res.msg || '请求过于频繁，请稍后再试', type: 'warning', grouping: true });
-            }
-            // 4. 处理其他常规业务错误
-            else {
-                ElMessage({ message: res.msg || '操作失败', type: 'error', grouping: true });
+
+            // 只有非静默模式下，才弹出 ElMessage 错误提示
+            if (!isSilent) {
+                if (res.code === 403) {
+                    ElMessage({ message: '权限不足', type: 'warning', grouping: true });
+                    router.replace('/403');
+                } else if (res.code === 429) {
+                    ElMessage({ message: res.msg || '请求过于频繁，请稍后再试', type: 'warning', grouping: true });
+                } else {
+                    ElMessage({ message: res.msg || '操作失败', type: 'error', grouping: true });
+                }
             }
 
             // 抛出异常，中断 Promise 链。
@@ -83,13 +84,16 @@ request.interceptors.response.use(
     },
     error => {
         // ================= 全局 HTTP 状态码拦截 =================
+        // 获取配置，防止 error.config 为空导致报错
+        const config = error.config || {};
+
         let errorMsg = '网络请求异常';
         if (error.response) {
             // 获取 HTTP 真实状态码
             const status = error.response.status;
 
             if (status === 401) {
-                handleUnauthorized();
+                if (!config.silent) handleUnauthorized();
                 return Promise.reject(error);
             } else if (status === 404) {
                 errorMsg = '未找到请求接口';
@@ -105,11 +109,14 @@ request.interceptors.response.use(
             errorMsg = '无法连接到服务器，请检查网络或后端服务是否启动';
         }
 
-        ElMessage({
-            message: errorMsg,
-            type: 'error',
-            grouping: true // 同样开启合并
-        });
+        // 如果配置了 silent: true，则不弹出任何全局错误提示
+        if (!config.silent) {
+            ElMessage({
+                message: errorMsg,
+                type: 'error',
+                grouping: true
+            });
+        }
 
         return Promise.reject(error);
     }
