@@ -89,9 +89,9 @@ public class LocalFileServiceImpl implements FileService {
             File dest = new File(targetDirPath + fileName);
             file.transferTo(dest);
 
-            // 4. 生成返回的 URL
+            // 4. 直接返回相对路径
             String urlDir = StrUtil.isNotBlank(dir) ? dir + StrUtil.SLASH : StrUtil.EMPTY;
-            return accessPath + urlDir + fileName;
+            return StrUtil.SLASH + urlDir + fileName;
         } catch (IOException e) {
             log.error("文件上传失败", e);
             throw new CustomerException(ResultCode.INTERNAL_SERVER_ERROR, MessageConstants.MSG_UPLOAD_FAILURE);

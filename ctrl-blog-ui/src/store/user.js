@@ -128,6 +128,7 @@ export const useUserStore = defineStore('user', () => {
             if (res.code === 200) {
                 if (res.data != null) {
                     userInfo.value = res.data
+                    console.log("前端收到的处理后的数据：", res.data);
                     // 同步更新本地缓存
                     localStorage.setItem('userInfo', JSON.stringify(res.data))
                 } else {

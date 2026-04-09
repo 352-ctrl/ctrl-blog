@@ -3,6 +3,32 @@ import {ElMessage} from "element-plus";
 import router from "@/router/index.js";
 import {useUserStore} from "@/store/user.js";
 
+// 1. 获取 .env 中配置的图片前缀
+const imgPrefix = import.meta.env.VITE_IMAGE_PREFIX || '';
+
+// 2. 定义哪些字段需要自动加前缀
+const IMAGE_KEYS = ['avatar', 'cover', 'logo'];
+
+// 3. 递归扫描并替换数据的函数
+const formatImageData = (data) => {
+    if (!data || typeof data !== 'object') return data;
+
+    if (Array.isArray(data)) {
+        data.forEach(item => formatImageData(item));
+    } else {
+        Object.keys(data).forEach(key => {
+            // 发现是图片字段，且是以 / 开头的相对路径，立刻拼上前缀
+            if (IMAGE_KEYS.includes(key) && typeof data[key] === 'string' && data[key].startsWith('/')) {
+                data[key] = imgPrefix + data[key];
+            } else if (typeof data[key] === 'object') {
+                // 如果是嵌套对象，递归深入处理
+                formatImageData(data[key]);
+            }
+        });
+    }
+    return data;
+};
+
 // 添加全局标志位，防止重复显示登录提示
 let isShowingLoginMessage = false
 // 全局拦截熔断开关
@@ -77,6 +103,10 @@ request.interceptors.response.use(
             // 抛出异常，中断 Promise 链。
             // 这样 Vue 组件里就不会再进入 .then() 的成功逻辑了
             return Promise.reject(new Error(res.msg || 'Error'))
+        }
+
+        if (res.code === 200 && res.data) {
+            formatImageData(res.data);
         }
 
         // 状态码 200，正常放行

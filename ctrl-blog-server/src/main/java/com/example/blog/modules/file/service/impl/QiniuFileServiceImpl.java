@@ -68,9 +68,8 @@ public class QiniuFileServiceImpl implements FileService {
             // 3. 上传到七牛云
             uploadManager.put(file.getInputStream(), fileName, upToken, null, null);
 
-            // 4. 返回 CDN 访问链接
-            String finalDomain = domain.endsWith(StrUtil.SLASH) ? domain : domain + StrUtil.SLASH;
-            return finalDomain + fileName;
+            // 4. 直接返回带有 / 前缀的相对路径
+            return StrUtil.SLASH + fileName;
 
         } catch (Exception e) {
             log.error("七牛云文件上传失败", e);

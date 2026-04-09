@@ -54,7 +54,6 @@ public class UserAddDTO {
     private String password;
 
     @Schema(description = "用户头像URL", example = "https://example.com/default-avatar.png")
-    @URL(message = "头像URL格式不合法")
     @Size(max = 500, message = "头像URL长度不能超过500个字符")
     private String avatar;
 

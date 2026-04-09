@@ -44,7 +44,6 @@ public class UserUpdateDTO {
     private String bio;
 
     @Schema(description = "用户头像URL", example = "https://example.com/avatar.jpg")
-    @URL(message = "头像URL格式不合法")
     @Size(max = 500, message = "头像URL长度不能超过500个字符")
     private String avatar;
 

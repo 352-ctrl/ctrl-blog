@@ -27,7 +27,6 @@ import java.util.List;
 public class ArticleAddDTO {
 
     @Schema(description = "文章封面URL", example = "https://example.com/cover.jpg")
-    @URL(message = "封面URL格式不合法")
     @Size(max = 500, message = "封面URL长度不能超过500个字符")
     private String cover;
 
