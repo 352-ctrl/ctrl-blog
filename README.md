@@ -23,11 +23,12 @@
 
 | 前台首页 | 后台仪表盘 |
 | :---: | :---: |
-| <img src="http://tbobxfar9.hn-bkt.clouddn.com/blog/article/1774168582128_image.png" width="400" alt="前台首页"/> | <img src="http://tbobxfar9.hn-bkt.clouddn.com/blog/article/1774168609096_image.png" width="400" alt="后台仪表盘"/> |
+| <img src="assets/前台首页.png" width="400" alt="前台首页"/> | <img src="assets/后台仪表盘.png" width="400" alt="后台仪表盘"/> |
 | **文章详情与目录** | **弹幕留言墙** |
-| <img src="http://tbobxfar9.hn-bkt.clouddn.com/blog/article/1774168651374_image.png" width="400" alt="文章详情"/> | <img src="http://tbobxfar9.hn-bkt.clouddn.com/blog/article/1774169346428_image.png" width="400" alt="弹幕留言墙"/> |
+| <img src="assets/文章详情与目录.png" width="400" alt="文章详情"/> | <img src="assets/弹幕留言墙.png" width="400" alt="弹幕留言墙"/> |
 
 ---
+
 
 ## ✨ 核心特性
 
@@ -94,26 +95,18 @@ npm install
 npm run dev
 ```
 
-### 方式二：Docker / CI/CD 生产环境自动化部署 (推荐)
+### 方式二：Docker Swarm + CI/CD 企业级高可用自动化部署 (🌟 强烈推荐)
 
-本项目已实现基于 **GitHub Actions** 和 **阿里云 ACR (容器镜像服务)** 的企业级自动化部署流水线。服务器实现“零源码”纯净运行。
+本项目已实现基于 **GitHub Actions** 和 **Docker Swarm** 的企业级自动化流水线。抛弃传统单机部署，采用现代化的集群编排架构，实现了真正的“Push即部署”与“零停机发版”。
 
-**1. 云端自动构建与推送**
+**1. 云端自动化构建 (CI)**
 * 开发者只需将代码 `git push` 至 GitHub `main` 分支。
-* GitHub Actions 将自动触发多阶段构建 (Multi-stage Build)，分别打包 Spring Boot 和 Vue 项目。
-* 自动构建 Docker 镜像并推送到阿里云 ACR 私有仓库。
+* GitHub Actions 自动触发多阶段构建 (Multi-stage Build)，分别打包 Spring Boot 和 Vue 项目。
+* 自动构建 Docker 镜像并极速推送到阿里云 ACR 私有仓库。
 
-**2. 服务器极速拉取运行**
-在生产服务器上，仅需两个配置文件即可秒级启动整个高可用集群：
+**2. Swarm 集群无感滚动更新 (CD)**
+* 流水线自动通过 SSH 登录集群 Master 节点下发指令。
+* 通过 `docker stack deploy` 触发 Swarm 集群的滚动更新 (Rolling Update)。
+* 按照设定的 `update_config` 策略，新老容器实例逐个平滑替换，整个发布过程 **0 宕机时间 (Zero Downtime)**，用户访问丝滑无缝。
 
-```bash
-# 1. 准备目录与配置文件
-mkdir -p /root/ctrl-blog && cd /root/ctrl-blog
-# 请在此目录下放置 docker-compose.yml 和包含敏感信息的 .env 文件
-
-# 2. 登录阿里云私有镜像仓库 (VPC内网极速拉取)
-sudo docker login --username=您的用户名 crpi-xxx-vpc.cn-hongkong.personal.cr.aliyuncs.com
-
-# 3. 一键拉取最新镜像并平滑启动
-sudo docker compose pull
-sudo docker compose up -d
+> **📌 生产环境架构说明：** > 当前线上环境采用 `1 Master + 2 Worker` 的 3 节点 Docker Swarm 跨主机高可用架构 (Overlay 网络)。核心数据服务 (MySQL/Redis) 通过约束策略锁定 Master 节点保障数据持久化安全；前后端无状态服务 (Server/UI) 设置多副本分布调度，轻松实现负载均衡与故障自动转移 (Auto-Healing)。
