@@ -1,8 +1,6 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: ctrl-mysql
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -12,25 +10,25 @@ services:
       - ./data/mysql:/var/lib/mysql
     networks:
       - blog-network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager # 锁定在 Master，保护数据
 
   redis:
     image: redis:7-alpine
-    container_name: ctrl-redis
-    restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     volumes:
       - ./data/redis:/data
     networks:
       - blog-network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager # 锁定在 Master，保护数据
 
   ctrl-blog-server:
-    # 使用阿里云私有仓库的 VPC 地址
     image: crpi-no0f86ik9slq5elj-vpc.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-server:latest
-    container_name: ctrl-backend
-    restart: always
-    depends_on:
-      - mysql
-      - redis
     env_file:
       - .env
     environment:
@@ -39,18 +37,28 @@ services:
       - REDIS_HOST=redis
     networks:
       - blog-network
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1 # 发版时每次更新1个副本，保证服务0中断
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 
   ctrl-blog-ui:
     image: crpi-no0f86ik9slq5elj-vpc.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-ui:latest
-    container_name: ctrl-frontend
-    restart: always
-    depends_on:
-      - ctrl-blog-server
     ports:
       - "80:80"
     networks:
       - blog-network
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 5s
+      restart_policy:
+        condition: on-failure
 
 networks:
   blog-network:
-    driver: bridge
+    driver: overlay # 切换为跨主机集群网络驱动

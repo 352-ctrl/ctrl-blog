@@ -1,4 +1,4 @@
-name: 自动部署 (ACR模式)
+name: 自动部署 (Swarm集群模式)
 
 on:
   push:
@@ -28,16 +28,20 @@ jobs:
           docker build -t ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-ui:latest ./ctrl-blog-ui
           docker push ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-ui:latest
 
-      - name: SSH远程更新服务器
+      - name: SSH远程更新 Swarm 集群
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERVER_IP }}
+          host: ${{ secrets.SERVER_IP }} # Master 节点的公网 IP
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             cd /root/ctrl-blog
-            # 这里的 docker-compose.yml 已经在服务器上了，只需执行拉取和更新
-            sudo docker compose pull
-            sudo docker compose up -d
-            # 清理旧的无用镜像，节省磁盘
-            sudo docker image prune -f
+            
+            # 确保 Master 节点登录了 ACR，这样它才能把拉取权限下发给 Worker 节点
+            sudo docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
+            
+            # 使用带有凭证验证的方式，通知集群拉取最新镜像并平滑更新
+            sudo docker stack deploy --with-registry-auth -c docker-compose.yml ctrl-blog
+            
+            # 清理集群上的悬空旧镜像（仅清理未使用的，不影响正在运行的）
+            sudo docker image prune -a -f
