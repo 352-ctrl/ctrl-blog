@@ -28,6 +28,16 @@ jobs:
           docker build -t ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-ui:latest ./ctrl-blog-ui
           docker push ${{ secrets.ACR_REGISTRY }}/ctrl-blog/ctrl-blog-ui:latest
 
+      - name: 推送配置文件到服务器
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "docker-compose.yml"
+          target: "/root/ctrl-blog/"
+
+
       - name: SSH远程更新 Swarm 集群
         uses: appleboy/ssh-action@master
         with:
@@ -40,8 +50,8 @@ jobs:
             # 确保 Master 节点登录了 ACR，这样它才能把拉取权限下发给 Worker 节点
             sudo docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
             
-            # 使用带有凭证验证的方式，通知集群拉取最新镜像并平滑更新
-            sudo docker stack deploy --with-registry-auth -c docker-compose.yml ctrl-blog
+            # 使用带有凭证验证的方式，强行读取 .env 注入变量并平滑更新
+            sudo bash -c 'set -a; source /root/ctrl-blog/.env; set +a; docker stack deploy --with-registry-auth -c /root/ctrl-blog/docker-compose.yml ctrl-blog'
             
             # 清理集群上的悬空旧镜像（仅清理未使用的，不影响正在运行的）
             sudo docker image prune -a -f

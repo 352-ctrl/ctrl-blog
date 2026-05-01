@@ -27,28 +27,29 @@ services:
           - node.role == manager # 锁定在 Master，保护数据
 
   ctrl-blog-server:
-    image: crpi-no0f86ik9slq5elj-vpc.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-server:latest
+    image: crpi-no0f86ik9slq5elj.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-server:latest
     env_file:
       - .env
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DB_HOST=mysql
       - REDIS_HOST=redis
-      # 强制显式注入核心密码，防止 Swarm 吞掉 env_file 里的变量
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - FILE_STORAGE_TYPE=${FILE_STORAGE_TYPE}
     networks:
       - blog-network
     deploy:
-      replicas: 3
+      replicas: 1
       update_config:
         parallelism: 1 # 发版时每次更新1个副本，保证服务0中断
         delay: 10s
+        order: start-first
       restart_policy:
         condition: on-failure
 
   ctrl-blog-ui:
-    image: crpi-no0f86ik9slq5elj-vpc.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-ui:latest
+    image: crpi-no0f86ik9slq5elj.cn-hongkong.personal.cr.aliyuncs.com/ctrl-blog/ctrl-blog-ui:latest
     ports:
       - "80:80"
     networks:
