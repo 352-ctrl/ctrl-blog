@@ -47,11 +47,16 @@ jobs:
           script: |
             cd /root/ctrl-blog
             
-            # 确保 Master 节点登录了 ACR，这样它才能把拉取权限下发给 Worker 节点
+            # 1. 登录私有仓库（确保凭证最新）
             sudo docker login --username=${{ secrets.ACR_USERNAME }} --password=${{ secrets.ACR_PASSWORD }} ${{ secrets.ACR_REGISTRY }}
             
-            # 使用带有凭证验证的方式，强行读取 .env 注入变量并平滑更新
-            sudo bash -c 'set -a; source /root/ctrl-blog/.env; set +a; docker stack deploy --with-registry-auth -c /root/ctrl-blog/docker-compose.yml ctrl-blog'
+            # 2. 部署 Stack，加入 --resolve-image always 强制解析最新镜像摘要
+            sudo bash -c 'set -a; source /root/ctrl-blog/.env; set +a; docker stack deploy --with-registry-auth --resolve-image always -c /root/ctrl-blog/docker-compose.yml ctrl-blog'
             
-            # 清理集群上的悬空旧镜像（仅清理未使用的，不影响正在运行的）
+            # 3. 强制拉取最新镜像并重启服务
+            # 即使镜像标签没变，这行命令也会强制每个副本重新拉取并滚动替换
+            sudo docker service update --force --with-registry-auth ctrl-blog_ctrl-blog-server
+            sudo docker service update --force --with-registry-auth ctrl-blog_ctrl-blog-ui
+            
+            # 4. 清理残留
             sudo docker image prune -a -f
