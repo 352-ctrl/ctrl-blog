@@ -25,10 +25,10 @@ public class HtmlToImageUtil {
 
     static {
         try {
-            // 使用 .ttf 文件，并确保路径与你截图的目录结构完全一致
-            InputStream fontStream = HtmlToImageUtil.class.getResourceAsStream("/fonts/DeYiHei/SmileySans-Oblique-2.ttf");
+            // 使用 .woff2 文件，并确保路径与你截图的目录结构完全一致
+            InputStream fontStream = HtmlToImageUtil.class.getResourceAsStream("/fonts/DeYiHei/SmileySans-Oblique-3.woff2");
             if (fontStream != null) {
-                // 加载 TTF 字体
+                // 加载 WOFF2 字体
                 Font baseFont = Font.createFont(Font.TRUETYPE_FONT, fontStream);
                 // 标题字号 64，作者字号 32
                 CUSTOM_TITLE_FONT = baseFont.deriveFont(Font.PLAIN, 64f);

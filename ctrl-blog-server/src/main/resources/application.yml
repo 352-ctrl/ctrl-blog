@@ -75,7 +75,7 @@ mybatis-plus:
   type-aliases-package: com.example.springboot.entity     # 实体类包路径
   configuration:
     map-underscore-to-camel-case: true      # 开启驼峰命名转换
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 控制台打印 SQL (调试用)
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 控制台打印 SQL (调试用)
   global-config:
     db-config:
       logic-delete-field: isDeleted         # 全局逻辑删除字段名
@@ -120,7 +120,7 @@ management:
       exposure:
         # 暴露所有监控端点，包括 metrics, health, info, env 等
         # 注意：在生产环境中，应该只暴露需要的端点，或者配合 Spring Security 进行权限控制
-        include: "*"
+        include: "health,metrics"
   endpoint:
     health:
       show-details: always # 显示详细的健康信息（包括磁盘空间、数据库连接状态等）

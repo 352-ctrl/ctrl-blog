@@ -7,7 +7,7 @@ import {useUserStore} from "@/store/user.js";
 const imgPrefix = import.meta.env.VITE_IMAGE_PREFIX || '';
 
 // 2. 定义哪些字段需要自动加前缀
-const IMAGE_KEYS = ['avatar', 'cover', 'logo'];
+const IMAGE_KEYS = ['avatar', 'userAvatar', 'cover', 'logo'];
 
 // 3. 递归扫描并替换数据的函数
 const formatImageData = (data) => {

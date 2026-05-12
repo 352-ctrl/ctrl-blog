@@ -4,24 +4,29 @@
       <div class="run-time">
         <el-icon class="heart-icon"><Trophy /></el-icon>
         <span>本站已勉强运行：{{ runTimeText }}</span>
+        <span class="divider hide-on-mobile">|</span>
       </div>
 
-      <div class="copyright">
-        © {{ startYear }} - {{ currentYear }} By
-        <a
-            v-if="webmaster.github"
-            :href="webmaster.github"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="author-name hover-link"
-        >
-          {{ webmaster.nickname || '神秘站长' }}
+      <div class="copyright-record">
+        <div class="copyright-wrapper">
+          <span class="copyright">© {{ startYear }} - {{ currentYear }} By</span>
+          <a
+              v-if="webmaster.github"
+              :href="webmaster.github"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="author-name hover-link"
+          >
+            {{ webmaster.nickname || '神秘站长' }}
+          </a>
+          <span v-else class="author-name">{{ webmaster.nickname || '神秘站长' }}</span>
+        </div>
+
+        <span class="divider hide-on-mobile">|</span>
+
+        <a href="https://beian.miit.gov.cn/" target="_blank" class="record-link hover-link">
+          闽ICP备2026016183号
         </a>
-        <span v-else class="author-name">{{ webmaster.nickname || '神秘站长' }}</span>
-      </div>
-
-      <div class="tech-stack hide-on-mobile">
-        Powered by Spring Boot 3 & Vue 3
       </div>
     </div>
   </footer>
@@ -119,9 +124,36 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   font-size: 13px;
   color: var(--el-text-color-secondary);
+}
+
+.copyright-record {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.divider {
+  margin: 0 4px;
+  color: var(--el-border-color-darker);
+  opacity: 0.5;
+}
+
+.record-link {
+  color: var(--el-text-color-secondary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.copyright-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .run-time {
@@ -165,15 +197,16 @@ onUnmounted(() => {
   color: var(--el-color-primary);
 }
 
-.tech-stack {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .hide-on-mobile {
     display: none;
+  }
+
+  .copyright-record {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
   }
 }
 </style>
