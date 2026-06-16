@@ -53,9 +53,12 @@ request.interceptors.request.use(config => {
         return Promise.reject(new axios.Cancel("Token已过期，请求被前端拦截熔断"));
     }
 
-    if (!config.headers['Content-Type']) {
-        config.headers['Content-Type'] = 'application/json;charset=utf-8'
+    if (!(config.data instanceof FormData)) {
+        if (!config.headers['Content-Type']) {
+            config.headers['Content-Type'] = 'application/json;charset=utf-8'
+        }
     }
+
     const token = localStorage.getItem('token')
     if (token) {
         config.headers['token'] = token

@@ -29,7 +29,7 @@ a {
 /* 导入思源黑体 (Noto Sans CJK) 作为基础正文 */
 @font-face {
     font-family: 'NotoSansCJK';
-    src: url('https://qiniu.ctrlblog.cn/blog/fonts/SiYuanHeiTiGoogleBan/NotoSansCJK-Regular-1.woff2') format('woff2');
+    src: url('@/assets/fonts/DeYiHei/SmileySans-Oblique-3.woff2') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -38,7 +38,7 @@ a {
 /* 导入得意黑 (Smiley Sans) 作为标题或装饰字体 */
 @font-face {
     font-family: 'SmileySans'; /* 定义字体别名 */
-    src: url('https://qiniu.ctrlblog.cn/blog/fonts/DeYiHei/SmileySans-Oblique-3.woff2') format('woff2');
+    src: url('@/assets/fonts/DeYiHei/SmileySans-Oblique-3.woff2') format('opentype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
